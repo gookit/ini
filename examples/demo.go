@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// go run ./examples/demo.go
 func main() {
 	cfg, err := ini.LoadFiles("testdata/test.ini")
 	if err != nil {
@@ -13,6 +14,7 @@ func main() {
 
 	fmt.Printf("%v\n", cfg.Data())
 
+	// load more, will override prev data by key
 	cfg.LoadStrings(`
 age = 100
 [sec1]

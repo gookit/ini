@@ -20,15 +20,16 @@ type Options struct {
 	IgnoreCase bool
 }
 
-// Ini data store
+// Ini data manager
 type Ini struct {
 	data   map[string]Section
 	opts   Options
+
 	inited bool
 }
 
 // DefOptions
-var DefOptions = Options{}
+var DefOptions = Options{ParseEnv: true}
 
 // New
 func New() *Ini {

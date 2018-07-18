@@ -55,6 +55,7 @@ func (e errSyntax) Error() string {
 // parser
 type parser struct {
 	mapping map[string]Section
+	ignoreCase bool
 }
 
 func newParser() *parser {
@@ -185,11 +186,16 @@ func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 }
 
 func (p *parser) addToSection(name string, key, val string) Section {
+	if p.ignoreCase {
+		name = strings.ToLower(name)
+		key = strings.ToLower(key)
+	}
+
 	if sec, ok := p.mapping[name]; ok {
 		sec[key] = val
 		return sec
 	}
 
-	// Create the section if it does not exist
+	// create the section if it does not exist
 	return Section{key: val}
 }
