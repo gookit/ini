@@ -7,7 +7,9 @@ import (
 
 // go run ./examples/demo.go
 func main() {
-	config, err := ini.LoadFiles("testdata/test.ini")
+	// config, err := ini.LoadFiles("testdata/tesdt.ini")
+	// LoadExists will ignore not exists file
+	config, err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
 		panic(err)
 	}
@@ -46,4 +48,10 @@ some = change val
 	config.Set("name", "new name")
 	name, ok = config.GetString("name")
 	fmt.Printf("- set string\n ok: %v, val: %v\n", ok, name)
+
+	// export data to file
+	// _, err = config.WriteToFile("testdata/export.ini")
+	// if err != nil {
+	// 	panic(err)
+	// }
 }

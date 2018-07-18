@@ -4,12 +4,35 @@
 
 ini parse by golang. ini config data manage
 
+> parse content is ref the project: https://github.com/dombenson/go-ini, Thank you very much
+
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
 ## Usage
+
+- example data(`testdata/test.ini`):
+
+```ini
+# comments
+name = inhere
+age = 50
+debug = true
+hasQuota1 = 'this is val'
+hasQuota2 = "this is val1"
+shell = ${SHELL}
+noEnv = ${NotExist|defValue}
+
+; comments
+[sec1]
+key = val0
+some = value
+stuff = things
+```
+
+- usage
 
 ```go
 package main
@@ -21,7 +44,9 @@ import (
 
 // go run ./examples/demo.go
 func main() {
-	config, err := ini.LoadFiles("testdata/test.ini")
+	// config, err := ini.LoadFiles("testdata/tesdt.ini")
+	// LoadExists will ignore not exists file
+	config, err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
 		panic(err)
 	}
@@ -60,6 +85,12 @@ some = change val
 	config.Set("name", "new name")
 	name, ok = config.GetString("name")
 	fmt.Printf("- set string\n ok: %v, val: %v\n", ok, name)
+	
+	// export data to file
+	// _, err = config.WriteToFile("testdata/export.ini")
+	// if err != nil {
+	// 	panic(err)
+	// }
 }
 ```
 

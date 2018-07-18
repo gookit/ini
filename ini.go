@@ -3,6 +3,8 @@ package ini
 import (
 	"os"
 	"io/ioutil"
+	"io"
+	"bufio"
 )
 
 const (
@@ -72,16 +74,6 @@ func (ini *Ini) SetOptions(opts Options) {
 	ini.opts = opts
 }
 
-func (ini *Ini) ensureInit() {
-	if ini.data == nil {
-		ini.data = make(map[string]Section)
-	}
-
-	if !ini.inited {
-		ini.inited = true
-	}
-}
-
 // LoadFiles
 func (ini *Ini) LoadFiles(files ...string) (err error) {
 	ini.ensureInit()
@@ -126,6 +118,27 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 	}
 
 	return
+}
+
+// ReadFrom Loads INI data from a reader and stores the data in the manager.
+func (ini *Ini) ReadFrom(in io.Reader) (n int64, err error) {
+	n = 0
+	scanner := bufio.NewScanner(in)
+
+	p := newParser()
+	n, err = p.parse(scanner)
+
+	return
+}
+
+func (ini *Ini) ensureInit() {
+	if ini.data == nil {
+		ini.data = make(map[string]Section)
+	}
+
+	if !ini.inited {
+		ini.inited = true
+	}
 }
 
 func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
