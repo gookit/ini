@@ -33,7 +33,7 @@ func Decode(blob []byte, v interface{}) (err error) {
 		return
 	}
 
-	bs, err := json.Marshal(p.sections)
+	bs, err := json.Marshal(p.simpleData)
 	if err != nil {
 		return
 	}
@@ -54,34 +54,77 @@ func (e errSyntax) Error() string {
 
 var (
 	// [section]
-	sectionRegex   = regexp.MustCompile(`^\[(.*)\]$`)
+	sectionRegex = regexp.MustCompile(`^\[(.*)\]$`)
 	// foo[] = val
 	assignArrRegex = regexp.MustCompile(`^([^=\[\]]+)\[\][^=]*=(.*)$`)
 	// key = val
-	assignRegex    = regexp.MustCompile(`^([^=]+)=(.*)$`)
-	quotesRegex    = regexp.MustCompile(`^(['"])(.*)(['"])$`)
+	assignRegex = regexp.MustCompile(`^([^=]+)=(.*)$`)
+	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
+
+type Sec struct {
+	isArray  bool
+	mapValue map[string]string
+	arrValue map[string][]string
+}
+
+// parse mode
+const FullMode parseMode = 1
+const SimpleMode parseMode = 2
+
+type parseMode uint8
+
+// section data in ini
+type MapValue map[string]string
+type ArrValue map[string][]string
 
 // parser
 type parser struct {
 	// for full parse(allow array, map section)
-	mapping map[string]interface{}
-	// for simple parse(section only allow map[string]string)
-	sections map[string]Section
+	fullData map[string]interface{}
 
-	// only for full parse
-	NoDefSection bool
-	DefSection string
+	// for simple parse(section only allow map[string]string)
+	simpleData map[string]map[string]string
+
+	ParseMode  parseMode
 	IgnoreCase bool
+	DefSection string
+	// only for full parse mode
+	NoDefSection bool
 }
 
-func newParser() *parser {
+// FullData
+func (p *parser) FullData() map[string]interface{} {
+	return p.fullData
+}
+
+// SimpleData
+func (p *parser) SimpleData() map[string]map[string]string {
+	return p.simpleData
+}
+
+// FullParser
+func FullParser() *parser {
 	return &parser{
-		sections: make(map[string]Section),
+		fullData: make(map[string]interface{}),
+
+		ParseMode: FullMode,
+		DefSection: "__default",
 	}
 }
 
-func parse(data string) (p *parser, err error) {
+// SimpleParser
+func SimpleParser() *parser {
+	return &parser{
+		simpleData: make(map[string]map[string]string),
+
+		ParseMode: SimpleMode,
+		DefSection: "__default",
+	}
+}
+
+// Parse
+func Parse(data string, mode parseMode) (p *parser, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
@@ -92,15 +135,13 @@ func parse(data string) (p *parser, err error) {
 		}
 	}()
 
-	p = &parser{
-		sections: make(map[string]Section),
+	if mode == FullMode {
+		p = FullParser()
+	} else {
+		p = SimpleParser()
 	}
 
-	buf := &bytes.Buffer{}
-	buf.WriteString(data)
-
-	scanner := bufio.NewScanner(buf)
-	_, err = p.parse(scanner)
+	err = p.parseString(data)
 
 	return
 }
@@ -125,9 +166,90 @@ func (p *parser) parseString(data string) error {
 	return err
 }
 
+/*************************************************************
+ * full parse
+ *************************************************************/
+
+// from github.com/dombenson/go-ini
+func (p *parser) fullParse(in *bufio.Scanner) (bytes int64, err error) {
+	section := p.DefSection
+
+	lineNum := 0
+	bytes = -1
+	readLine := true
+
+	for readLine = in.Scan(); readLine; readLine = in.Scan() {
+		line := in.Text()
+
+		bytes++
+		bytes += int64(len(line))
+
+		lineNum++
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			// Skip blank lines
+			continue
+		}
+		if line[0] == ';' || line[0] == '#' {
+			// Skip comments
+			continue
+		}
+
+		inDef := section == p.DefSection
+
+		// skip array parse
+		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
+			key, val := groups[1], groups[2]
+			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			curVal, ok := file.section(section).arrayValues[key]
+			if ok {
+				file.section(section).arrayValues[key] = append(curVal, val)
+			} else {
+				file.section(section).arrayValues[key] = make([]string, 1, 4)
+				file.section(section).arrayValues[key][0] = val
+			}
+		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
+			key, val := groups[1], groups[2]
+			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			// file.section(section).stringValues[key] = val
+
+			p.simpleData[section] = p.addToSection(section, key, val)
+		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
+			name := strings.TrimSpace(groups[1])
+			section = name
+			// Create the section if it does not exist
+			// file.section(section)
+		} else {
+			err = errSyntax{lineNum, line}
+			return
+		}
+	}
+
+	if bytes < 0 {
+		bytes = 0
+	}
+
+	err = in.Err()
+
+	return
+}
+
+func (p *parser) appendToMapping(section string, isArr bool) {
+
+}
+
+/*************************************************************
+ * simple parse
+ *************************************************************/
+
+// from github.com/dombenson/go-ini
+func (p *parser) simpleParse(in *bufio.Scanner) (bytes int64, err error) {
+	return
+}
+
 // from github.com/dombenson/go-ini
 func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
-	section := DefSection
+	section := p.DefSection
 	lineNum := 0
 	bytes = -1
 	readLine := true
@@ -163,7 +285,7 @@ func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 			key, val = strings.TrimSpace(key), trimWithQuotes(val)
 			// file.section(section).stringValues[key] = val
 
-			p.sections[section] = p.addToSection(section, key, val)
+			p.simpleData[section] = p.addToSection(section, key, val)
 		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
 			name := strings.TrimSpace(groups[1])
 			section = name
@@ -190,7 +312,7 @@ func (p *parser) addToSection(name string, key, val string) Section {
 		key = strings.ToLower(key)
 	}
 
-	if sec, ok := p.sections[name]; ok {
+	if sec, ok := p.simpleData[name]; ok {
 		sec[key] = val
 		return sec
 	}

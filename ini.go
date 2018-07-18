@@ -18,20 +18,21 @@ type Section map[string]string
 
 // Options
 type Options struct {
+	Readonly   bool
 	ParseEnv   bool
 	IgnoreCase bool
 }
 
 // Ini data manager
 type Ini struct {
-	data   map[string]Section
-	opts   Options
+	data map[string]Section
+	opts *Options
 
 	inited bool
 }
 
 // DefOptions
-var DefOptions = Options{ParseEnv: true}
+var DefOptions = &Options{ParseEnv: true}
 
 // New
 func New() *Ini {
@@ -42,12 +43,60 @@ func New() *Ini {
 }
 
 // NewWithOptions
-func NewWithOptions(opts Options) *Ini {
-	return &Ini{
+// usage:
+// ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
+func NewWithOptions(opts ...func(*Options)) *Ini {
+	ini := &Ini{
 		data: make(map[string]Section),
-		opts: opts,
+		opts: &Options{},
+	}
+
+	// apply options
+	for _, opt := range opts {
+		opt(ini.opts)
+	}
+
+	return ini
+}
+
+/*************************************************************
+ * options func
+ *************************************************************/
+
+// Readonly
+// usage:
+// ini.NewWithOptions(ini.Readonly)
+func Readonly(opts *Options) {
+	opts.Readonly = true
+}
+
+// ParseEnv
+// usage:
+// ini.NewWithOptions(ini.ParseEnv)
+func ParseEnv(opts *Options) {
+	opts.ParseEnv = true
+}
+
+// IgnoreCase
+func IgnoreCase(opts *Options) {
+	opts.IgnoreCase = true
+}
+
+// SetOptions
+func (ini *Ini) SetOptions(opts ...func(*Options)) {
+	if ini.inited {
+		panic("ini: Cannot set options after initialization is complete")
+	}
+
+	// apply options
+	for _, opt := range opts {
+		opt(ini.opts)
 	}
 }
+
+/*************************************************************
+ * data load
+ *************************************************************/
 
 // LoadFiles
 func LoadFiles(files ...string) (ini *Ini, err error) {
@@ -63,15 +112,6 @@ func LoadExists(files ...string) (ini *Ini, err error) {
 	err = ini.LoadExists(files...)
 
 	return
-}
-
-// SetOptions
-func (ini *Ini) SetOptions(opts Options) {
-	if ini.inited {
-		panic("cannot setting options after inited")
-	}
-
-	ini.opts = opts
 }
 
 // LoadFiles
@@ -114,7 +154,7 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 		}
 
 		// load and merge data
-		ini.MergeData(p.mapping)
+		ini.MergeData(p.sections)
 	}
 
 	return
@@ -164,7 +204,7 @@ func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
 		}
 
 		// load and merge data
-		ini.MergeData(p.mapping)
+		ini.MergeData(p.sections)
 	}
 
 	return
