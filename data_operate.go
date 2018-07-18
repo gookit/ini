@@ -28,7 +28,8 @@ func (ini *Ini) Get(key string) (val string, ok bool) {
 	}
 
 	// get section data
-	if sec, ok := ini.data[name]; !ok {
+	sec, ok := ini.data[name]
+	if ok {
 		// find from section
 		val, ok = sec[key]
 	}
@@ -68,11 +69,13 @@ func (ini *Ini) MustInt(key string) int {
 // along with a boolean result similar to a map lookup.
 // of following(case insensitive):
 //  - true
-//  - yes
 //  - false
+//  - yes
 //  - no
-//  - 1
+//  - off
+//  - on
 //  - 0
+//  - 1
 // The `ok` boolean will be false in the event that the value could not be parsed as a bool
 func (ini *Ini) GetBool(key string) (value bool, ok bool) {
 	rawVal, ok := ini.Get(key)
@@ -82,9 +85,9 @@ func (ini *Ini) GetBool(key string) (value bool, ok bool) {
 
 	lowerCase := strings.ToLower(rawVal)
 	switch lowerCase {
-	case "", "0", "false", "no":
+	case "", "0", "false", "no", "off":
 		value = false
-	case "1", "true", "yes":
+	case "1", "true", "yes", "on":
 		value = true
 	default:
 		ok = false
