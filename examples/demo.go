@@ -23,7 +23,9 @@ age = 100
 newK = newVal
 some = change val
 `)
-	// fmt.Printf("%v\n", config.Data())
+
+	fmt.Printf("Full data:\n%s\n", config.PrettyJson())
+	fmt.Println("Usage example:")
 
 	iv, ok := config.GetInt("age")
 	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)

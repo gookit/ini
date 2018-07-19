@@ -104,6 +104,12 @@ func TestIni_Get(t *testing.T) {
 	iv = conf.DefInt("notExist", 34)
 	st.Equal(34, iv)
 
+	iv = conf.MustInt("age")
+	st.Equal(28, iv)
+
+	iv = conf.MustInt("notExist")
+	st.Equal(0, iv)
+
 	// get bool
 	str, ok = conf.Get("debug")
 	st.True(ok)
@@ -114,6 +120,12 @@ func TestIni_Get(t *testing.T) {
 	st.Equal(true, bv)
 
 	bv = conf.DefBool("notExist", false)
+	st.Equal(false, bv)
+
+	bv = conf.MustBool("debug")
+	st.Equal(true, bv)
+
+	bv = conf.MustBool("notExist")
 	st.Equal(false, bv)
 
 	// get string
@@ -128,6 +140,20 @@ func TestIni_Get(t *testing.T) {
 	str = conf.DefString("notExists", "defVal")
 	st.Equal("defVal", str)
 
+	str = conf.MustString("name")
+	st.Equal("inhere", str)
+
+	str = conf.MustString("notExists")
+	st.Equal("", str)
+
+	str, ok = conf.GetString("hasQuota1")
+	st.True(ok)
+	st.Equal("this is val", str)
+
+	str, ok = conf.GetString("hasquota1")
+	st.False(ok)
+	st.Equal("", str)
+
 	// get by path
 	str, ok = conf.Get("sec1.some")
 	st.True(ok)
@@ -137,7 +163,6 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("val0", mp["key"])
 }
-
 
 func TestIni_Set(t *testing.T) {
 	st := assert.New(t)
@@ -162,4 +187,43 @@ func TestIni_Set(t *testing.T) {
 	mp, ok = conf.GetStringMap("newSec1")
 	st.True(ok)
 	st.Equal("v0", mp["k0"])
+
+	conf.SetInt("int", 345, "newSec")
+	iv, ok := conf.GetInt("newSec.int")
+	st.True(ok)
+	st.Equal(345, iv)
+
+	conf.SetBool("bol", false, "newSec")
+	bv, ok := conf.GetBool("newSec.bol")
+	st.True(ok)
+	st.False(bv)
+}
+
+func TestIgnoreCase(t *testing.T) {
+	st := assert.New(t)
+	conf := NewWithOptions(IgnoreCase)
+
+	err := conf.LoadStrings(`kEy = val`)
+	st.Nil(err)
+
+	opts := conf.Options()
+	st.True(opts.IgnoreCase)
+
+	str, ok := conf.GetString("KEY")
+	st.True(ok)
+	st.Equal("val", str)
+
+	str, ok = conf.GetString("key")
+	st.True(ok)
+	st.Equal("val", str)
+
+	conf.Set("NK", "val1")
+
+	str, ok = conf.GetString("nk")
+	st.True(ok)
+	st.Equal("val1", str)
+
+	str, ok = conf.GetString("Nk")
+	st.True(ok)
+	st.Equal("val1", str)
 }

@@ -7,6 +7,7 @@ ini parse by golang. ini config data manage
 - easy to use
 - support multi file,data load
 - support data override merge
+- support parse ENV key
 
 ## Godoc
 
@@ -96,7 +97,7 @@ some = change val
 }
 ```
 
-- output
+- output(by `go run ./examples/demo.go`)
 
 ```text
 get int

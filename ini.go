@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	SepSection = "."
 	DefSection = "__default"
 )
 
@@ -117,6 +118,11 @@ func IgnoreCase(opts *Options) {
 	opts.IgnoreCase = true
 }
 
+// Options
+func (ini *Ini) Options() *Options {
+	return ini.opts
+}
+
 // WithOptions
 func (ini *Ini) WithOptions(opts ...func(*Options)) {
 	if ini.inited {
@@ -170,12 +176,22 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 		if err != nil {
 			return
 		}
-
-		// load and merge data
-		// ini.MergeData(p.sections)
 	}
 
 	return
+}
+
+// LoadData
+func (ini *Ini) LoadData(data map[string]Section) {
+	ini.ensureInit()
+	if len(ini.data) == 0 {
+		ini.data = data
+	}
+
+	// append or override setting data
+	for name, sec := range data {
+		ini.SetSection(name, sec)
+	}
 }
 
 func (ini *Ini) ensureInit() {
@@ -208,9 +224,6 @@ func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
 		if err != nil {
 			return
 		}
-
-		// load and merge data
-		// ini.MergeData(p.sections)
 	}
 
 	return

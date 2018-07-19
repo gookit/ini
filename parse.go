@@ -14,17 +14,18 @@ func (ini *Ini) parse(data string) (err error) {
 	p := parser.SimpleParser()
 	p.DefSection = DefSection
 	p.Collector = ini.valueCollector
+	p.IgnoreCase = ini.opts.IgnoreCase
 
-	if ini.opts.IgnoreCase {
-		p.IgnoreCase = true
-	}
-
-	err = p.ParseString(data)
-
-	return
+	return p.ParseString(data)
 }
 
+// collect value form parser
 func (ini *Ini) valueCollector(section, key, val string, isArr bool) {
+	if ini.opts.IgnoreCase {
+		section = strings.ToLower(section)
+		key = strings.ToLower(key)
+	}
+
 	if sec, ok := ini.data[section]; ok {
 		sec[key] = val
 		ini.data[section] = sec

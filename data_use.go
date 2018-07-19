@@ -13,24 +13,20 @@ import (
 
 // Get a value by key string. you can use '.' split for get value in a special section
 func (ini *Ini) Get(key string) (val string, ok bool) {
-	key = strings.Trim(strings.TrimSpace(key), ".")
+	key = formatKey(key)
 	if key == "" {
 		return
 	}
 
-	// default find from default Section
-	name := DefSection
-
-	// get val by path. eg "log.dir"
-	if strings.Contains(key, ".") {
-		ss := strings.SplitN(key, ".", 2)
-		name, key = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+	if ini.opts.IgnoreCase {
+		key = strings.ToLower(key)
 	}
+
+	name, key := ini.splitSectionAndKey(key, SepSection)
 
 	// get section data
 	sec, ok := ini.data[name]
 	if ok {
-		// find from section
 		val, ok = sec[key]
 	}
 
@@ -156,14 +152,17 @@ func (ini *Ini) MustString(key string) string {
 
 // GetStringMap
 func (ini *Ini) GetStringMap(name string) (mp map[string]string, ok bool) {
+	if ini.opts.IgnoreCase {
+		name = strings.ToLower(name)
+	}
+
 	mp, ok = ini.data[name]
 	return
 }
 
 // GetSection
 func (ini *Ini) GetSection(name string) (sec map[string]string, ok bool) {
-	sec, ok = ini.data[name]
-	return
+	return ini.GetStringMap(name)
 }
 
 /*************************************************************
@@ -173,7 +172,7 @@ func (ini *Ini) GetSection(name string) (sec map[string]string, ok bool) {
 // Set a value to the section by key.
 // if section is empty, will set to default section
 func (ini *Ini) Set(key, val string, section ...string) {
-	key = strings.Trim(strings.TrimSpace(key), ".")
+	key = formatKey(key)
 	if key == "" {
 		return
 	}
@@ -218,6 +217,10 @@ func (ini *Ini) SetString(key, val string, section ...string) {
 	ini.Set(key, val, section...)
 }
 
+/*************************************************************
+ * section operate
+ *************************************************************/
+
 // SetSection
 func (ini *Ini) SetSection(name string, values map[string]string) {
 	if old, ok := ini.data[name]; ok {
@@ -235,29 +238,52 @@ func (ini *Ini) SetSection(name string, values map[string]string) {
 func (ini *Ini) AddSection(name string, values map[string]string) {
 	if ini.opts.IgnoreCase {
 		name = strings.ToLower(name)
-
 		ini.data[name] = mapKeyToLower(values)
 	} else {
 		ini.data[name] = values
 	}
 }
 
-// MergeData
-func (ini *Ini) MergeData(data map[string]Section) {
-	ini.ensureInit()
-	if len(ini.data) == 0 {
-		ini.data = data
+// HasSection
+func (ini *Ini) HasSection(name string) bool {
+	_, ok := ini.data[name]
+	return ok
+}
+
+// DelSection
+func (ini *Ini) DelSection(name string) bool {
+	_, ok := ini.data[name]
+	if ok {
+		delete(ini.data, name)
 	}
 
-	// append or override setting data
-	for name, sec := range data {
-		ini.SetSection(name, sec)
-	}
+	return ok
 }
 
 /*************************************************************
  * helper methods
  *************************************************************/
+
+// DelKey
+func (ini *Ini) DelKey(key string) (ok bool) {
+	key = formatKey(key)
+	if key == "" {
+		return
+	}
+
+	sec, key := ini.splitSectionAndKey(key, SepSection)
+	mp, ok := ini.data[sec]
+	if !ok {
+		return
+	}
+
+	if _, ok = mp[key]; ok {
+		delete(mp, key)
+		ini.data[sec] = mp
+	}
+
+	return
+}
 
 // Reset all data
 func (ini *Ini) Reset() {
@@ -269,16 +295,27 @@ func (ini *Ini) Data() map[string]Section {
 	return ini.data
 }
 
-// HasSection
-func (ini *Ini) HasSection(name string) bool {
-	_, ok := ini.data[name]
-	return ok
+func (ini *Ini) splitSectionAndKey(key, sep string) (string, string) {
+	// default find from default Section
+	name := DefSection
+
+	// get val by path. eg "log.dir"
+	if strings.Contains(key, sep) {
+		ss := strings.SplitN(key, sep, 2)
+		name, key = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+	}
+
+	return name, key
 }
 
+// format key
+func formatKey(key string) string {
+	return strings.Trim(strings.TrimSpace(key), ".")
+}
 
 // simple merge two string map
 func mergeStringMap(src, dst map[string]string, ignoreCase bool) map[string]string {
-	for k,v := range src {
+	for k, v := range src {
 		if ignoreCase {
 			k = strings.ToLower(k)
 		}
@@ -292,7 +329,7 @@ func mergeStringMap(src, dst map[string]string, ignoreCase bool) map[string]stri
 func mapKeyToLower(src map[string]string) map[string]string {
 	newMp := make(map[string]string)
 
-	for k,v := range src {
+	for k, v := range src {
 		k = strings.ToLower(k)
 		newMp[k] = v
 	}

@@ -5,7 +5,31 @@ import (
 	"sort"
 	"fmt"
 	"os"
+	"encoding/json"
+	"bytes"
 )
+
+// String
+func (ini *Ini) String() string {
+	buf := &bytes.Buffer{}
+
+	_, err := ini.WriteTo(buf)
+	if err != nil {
+		return ""
+	}
+
+	return buf.String()
+}
+
+// WriteToFile get pretty Json string
+func (ini *Ini) PrettyJson() string{
+	out, err := json.MarshalIndent(ini.data, "", "    ")
+	if err != nil {
+		return ""
+	}
+
+	return string(out)
+}
 
 // WriteToFile
 func (ini *Ini) WriteToFile(file string) (n int64, err error) {
