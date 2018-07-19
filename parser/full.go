@@ -11,11 +11,16 @@ import (
 
 // from github.com/dombenson/go-ini
 func (p *parser) fullParse(in *bufio.Scanner) (bytes int64, err error) {
+	if p.parsed {
+		return
+	}
+
 	section := p.DefSection
 	if p.IgnoreCase && section != "" {
 		section = strings.ToLower(section)
 	}
 
+	p.parsed = true
 	lineNum := 0
 	bytes = -1
 	readLine := true

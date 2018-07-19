@@ -26,7 +26,7 @@ There are example data:
 	types[] = x
 	types[] = y
 
-how to parse, please see examples:
+how to use, please see examples:
 
  */
 package parser
@@ -78,6 +78,7 @@ type parser struct {
 	// for simple parse(section only allow map[string]string)
 	simpleData map[string]map[string]string
 
+	parsed bool
 	parseMode  parseMode
 
 	// options
@@ -186,6 +187,11 @@ func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
 // ParseBytes
 func (p *parser) ParseBytes(data []byte) error {
 	var err error
+
+	if len(data) == 0 {
+		return nil
+	}
+
 	buf := &bytes.Buffer{}
 	buf.Write(data)
 
@@ -204,6 +210,10 @@ func (p *parser) ParseBytes(data []byte) error {
 func (p *parser) ParseString(data string) error {
 	var err error
 
+	if strings.TrimSpace(data) == "" {
+		return nil
+	}
+
 	buf := &bytes.Buffer{}
 	buf.WriteString(data)
 
@@ -216,6 +226,15 @@ func (p *parser) ParseString(data string) error {
 	}
 
 	return err
+}
+
+// ParsedData
+func (p *parser) ParsedData() interface{} {
+	if p.parseMode == FullMode  {
+		return p.fullData
+	}
+
+	return p.simpleData
 }
 
 func trimWithQuotes(inputVal string) (ret string) {

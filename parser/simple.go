@@ -15,6 +15,11 @@ func (p *parser) simpleParse(in *bufio.Scanner) (bytes int64, err error) {
 
 // from github.com/dombenson/go-ini
 func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
+	if p.parsed {
+		return
+	}
+
+	p.parsed = true
 	bytes = -1
 	lineNum := 0
 	readLine := true

@@ -66,6 +66,35 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 }
 
 /*************************************************************
+ * quick use
+ *************************************************************/
+
+
+// LoadFiles
+func LoadFiles(files ...string) (ini *Ini, err error) {
+	ini = New()
+	err = ini.LoadFiles(files...)
+
+	return
+}
+
+// LoadExists
+func LoadExists(files ...string) (ini *Ini, err error) {
+	ini = New()
+	err = ini.LoadExists(files...)
+
+	return
+}
+
+// LoadStrings
+func LoadStrings(strings ...string) (ini *Ini, err error) {
+	ini = New()
+	err = ini.LoadStrings(strings...)
+
+	return
+}
+
+/*************************************************************
  * options func
  *************************************************************/
 
@@ -103,22 +132,6 @@ func (ini *Ini) WithOptions(opts ...func(*Options)) {
 /*************************************************************
  * data load
  *************************************************************/
-
-// LoadFiles
-func LoadFiles(files ...string) (ini *Ini, err error) {
-	ini = New()
-	err = ini.LoadFiles(files...)
-
-	return
-}
-
-// LoadExists
-func LoadExists(files ...string) (ini *Ini, err error) {
-	ini = New()
-	err = ini.LoadExists(files...)
-
-	return
-}
 
 // LoadFiles
 func (ini *Ini) LoadFiles(files ...string) (err error) {
