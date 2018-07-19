@@ -4,8 +4,6 @@
 
 ini parse by golang. ini config data manage
 
-> parse content is ref the project: https://github.com/dombenson/go-ini, Thank you very much
-
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
@@ -112,6 +110,11 @@ get env 'envKey1' val: defValue
 - set string
  ok: true, val: new name
 ```
+
+## Ref 
+
+- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
+- [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
 
 ## License
 

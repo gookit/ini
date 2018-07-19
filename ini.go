@@ -1,10 +1,18 @@
+/*
+Ini parse by golang. ini config file/data manage
+
+Source code and other details for the project are available at GitHub:
+
+	https://github.com/gookit/ini
+
+INI parser is: https://github.com/gookit/ini/parser
+
+ */
 package ini
 
 import (
 	"os"
 	"io/ioutil"
-	"io"
-	"bufio"
 )
 
 const (
@@ -13,8 +21,6 @@ const (
 
 // section in ini data
 type Section map[string]string
-
-// type ArrSection map[string][]string
 
 // Options
 type Options struct {
@@ -82,8 +88,8 @@ func IgnoreCase(opts *Options) {
 	opts.IgnoreCase = true
 }
 
-// SetOptions
-func (ini *Ini) SetOptions(opts ...func(*Options)) {
+// WithOptions
+func (ini *Ini) WithOptions(opts ...func(*Options)) {
 	if ini.inited {
 		panic("ini: Cannot set options after initialization is complete")
 	}
@@ -147,26 +153,14 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 	ini.ensureInit()
 
 	for _, str := range strings {
-		p := newParser()
-		err = p.parseString(str)
+		err = ini.parse(str)
 		if err != nil {
 			return
 		}
 
 		// load and merge data
-		ini.MergeData(p.sections)
+		// ini.MergeData(p.sections)
 	}
-
-	return
-}
-
-// ReadFrom Loads INI data from a reader and stores the data in the manager.
-func (ini *Ini) ReadFrom(in io.Reader) (n int64, err error) {
-	n = 0
-	scanner := bufio.NewScanner(in)
-
-	p := newParser()
-	n, err = p.parse(scanner)
 
 	return
 }
@@ -197,14 +191,13 @@ func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
 	// read file content
 	bts, err := ioutil.ReadAll(fd)
 	if err == nil {
-		p := newParser()
-		err = p.parseBytes(bts)
+		err = ini.parse(string(bts))
 		if err != nil {
 			return
 		}
 
 		// load and merge data
-		ini.MergeData(p.sections)
+		// ini.MergeData(p.sections)
 	}
 
 	return

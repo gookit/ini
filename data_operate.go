@@ -154,6 +154,12 @@ func (ini *Ini) MustString(key string) string {
 	return ini.DefString(key, "")
 }
 
+// GetStringMap
+func (ini *Ini) GetStringMap(name string) (mp map[string]string, ok bool) {
+	mp, ok = ini.data[name]
+	return
+}
+
 // GetSection
 func (ini *Ini) GetSection(name string) (sec map[string]string, ok bool) {
 	sec, ok = ini.data[name]
