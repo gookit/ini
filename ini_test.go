@@ -227,3 +227,56 @@ func TestIgnoreCase(t *testing.T) {
 	st.True(ok)
 	st.Equal("val1", str)
 }
+
+func TestBasic(t *testing.T) {
+	st := assert.New(t)
+
+	conf, err := LoadStrings(iniStr)
+	st.Nil(err)
+
+	st.True(conf.HasKey("name"))
+	st.False(conf.HasKey("notExist"))
+
+	st.True(conf.HasSection("sec1"))
+	st.False(conf.HasSection("notExist"))
+}
+
+func TestReadonly(t *testing.T) {
+	st := assert.New(t)
+	conf := NewWithOptions(Readonly)
+
+	err := conf.LoadStrings(`key = val`)
+	st.Nil(err)
+
+	err = conf.Set("newK", "newV")
+	st.Error(err)
+}
+
+func TestParseEnv(t *testing.T) {
+	st := assert.New(t)
+	conf := NewWithOptions(ParseEnv)
+
+	err := conf.LoadStrings(`key = ${PATH}`)
+	st.Nil(err)
+
+	str, ok := conf.GetString("key")
+	st.True(ok)
+	st.NotContains(str, "${")
+}
+
+func TestIni_DelKey(t *testing.T) {
+	st := assert.New(t)
+
+	conf, err := LoadStrings(iniStr)
+	st.Nil(err)
+
+	st.True(conf.HasKey("name"))
+	ok := conf.DelKey("name")
+	st.True(ok)
+	st.False(conf.HasKey("name"))
+
+	st.True(conf.HasSection("sec1"))
+	ok = conf.DelSection("sec1")
+	st.True(ok)
+	st.False(conf.HasSection("sec1"))
+}

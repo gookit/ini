@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"os"
+	"errors"
 )
+
+// if is readonly
+var cannotSetInReadonly = errors.New("ini: The config manager instance in 'readonly' mode")
 
 /*************************************************************
  * data get
@@ -13,6 +17,12 @@ import (
 
 // Get a value by key string. you can use '.' split for get value in a special section
 func (ini *Ini) Get(key string) (val string, ok bool) {
+	// if not is readonly
+	if !ini.opts.Readonly {
+		ini.lock.Lock()
+		defer ini.lock.Unlock()
+	}
+
 	key = formatKey(key)
 	if key == "" {
 		return
@@ -171,7 +181,15 @@ func (ini *Ini) GetSection(name string) (sec map[string]string, ok bool) {
 
 // Set a value to the section by key.
 // if section is empty, will set to default section
-func (ini *Ini) Set(key, val string, section ...string) {
+func (ini *Ini) Set(key, val string, section ...string) (err error) {
+	// if is readonly
+	if ini.opts.Readonly {
+		return cannotSetInReadonly
+	} else {
+		ini.lock.Lock()
+		defer ini.lock.Unlock()
+	}
+
 	key = formatKey(key)
 	if key == "" {
 		return
@@ -195,6 +213,7 @@ func (ini *Ini) Set(key, val string, section ...string) {
 	}
 
 	ini.data[name] = sec
+	return
 }
 
 // SetInt
@@ -222,7 +241,12 @@ func (ini *Ini) SetString(key, val string, section ...string) {
  *************************************************************/
 
 // SetSection
-func (ini *Ini) SetSection(name string, values map[string]string) {
+func (ini *Ini) SetSection(name string, values map[string]string) (err error) {
+	// if is readonly
+	if ini.opts.Readonly {
+		return cannotSetInReadonly
+	}
+
 	if old, ok := ini.data[name]; ok {
 		if ini.opts.IgnoreCase {
 			name = strings.ToLower(name)
@@ -232,16 +256,24 @@ func (ini *Ini) SetSection(name string, values map[string]string) {
 	} else {
 		ini.AddSection(name, values)
 	}
+
+	return
 }
 
 // AddSection
-func (ini *Ini) AddSection(name string, values map[string]string) {
+func (ini *Ini) AddSection(name string, values map[string]string) (err error) {
+	// if is readonly
+	if ini.opts.Readonly {
+		return cannotSetInReadonly
+	}
+
 	if ini.opts.IgnoreCase {
 		name = strings.ToLower(name)
 		ini.data[name] = mapKeyToLower(values)
 	} else {
 		ini.data[name] = values
 	}
+	return
 }
 
 // HasSection
@@ -252,6 +284,15 @@ func (ini *Ini) HasSection(name string) bool {
 
 // DelSection
 func (ini *Ini) DelSection(name string) bool {
+	// if is readonly
+	if ini.opts.Readonly {
+		return false
+	}
+
+	if ini.opts.IgnoreCase {
+		name = strings.ToLower(name)
+	}
+
 	_, ok := ini.data[name]
 	if ok {
 		delete(ini.data, name)
@@ -264,11 +305,26 @@ func (ini *Ini) DelSection(name string) bool {
  * helper methods
  *************************************************************/
 
+// HasKey
+func (ini *Ini) HasKey(key string) (ok bool) {
+	_, ok = ini.Get(key)
+	return
+}
+
 // DelKey
 func (ini *Ini) DelKey(key string) (ok bool) {
+	// if is readonly
+	if ini.opts.Readonly {
+		return
+	}
+
 	key = formatKey(key)
 	if key == "" {
 		return
+	}
+
+	if ini.opts.IgnoreCase {
+		key = strings.ToLower(key)
 	}
 
 	sec, key := ini.splitSectionAndKey(key, SepSection)

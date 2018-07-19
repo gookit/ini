@@ -13,6 +13,7 @@ package ini
 import (
 	"os"
 	"io/ioutil"
+	"sync"
 )
 
 const (
@@ -34,6 +35,7 @@ type Options struct {
 type Ini struct {
 	data map[string]Section
 	opts *Options
+	lock sync.RWMutex
 
 	inited bool
 }
