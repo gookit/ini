@@ -1,0 +1,12 @@
+language: go
+go:
+  - '1.8'
+  - '1.9'
+  - 1.10.x
+
+#before_install:
+#  - go get -u github.com/gookit/i18n
+#  - go get -v github.com/stretchr/testify/assert
+
+script:
+    go test -v -cover

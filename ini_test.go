@@ -1,5 +1,6 @@
 package ini
 
+// test cover details: https://gocover.io/github.com/gookit/ini
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
