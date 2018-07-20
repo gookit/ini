@@ -54,6 +54,7 @@ func (ini *Ini) Int(key string) (val int, ok bool) {
 		return val, true
 	}
 
+	ok = false
 	return
 }
 

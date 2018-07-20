@@ -60,14 +60,17 @@ var (
 )
 
 // parse mode
-// FullMode - will parse array
-// SimpleMode - don't parse array value
+// ModeFull - will parse array
+// ModeSimple - don't parse array value
 const (
-	FullMode   parseMode = 1
-	SimpleMode parseMode = 2
+	ModeFull   parseMode = 1
+	ModeSimple parseMode = 2
 )
 
 type parseMode uint8
+
+// UserCollector custom data collector.
+// notice: in simple mode, isArr always is false.
 type UserCollector func(section, key, val string, isArr bool)
 
 // parser
@@ -91,22 +94,12 @@ type parser struct {
 	Collector UserCollector
 }
 
-// FullData
-func (p *parser) FullData() map[string]interface{} {
-	return p.fullData
-}
-
-// SimpleData
-func (p *parser) SimpleData() map[string]map[string]string {
-	return p.simpleData
-}
-
-// FullParser
+// FullParser create a full mode parser
 func FullParser(opts ...func(*parser)) *parser {
 	p := &parser{
 		fullData: make(map[string]interface{}),
 
-		parseMode:  FullMode,
+		parseMode:  ModeFull,
 		DefSection: "__default",
 	}
 
@@ -116,34 +109,33 @@ func FullParser(opts ...func(*parser)) *parser {
 	return p
 }
 
-// SimpleParser
+// SimpleParser create a simple mode parser
 func SimpleParser(opts ...func(*parser)) *parser {
 	p := &parser{
 		simpleData: make(map[string]map[string]string),
 
-		parseMode:  SimpleMode,
+		parseMode:  ModeSimple,
 		DefSection: "__default",
 	}
 
 	// apply options
 	p.WithOptions(opts...)
-
 	return p
 }
 
-// ParseEnv
+// NoDefSection set don't return DefSection title
 // usage:
 // parser.NewWithOptions(ini.ParseEnv)
 func NoDefSection(p *parser) {
 	p.NoDefSection = true
 }
 
-// IgnoreCase
+// IgnoreCase set ignore-case
 func IgnoreCase(p *parser) {
 	p.IgnoreCase = true
 }
 
-// Parse
+// Parse a INI data string to golang
 func Parse(data string, mode parseMode, opts ...func(*parser)) (p *parser, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -155,7 +147,7 @@ func Parse(data string, mode parseMode, opts ...func(*parser)) (p *parser, err e
 		}
 	}()
 
-	if mode == FullMode {
+	if mode == ModeFull {
 		p = FullParser(opts...)
 	} else {
 		p = SimpleParser(opts...)
@@ -165,7 +157,7 @@ func Parse(data string, mode parseMode, opts ...func(*parser)) (p *parser, err e
 	return
 }
 
-// WithOptions
+// WithOptions apply some options
 func (p *parser) WithOptions(opts ...func(*parser)) {
 	// apply options
 	for _, opt := range opts {
@@ -173,9 +165,9 @@ func (p *parser) WithOptions(opts ...func(*parser)) {
 	}
 }
 
-// ParseFrom
+// ParseFrom a data scanner
 func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
-	if p.parseMode == FullMode {
+	if p.parseMode == ModeFull {
 		n, err = p.fullParse(in)
 	} else {
 		n, err = p.parse(in)
@@ -184,7 +176,7 @@ func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
 	return
 }
 
-// ParseBytes
+// ParseBytes parse from byte data
 func (p *parser) ParseBytes(data []byte) error {
 	var err error
 
@@ -197,7 +189,7 @@ func (p *parser) ParseBytes(data []byte) error {
 
 	scanner := bufio.NewScanner(buf)
 
-	if p.parseMode == FullMode {
+	if p.parseMode == ModeFull {
 		_, err = p.fullParse(scanner)
 	} else {
 		_, err = p.parse(scanner)
@@ -206,7 +198,7 @@ func (p *parser) ParseBytes(data []byte) error {
 	return err
 }
 
-// ParseString
+// ParseString parse from string data
 func (p *parser) ParseString(data string) error {
 	var err error
 
@@ -219,7 +211,7 @@ func (p *parser) ParseString(data string) error {
 
 	scanner := bufio.NewScanner(buf)
 
-	if p.parseMode == FullMode {
+	if p.parseMode == ModeFull {
 		_, err = p.fullParse(scanner)
 	} else {
 		_, err = p.parse(scanner)
@@ -228,13 +220,39 @@ func (p *parser) ParseString(data string) error {
 	return err
 }
 
-// ParsedData
+// ParsedData get parsed data
 func (p *parser) ParsedData() interface{} {
-	if p.parseMode == FullMode {
+	if p.parseMode == ModeFull {
 		return p.fullData
 	}
 
 	return p.simpleData
+}
+
+// ParseMode get current mode
+func (p *parser) ParseMode() parseMode {
+	return p.parseMode
+}
+
+// FullData get parsed data by full parse
+func (p *parser) FullData() map[string]interface{} {
+	return p.fullData
+}
+
+// SimpleData get parsed data by simple parse
+func (p *parser) SimpleData() map[string]map[string]string {
+	return p.simpleData
+}
+
+// Reset parser, clear parsed data
+func (p *parser) Reset() {
+	p.parsed = false
+
+	if p.parseMode == ModeFull {
+		p.fullData = make(map[string]interface{})
+	} else {
+		p.simpleData = make(map[string]map[string]string)
+	}
 }
 
 func trimWithQuotes(inputVal string) (ret string) {

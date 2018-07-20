@@ -102,6 +102,11 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal(28, iv)
 
+	// invalid
+	iv, ok = conf.Int("name")
+	st.False(ok)
+	st.Equal(0, iv)
+
 	iv = conf.DefInt("notExist", 34)
 	st.Equal(34, iv)
 
@@ -119,6 +124,11 @@ func TestIni_Get(t *testing.T) {
 	bv, ok := conf.Bool("debug")
 	st.True(ok)
 	st.Equal(true, bv)
+
+	// invalid
+	bv, ok = conf.Bool("name")
+	st.False(ok)
+	st.False(bv)
 
 	bv = conf.DefBool("notExist", false)
 	st.Equal(false, bv)
@@ -163,6 +173,10 @@ func TestIni_Get(t *testing.T) {
 	mp, ok := conf.StringMap("sec1")
 	st.True(ok)
 	st.Equal("val0", mp["key"])
+
+	str, ok = conf.Get(" ")
+	st.False(ok)
+	st.Equal("", str)
 }
 
 func TestIni_Set(t *testing.T) {
@@ -170,6 +184,9 @@ func TestIni_Set(t *testing.T) {
 
 	conf, err := LoadStrings(iniStr)
 	st.Nil(err)
+
+	conf.Set(" ", "val")
+	st.False(conf.HasKey(" "))
 
 	conf.Set("key", "val", "newSec")
 	st.True(conf.HasSection("newSec"))
@@ -204,7 +221,11 @@ func TestIgnoreCase(t *testing.T) {
 	st := assert.New(t)
 	conf := NewWithOptions(IgnoreCase)
 
-	err := conf.LoadStrings(`kEy = val`)
+	err := conf.LoadStrings(`
+kEy = val
+[sEc]
+sK = val
+`)
 	st.Nil(err)
 
 	opts := conf.Options()
@@ -227,6 +248,17 @@ func TestIgnoreCase(t *testing.T) {
 	str, ok = conf.String("Nk")
 	st.True(ok)
 	st.Equal("val1", str)
+
+	sec, ok := conf.StringMap("sec")
+	st.True(ok)
+	st.Equal("val", sec["sk"])
+
+	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
+	st.Nil(err)
+
+	sec, ok = conf.StringMap("newSec")
+	st.True(ok)
+	st.Equal("val", sec["key0"])
 }
 
 func TestBasic(t *testing.T) {
@@ -267,12 +299,20 @@ func TestParseEnv(t *testing.T) {
 	st := assert.New(t)
 	conf := NewWithOptions(ParseEnv)
 
-	err := conf.LoadStrings(`key = ${PATH}`)
+	err := conf.LoadStrings(`
+key = ${PATH}
+notExist = ${NotExist|defValue}
+`)
 	st.Nil(err)
 
 	str, ok := conf.String("key")
 	st.True(ok)
 	st.NotContains(str, "${")
+
+	str, ok = conf.String("notExist")
+	st.True(ok)
+	st.NotContains(str, "${")
+	st.Equal("defValue", str)
 }
 
 func TestIni_Del(t *testing.T) {

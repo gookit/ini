@@ -18,7 +18,7 @@ func Decode(blob []byte, v interface{}) (err error) {
 		return fmt.Errorf("ini: Decode of nil %s", reflect.TypeOf(v))
 	}
 
-	p, err := Parse(string(blob), FullMode, NoDefSection)
+	p, err := Parse(string(blob), ModeFull, NoDefSection)
 	if err != nil {
 		return
 	}

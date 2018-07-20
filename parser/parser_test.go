@@ -1,6 +1,10 @@
 package parser
 
-import "fmt"
+import (
+	"fmt"
+	"testing"
+	"github.com/stretchr/testify/assert"
+)
 
 var iniStr = `
 # comments
@@ -28,8 +32,8 @@ types[] = y
 `
 
 func Example_fullParse() {
-	p, err := Parse(iniStr, FullMode)
-	// p, err := Parse(iniStr, FullMode, NoDefSection)
+	p, err := Parse(iniStr, ModeFull)
+	// p, err := Parse(iniStr, ModeFull, NoDefSection)
 	if err != nil {
 		panic(err)
 	}
@@ -39,10 +43,41 @@ func Example_fullParse() {
 
 func Example_simpleParse() {
 	// simple mode will ignore all array values
-	p, err := Parse(iniStr, SimpleMode)
+	p, err := Parse(iniStr, ModeSimple)
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Printf("simple parse:\n%#v\n", p.SimpleData())
+}
+
+func TestSimpleParser(t *testing.T) {
+	st := assert.New(t)
+
+	// simple mode will ignore all array values
+	p := SimpleParser()
+	st.Equal(ModeSimple, p.ParseMode())
+	st.False(p.IgnoreCase)
+	st.False(p.NoDefSection)
+
+	err := p.ParseString("invalid string")
+	st.Error(err)
+
+	err = p.ParseString(iniStr)
+	st.Nil(err)
+}
+
+func TestFullParser(t *testing.T) {
+	st := assert.New(t)
+	p := FullParser()
+	st.Equal(ModeFull, p.ParseMode())
+	st.False(p.IgnoreCase)
+	st.False(p.NoDefSection)
+
+	err := p.ParseString("invalid string")
+	st.Error(err)
+
+	err = p.ParseString(iniStr)
+	st.Nil(err)
+
 }

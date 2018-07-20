@@ -12,6 +12,8 @@
 - 支持数据覆盖合并
 - 支持解析 ENV 变量名
 
+> **[EN README](README.md)**
+
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)

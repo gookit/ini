@@ -12,6 +12,8 @@ ini parse by golang. ini config data manage
 - support data override merge
 - support parse ENV key
 
+> **[中文说明](README_cn.md)**
+
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)

@@ -9,7 +9,8 @@ import (
  * full parse
  *************************************************************/
 
-// from github.com/dombenson/go-ini
+// fullParse will parse array item
+// ref github.com/dombenson/go-ini
 func (p *parser) fullParse(in *bufio.Scanner) (bytes int64, err error) {
 	if p.parsed {
 		return
