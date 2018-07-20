@@ -87,6 +87,46 @@ some = value
 stuff = things
 `
 
+func TestLoad(t *testing.T) {
+	st := assert.New(t)
+
+	conf, err := LoadFiles("testdata/test.ini")
+	st.Nil(err)
+	st.NotEmpty(conf.Data())
+
+	conf, err = LoadFiles("no-file.ini")
+	st.Error(err)
+	st.Empty(conf.Data())
+
+	conf, err = LoadExists("testdata/test.ini", "no-file.ini")
+	st.Nil(err)
+	st.NotEmpty(conf.Data())
+
+	conf,err = LoadStrings("name = inhere")
+	st.Nil(err)
+	st.NotEmpty(conf.Data())
+
+	err = conf.LoadStrings("invalid string")
+	st.Error(err)
+}
+
+func TestBasic(t *testing.T) {
+	st := assert.New(t)
+
+	conf, err := LoadStrings(iniStr)
+	st.Nil(err)
+
+	st.True(conf.HasKey("name"))
+	st.False(conf.HasKey("notExist"))
+
+	st.True(conf.HasSection("sec1"))
+	st.False(conf.HasSection("notExist"))
+
+	st.Panics(func() {
+		conf.WithOptions(IgnoreCase)
+	})
+}
+
 func TestIni_Get(t *testing.T) {
 	st := assert.New(t)
 
@@ -202,7 +242,7 @@ func TestIni_Set(t *testing.T) {
 	conf.SetSection("newSec1", map[string]string{"k0": "v0"})
 	st.True(conf.HasSection("newSec1"))
 
-	mp, ok = conf.StringMap("newSec1")
+	mp, ok = conf.Section("newSec1")
 	st.True(ok)
 	st.Equal("v0", mp["k0"])
 
@@ -215,6 +255,16 @@ func TestIni_Set(t *testing.T) {
 	bv, ok := conf.Bool("newSec.bol")
 	st.True(ok)
 	st.False(bv)
+
+	conf.SetBool("bol", true, "newSec")
+	bv, ok = conf.Bool("newSec.bol")
+	st.True(ok)
+	st.True(bv)
+
+	conf.SetString("name", "new name")
+	str, ok := conf.String("name")
+	st.True(ok)
+	st.Equal("new name", str)
 }
 
 func TestIgnoreCase(t *testing.T) {
@@ -239,6 +289,9 @@ sK = val
 	st.True(ok)
 	st.Equal("val", str)
 
+	st.True(conf.Del("key"))
+	st.False(conf.HasKey("kEy"))
+
 	conf.Set("NK", "val1")
 
 	str, ok = conf.String("nk")
@@ -259,19 +312,16 @@ sK = val
 	sec, ok = conf.StringMap("newSec")
 	st.True(ok)
 	st.Equal("val", sec["key0"])
-}
 
-func TestBasic(t *testing.T) {
-	st := assert.New(t)
+	conf.SetSection("NewSec", map[string]string{"key1": "val0"})
+	str, ok = conf.String("newSec.key1")
+	st.True(ok)
+	st.Equal("val0", str)
 
-	conf, err := LoadStrings(iniStr)
-	st.Nil(err)
-
-	st.True(conf.HasKey("name"))
-	st.False(conf.HasKey("notExist"))
-
-	st.True(conf.HasSection("sec1"))
-	st.False(conf.HasSection("notExist"))
+	conf.SetSection("newSec1", map[string]string{"k0": "v0"})
+	st.True(conf.HasSection("newSec1"))
+	st.True(conf.HasSection("newsec1"))
+	st.True(conf.DelSection("newsec1"))
 }
 
 func TestReadonly(t *testing.T) {
@@ -285,6 +335,9 @@ k = v
 `)
 	st.Nil(err)
 
+	opts := conf.Options()
+	st.True(opts.Readonly)
+
 	err = conf.Set("newK", "newV")
 	st.Error(err)
 
@@ -293,6 +346,10 @@ k = v
 
 	ok = conf.DelSection("sec")
 	st.False(ok)
+
+	err = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
+	st.Error(err)
+	st.False(conf.HasSection("newSec1"))
 }
 
 func TestParseEnv(t *testing.T) {
@@ -304,6 +361,9 @@ key = ${PATH}
 notExist = ${NotExist|defValue}
 `)
 	st.Nil(err)
+
+	opts := conf.Options()
+	st.True(opts.ParseEnv)
 
 	str, ok := conf.String("key")
 	st.True(ok)
@@ -326,6 +386,9 @@ func TestIni_Del(t *testing.T) {
 	st.True(ok)
 	st.False(conf.HasKey("name"))
 
+	st.False(conf.Del(" "))
+	st.False(conf.Del("no-key"))
+
 	st.True(conf.HasSection("sec1"))
 	ok = conf.DelSection("sec1")
 	st.True(ok)
@@ -347,4 +410,7 @@ func TestOther(t *testing.T) {
 	str = conf.PrettyJson()
 	st.Contains(str, "inhere")
 	st.Contains(str, "sec1")
+
+	conf.Reset()
+	st.Empty(conf.Data())
 }

@@ -283,6 +283,10 @@ func (ini *Ini) NewSection(name string, values map[string]string) (err error) {
 
 // HasSection
 func (ini *Ini) HasSection(name string) bool {
+	if ini.opts.IgnoreCase {
+		name = strings.ToLower(name)
+	}
+
 	_, ok := ini.data[name]
 	return ok
 }

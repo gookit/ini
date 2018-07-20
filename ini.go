@@ -61,9 +61,7 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 	}
 
 	// apply options
-	for _, opt := range opts {
-		opt(ini.opts)
-	}
+	ini.WithOptions(opts...)
 
 	return ini
 }
