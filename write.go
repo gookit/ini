@@ -9,19 +9,18 @@ import (
 	"bytes"
 )
 
-// String
-func (ini *Ini) String() string {
+// Export to INI text string
+func (ini *Ini) Export() string {
 	buf := &bytes.Buffer{}
 
-	_, err := ini.WriteTo(buf)
-	if err != nil {
-		return ""
+	if _, err := ini.WriteTo(buf); err == nil {
+		return buf.String()
 	}
 
-	return buf.String()
+	return ""
 }
 
-// WriteToFile get pretty Json string
+// PrettyJson translate to pretty JSON string
 func (ini *Ini) PrettyJson() string{
 	out, err := json.MarshalIndent(ini.data, "", "    ")
 	if err != nil {
@@ -57,6 +56,7 @@ func (ini *Ini) WriteTo(out io.Writer) (n int64, err error) {
 	sort.Strings(orderedSections)
 
 	for _, section := range orderedSections {
+		// don't add section title for DefSection
 		if section != DefSection {
 			thisWrite, err = fmt.Fprintln(out, "["+section+"]")
 			n += int64(thisWrite)

@@ -27,19 +27,19 @@ some = change val
 	fmt.Printf("Full data:\n%s\n", config.PrettyJson())
 	fmt.Println("Usage example:")
 
-	iv, ok := config.GetInt("age")
+	iv, ok := config.Int("age")
 	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)
 
-	bv, ok := config.GetBool("debug")
+	bv, ok := config.Bool("debug")
 	fmt.Printf("get bool\n - ok: %v, val: %v\n", ok, bv)
 
-	name, ok := config.GetString("name")
+	name, ok := config.String("name")
 	fmt.Printf("get string\n - ok: %v, val: %v\n", ok, name)
 
-	sec1, ok := config.GetSection("sec1")
+	sec1, ok := config.StringMap("sec1")
 	fmt.Printf("get section\n - ok: %v, val: %#v\n", ok, sec1)
 
-	str, ok := config.GetString("sec1.key")
+	str, ok := config.String("sec1.key")
 	fmt.Printf("get sub-value by path 'section.key'\n - ok: %v, val: %s\n", ok, str)
 
 	// can parse env name(ParseEnv: true)
@@ -48,7 +48,7 @@ some = change val
 
 	// set value
 	config.Set("name", "new name")
-	name, ok = config.GetString("name")
+	name, ok = config.String("name")
 	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
 
 	// export data to file

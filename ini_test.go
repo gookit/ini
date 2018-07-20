@@ -23,19 +23,19 @@ some = change val
 `)
 	// fmt.Printf("%v\n", config.Data())
 
-	iv, ok := config.GetInt("age")
+	iv, ok := config.Int("age")
 	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)
 
-	bv, ok := config.GetBool("debug")
+	bv, ok := config.Bool("debug")
 	fmt.Printf("get bool\n - ok: %v, val: %v\n", ok, bv)
 
-	name, ok := config.GetString("name")
+	name, ok := config.String("name")
 	fmt.Printf("get string\n - ok: %v, val: %v\n", ok, name)
 
-	sec1, ok := config.GetSection("sec1")
+	sec1, ok := config.StringMap("sec1")
 	fmt.Printf("get section\n - ok: %v, val: %#v\n", ok, sec1)
 
-	str, ok := config.GetString("sec1.key")
+	str, ok := config.String("sec1.key")
 	fmt.Printf("get sub-value by path 'section.key'\n - ok: %v, val: %s\n", ok, str)
 
 	// can parse env name(ParseEnv: true)
@@ -44,7 +44,7 @@ some = change val
 
 	// set value
 	config.Set("name", "new name")
-	name, ok = config.GetString("name")
+	name, ok = config.String("name")
 	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
 
 	// export data to file
@@ -97,7 +97,7 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("28", str)
 
-	iv, ok := conf.GetInt("age")
+	iv, ok := conf.Int("age")
 	st.True(ok)
 	st.Equal(28, iv)
 
@@ -115,7 +115,7 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("true", str)
 
-	bv, ok := conf.GetBool("debug")
+	bv, ok := conf.Bool("debug")
 	st.True(ok)
 	st.Equal(true, bv)
 
@@ -133,7 +133,7 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("inhere", val)
 
-	str, ok = conf.GetString("notExists")
+	str, ok = conf.String("notExists")
 	st.False(ok)
 	st.Equal("", str)
 
@@ -146,11 +146,11 @@ func TestIni_Get(t *testing.T) {
 	str = conf.MustString("notExists")
 	st.Equal("", str)
 
-	str, ok = conf.GetString("hasQuota1")
+	str, ok = conf.String("hasQuota1")
 	st.True(ok)
 	st.Equal("this is val", str)
 
-	str, ok = conf.GetString("hasquota1")
+	str, ok = conf.String("hasquota1")
 	st.False(ok)
 	st.Equal("", str)
 
@@ -159,7 +159,7 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("value", str)
 
-	mp, ok := conf.GetStringMap("sec1")
+	mp, ok := conf.StringMap("sec1")
 	st.True(ok)
 	st.Equal("val0", mp["key"])
 }
@@ -177,24 +177,24 @@ func TestIni_Set(t *testing.T) {
 	st.True(ok)
 	st.Equal("val", val)
 
-	mp, ok := conf.GetStringMap("newSec")
+	mp, ok := conf.StringMap("newSec")
 	st.True(ok)
 	st.Equal("val", mp["key"])
 
 	conf.SetSection("newSec1", map[string]string{"k0": "v0"})
 	st.True(conf.HasSection("newSec1"))
 
-	mp, ok = conf.GetStringMap("newSec1")
+	mp, ok = conf.StringMap("newSec1")
 	st.True(ok)
 	st.Equal("v0", mp["k0"])
 
 	conf.SetInt("int", 345, "newSec")
-	iv, ok := conf.GetInt("newSec.int")
+	iv, ok := conf.Int("newSec.int")
 	st.True(ok)
 	st.Equal(345, iv)
 
 	conf.SetBool("bol", false, "newSec")
-	bv, ok := conf.GetBool("newSec.bol")
+	bv, ok := conf.Bool("newSec.bol")
 	st.True(ok)
 	st.False(bv)
 }
@@ -209,21 +209,21 @@ func TestIgnoreCase(t *testing.T) {
 	opts := conf.Options()
 	st.True(opts.IgnoreCase)
 
-	str, ok := conf.GetString("KEY")
+	str, ok := conf.String("KEY")
 	st.True(ok)
 	st.Equal("val", str)
 
-	str, ok = conf.GetString("key")
+	str, ok = conf.String("key")
 	st.True(ok)
 	st.Equal("val", str)
 
 	conf.Set("NK", "val1")
 
-	str, ok = conf.GetString("nk")
+	str, ok = conf.String("nk")
 	st.True(ok)
 	st.Equal("val1", str)
 
-	str, ok = conf.GetString("Nk")
+	str, ok = conf.String("Nk")
 	st.True(ok)
 	st.Equal("val1", str)
 }
@@ -245,11 +245,21 @@ func TestReadonly(t *testing.T) {
 	st := assert.New(t)
 	conf := NewWithOptions(Readonly)
 
-	err := conf.LoadStrings(`key = val`)
+	err := conf.LoadStrings(`
+key = val
+[sec]
+k = v
+`)
 	st.Nil(err)
 
 	err = conf.Set("newK", "newV")
 	st.Error(err)
+
+	ok := conf.Del("key")
+	st.False(ok)
+
+	ok = conf.DelSection("sec")
+	st.False(ok)
 }
 
 func TestParseEnv(t *testing.T) {
@@ -259,19 +269,19 @@ func TestParseEnv(t *testing.T) {
 	err := conf.LoadStrings(`key = ${PATH}`)
 	st.Nil(err)
 
-	str, ok := conf.GetString("key")
+	str, ok := conf.String("key")
 	st.True(ok)
 	st.NotContains(str, "${")
 }
 
-func TestIni_DelKey(t *testing.T) {
+func TestIni_Del(t *testing.T) {
 	st := assert.New(t)
 
 	conf, err := LoadStrings(iniStr)
 	st.Nil(err)
 
 	st.True(conf.HasKey("name"))
-	ok := conf.DelKey("name")
+	ok := conf.Del("name")
 	st.True(ok)
 	st.False(conf.HasKey("name"))
 
@@ -279,4 +289,21 @@ func TestIni_DelKey(t *testing.T) {
 	ok = conf.DelSection("sec1")
 	st.True(ok)
 	st.False(conf.HasSection("sec1"))
+}
+
+func TestOther(t *testing.T) {
+	st := assert.New(t)
+
+	conf, err := LoadStrings(iniStr)
+	st.Nil(err)
+
+	// export as INI string
+	str := conf.Export()
+	st.Contains(str, "inhere")
+	st.Contains(str, "[sec1]")
+
+	// export as formatted JSON string
+	str = conf.PrettyJson()
+	st.Contains(str, "inhere")
+	st.Contains(str, "sec1")
 }

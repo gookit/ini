@@ -43,8 +43,8 @@ func (ini *Ini) Get(key string) (val string, ok bool) {
 	return
 }
 
-// GetInt get a int value
-func (ini *Ini) GetInt(key string) (val int, ok bool) {
+// Int get a int value
+func (ini *Ini) Int(key string) (val int, ok bool) {
 	rawVal, ok := ini.Get(key)
 	if !ok {
 		return
@@ -59,7 +59,7 @@ func (ini *Ini) GetInt(key string) (val int, ok bool) {
 
 // DefInt get a int value, if not found return default value
 func (ini *Ini) DefInt(key string, def int) (val int) {
-	if val, ok := ini.GetInt(key); ok {
+	if val, ok := ini.Int(key); ok {
 		return val
 	}
 
@@ -71,7 +71,7 @@ func (ini *Ini) MustInt(key string) int {
 	return ini.DefInt(key, 0)
 }
 
-// GetBool Looks up a value for a key in this section and attempts to parse that value as a boolean,
+// Bool Looks up a value for a key in this section and attempts to parse that value as a boolean,
 // along with a boolean result similar to a map lookup.
 // of following(case insensitive):
 //  - true
@@ -83,7 +83,7 @@ func (ini *Ini) MustInt(key string) int {
 //  - 0
 //  - 1
 // The `ok` boolean will be false in the event that the value could not be parsed as a bool
-func (ini *Ini) GetBool(key string) (value bool, ok bool) {
+func (ini *Ini) Bool(key string) (value bool, ok bool) {
 	rawVal, ok := ini.Get(key)
 	if !ok {
 		return
@@ -104,7 +104,7 @@ func (ini *Ini) GetBool(key string) (value bool, ok bool) {
 
 // DefBool get a bool value, if not found return default value
 func (ini *Ini) DefBool(key string, def bool) bool {
-	if value, ok := ini.GetBool(key); ok {
+	if value, ok := ini.Bool(key); ok {
 		return value
 	}
 
@@ -117,7 +117,7 @@ func (ini *Ini) MustBool(key string) bool {
 }
 
 // GetString like Get method, but will parse ENV value.
-func (ini *Ini) GetString(key string) (val string, ok bool) {
+func (ini *Ini) String(key string) (val string, ok bool) {
 	val, ok = ini.Get(key)
 	if !ok {
 		return
@@ -148,7 +148,7 @@ func (ini *Ini) GetString(key string) (val string, ok bool) {
 
 // DefString get a string value, if not found return default value
 func (ini *Ini) DefString(key string, def string) string {
-	if value, ok := ini.GetString(key); ok {
+	if value, ok := ini.String(key); ok {
 		return value
 	}
 
@@ -160,8 +160,8 @@ func (ini *Ini) MustString(key string) string {
 	return ini.DefString(key, "")
 }
 
-// GetStringMap
-func (ini *Ini) GetStringMap(name string) (mp map[string]string, ok bool) {
+// StringMap
+func (ini *Ini) StringMap(name string) (mp map[string]string, ok bool) {
 	if ini.opts.IgnoreCase {
 		name = strings.ToLower(name)
 	}
@@ -170,9 +170,9 @@ func (ini *Ini) GetStringMap(name string) (mp map[string]string, ok bool) {
 	return
 }
 
-// GetSection
-func (ini *Ini) GetSection(name string) (sec map[string]string, ok bool) {
-	return ini.GetStringMap(name)
+// Section
+func (ini *Ini) Section(name string) (sec map[string]string, ok bool) {
+	return ini.StringMap(name)
 }
 
 /*************************************************************
@@ -240,28 +240,32 @@ func (ini *Ini) SetString(key, val string, section ...string) {
  * section operate
  *************************************************************/
 
-// SetSection
+// SetSection if not exist, add new section. If exist, will merge to old section.
 func (ini *Ini) SetSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if ini.opts.Readonly {
 		return cannotSetInReadonly
 	}
 
-	if old, ok := ini.data[name]; ok {
-		if ini.opts.IgnoreCase {
-			name = strings.ToLower(name)
-		}
+	if ini.opts.IgnoreCase {
+		name = strings.ToLower(name)
+	}
 
+	if old, ok := ini.data[name]; ok {
 		ini.data[name] = mergeStringMap(values, old, ini.opts.IgnoreCase)
 	} else {
-		ini.AddSection(name, values)
+		if ini.opts.IgnoreCase {
+			values = mapKeyToLower(values)
+		}
+
+		ini.data[name] = values
 	}
 
 	return
 }
 
-// AddSection
-func (ini *Ini) AddSection(name string, values map[string]string) (err error) {
+// NewSection add new section data, existed will be replace
+func (ini *Ini) NewSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if ini.opts.Readonly {
 		return cannotSetInReadonly
@@ -311,8 +315,8 @@ func (ini *Ini) HasKey(key string) (ok bool) {
 	return
 }
 
-// DelKey
-func (ini *Ini) DelKey(key string) (ok bool) {
+// Del
+func (ini *Ini) Del(key string) (ok bool) {
 	// if is readonly
 	if ini.opts.Readonly {
 		return
