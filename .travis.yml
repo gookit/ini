@@ -4,9 +4,10 @@ go:
   - '1.9'
   - 1.10.x
 
-#before_install:
-#  - go get -u github.com/gookit/i18n
-#  - go get -v github.com/stretchr/testify/assert
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
 
 script:
-    go test -v -cover
+#  - go test -v -cover
+  - $HOME/gopath/bin/goveralls -service=travis-ci
