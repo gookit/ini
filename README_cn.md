@@ -5,21 +5,21 @@
 [![cover.run](https://cover.run/go/github.com/gookit/ini.svg?style=flat&tag=golang-1.10)](https://cover.run/go?tag=golang-1.10&repo=github.com%2Fgookit%2Fini)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
 
-ini parse by golang. ini config data manage
+使用INI格式作为配置，配置数据的加载，管理，使用
 
-- easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
-- support multi file, data load
-- support data override merge
-- support parse ENV key
+- 使用简单(获取: `Int` `Bool` `String` `StringMap`, 设置: `SetInt` `SetBool` `SetString` ...)
+- 支持多文件，数据加载
+- 支持数据覆盖合并
+- 支持解析 ENV 变量名
 
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
-## Usage
+## 快速使用
 
-- example data(`testdata/test.ini`):
+- 示例数据(`testdata/test.ini`):
 
 ```ini
 # comments
@@ -38,7 +38,7 @@ some = value
 stuff = things
 ```
 
-- usage
+- 开始使用
 
 ```go
 package main
@@ -51,7 +51,7 @@ import (
 // go run ./examples/demo.go
 func main() {
 	// config, err := ini.LoadFiles("testdata/tesdt.ini")
-	// LoadExists will ignore not exists file
+	// LoadExists 将忽略不存在的文件
 	config, err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
 		panic(err)
@@ -59,7 +59,7 @@ func main() {
 
 	// fmt.Printf("%v\n", config.Data())
 
-	// load more, will override prev data by key
+	// 加载更多，将按键覆盖之前数据
 	config.LoadStrings(`
 age = 100
 [sec1]
@@ -100,7 +100,7 @@ some = change val
 }
 ```
 
-- output(by `go run ./examples/demo.go`)
+- 输出(by `go run ./examples/demo.go`)
 
 ```text
 get int
