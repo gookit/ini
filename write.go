@@ -1,12 +1,12 @@
 package ini
 
 import (
-	"io"
-	"sort"
-	"fmt"
-	"os"
-	"encoding/json"
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"sort"
 )
 
 // Export to INI text string
@@ -21,7 +21,7 @@ func (ini *Ini) Export() string {
 }
 
 // PrettyJson translate to pretty JSON string
-func (ini *Ini) PrettyJson() string{
+func (ini *Ini) PrettyJson() string {
 	out, err := json.MarshalIndent(ini.data, "", "    ")
 	if err != nil {
 		return ""

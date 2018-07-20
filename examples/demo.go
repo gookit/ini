@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/gookit/ini"
 	"fmt"
+	"github.com/gookit/ini"
 )
 
 // go run ./examples/demo.go

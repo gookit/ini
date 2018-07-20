@@ -49,7 +49,7 @@ func (p *parser) fullParse(in *bufio.Scanner) (bytes int64, err error) {
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, true)
-			} else  {
+			} else {
 				p.collectFullValue(section, key, val, true)
 			}
 		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
@@ -58,7 +58,7 @@ func (p *parser) fullParse(in *bufio.Scanner) (bytes int64, err error) {
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, false)
-			} else  {
+			} else {
 				p.collectFullValue(section, key, val, false)
 			}
 		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {

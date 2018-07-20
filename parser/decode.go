@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"reflect"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"reflect"
 )
 
 // Decode

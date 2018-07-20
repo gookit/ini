@@ -49,7 +49,7 @@ func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, false)
-			} else  {
+			} else {
 				p.collectMapValue(section, key, val)
 			}
 		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
@@ -78,10 +78,9 @@ func (p *parser) collectMapValue(name string, key, val string) {
 
 	if sec, ok := p.simpleData[name]; ok {
 		sec[key] = val
-		p.simpleData[name] =  sec
+		p.simpleData[name] = sec
 	} else {
 		// create the section if it does not exist
 		p.simpleData[name] = map[string]string{key: val}
 	}
 }
-

@@ -1,11 +1,11 @@
 package examples
 
 import (
-	"github.com/gookit/ini/parser"
 	"fmt"
+	"github.com/gookit/ini/parser"
 )
 
-func main()  {
+func main() {
 	iniStr := `
 # comments
 name = inhere

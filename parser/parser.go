@@ -28,15 +28,15 @@ There are example data:
 
 how to use, please see examples:
 
- */
+*/
 package parser
 
 import (
-	"fmt"
 	"bufio"
 	"bytes"
-	"strings"
+	"fmt"
 	"regexp"
+	"strings"
 )
 
 // ErrSyntax is returned when there is a syntax error in an INI file.
@@ -63,7 +63,7 @@ var (
 // FullMode - will parse array
 // SimpleMode - don't parse array value
 const (
-	FullMode parseMode = 1
+	FullMode   parseMode = 1
 	SimpleMode parseMode = 2
 )
 
@@ -78,8 +78,8 @@ type parser struct {
 	// for simple parse(section only allow map[string]string)
 	simpleData map[string]map[string]string
 
-	parsed bool
-	parseMode  parseMode
+	parsed    bool
+	parseMode parseMode
 
 	// options
 	IgnoreCase bool
@@ -106,7 +106,7 @@ func FullParser(opts ...func(*parser)) *parser {
 	p := &parser{
 		fullData: make(map[string]interface{}),
 
-		parseMode: FullMode,
+		parseMode:  FullMode,
 		DefSection: "__default",
 	}
 
@@ -121,7 +121,7 @@ func SimpleParser(opts ...func(*parser)) *parser {
 	p := &parser{
 		simpleData: make(map[string]map[string]string),
 
-		parseMode: SimpleMode,
+		parseMode:  SimpleMode,
 		DefSection: "__default",
 	}
 
@@ -230,7 +230,7 @@ func (p *parser) ParseString(data string) error {
 
 // ParsedData
 func (p *parser) ParsedData() interface{} {
-	if p.parseMode == FullMode  {
+	if p.parseMode == FullMode {
 		return p.fullData
 	}
 

@@ -27,7 +27,7 @@ types[] = x
 types[] = y
 `
 
-func Example_fullParse()  {
+func Example_fullParse() {
 	p, err := Parse(iniStr, FullMode)
 	// p, err := Parse(iniStr, FullMode, NoDefSection)
 	if err != nil {
@@ -37,7 +37,7 @@ func Example_fullParse()  {
 	fmt.Printf("full parse:\n%#v\n", p.FullData())
 }
 
-func Example_simpleParse()  {
+func Example_simpleParse() {
 	// simple mode will ignore all array values
 	p, err := Parse(iniStr, SimpleMode)
 	if err != nil {

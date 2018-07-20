@@ -7,12 +7,12 @@ Source code and other details for the project are available at GitHub:
 
 INI parser is: https://github.com/gookit/ini/parser
 
- */
+*/
 package ini
 
 import (
-	"os"
 	"io/ioutil"
+	"os"
 	"sync"
 )
 
@@ -71,7 +71,6 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 /*************************************************************
  * quick use
  *************************************************************/
-
 
 // LoadFiles
 func LoadFiles(files ...string) (ini *Ini, err error) {

@@ -1,11 +1,11 @@
 package ini
 
 import (
-	"strings"
-	"fmt"
-	"strconv"
-	"os"
 	"errors"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
 // if is readonly
