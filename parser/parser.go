@@ -173,23 +173,6 @@ func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
 	return
 }
 
-// ParseBytes parse from byte data
-func (p *parser) ParseBytes(data []byte) error {
-	var err error
-
-	if len(data) == 0 {
-		return nil
-	}
-
-	buf := &bytes.Buffer{}
-	buf.Write(data)
-
-	scanner := bufio.NewScanner(buf)
-	_, err = p.parse(scanner)
-
-	return err
-}
-
 // ParseString parse from string data
 func (p *parser) ParseString(data string) error {
 	var err error

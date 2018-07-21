@@ -51,6 +51,18 @@ func Example_simpleParse() {
 	fmt.Printf("simple parse:\n%#v\n", p.SimpleData())
 }
 
+func TestParse(t *testing.T) {
+	st := assert.New(t)
+
+	p, err := Parse("invalid", ModeFull)
+	st.Error(err)
+	st.True(len(p.FullData()) == 0)
+
+	p, err = Parse("invalid", ModeSimple)
+	st.Error(err)
+	st.True(len(p.SimpleData()) == 0)
+}
+
 func TestSimpleParser(t *testing.T) {
 	st := assert.New(t)
 
@@ -63,12 +75,36 @@ func TestSimpleParser(t *testing.T) {
 	err := p.ParseString("invalid string")
 	st.Error(err)
 
+	err = p.ParseString("")
+	st.Nil(err)
+	st.True(len(p.SimpleData()) == 0)
+
+	p.Reset()
 	err = p.ParseString(iniStr)
 	st.Nil(err)
+
+	data := p.SimpleData()
+	str := fmt.Sprintf("%v", data)
+	st.Contains(str, "hasQuota2:")
+	st.NotContains(str, "hasquota1:")
+
+	// ignore case
+	p = SimpleParser(IgnoreCase)
+	err = p.ParseString(iniStr)
+	st.Nil(err)
+
+	v := p.ParsedData()
+	st.NotEmpty(v)
+
+	data = p.SimpleData()
+	str = fmt.Sprintf("%v", data)
+	st.Contains(str, "hasquota2:")
+	st.NotContains(str, "hasQuota1:")
 }
 
 func TestFullParser(t *testing.T) {
 	st := assert.New(t)
+
 	p := FullParser()
 	st.Equal(ModeFull, p.ParseMode())
 	st.False(p.IgnoreCase)
@@ -77,9 +113,25 @@ func TestFullParser(t *testing.T) {
 	err := p.ParseString("invalid string")
 	st.Error(err)
 
+	p.Reset()
 	err = p.ParseString(iniStr)
 	st.Nil(err)
 
+	v := p.ParsedData()
+	st.NotEmpty(v)
+
+	// ignore case
+	p = FullParser(IgnoreCase)
+	err = p.ParseString(iniStr)
+	st.Nil(err)
+
+	v = p.ParsedData()
+	st.NotEmpty(v)
+
+	data := p.FullData()
+	str := fmt.Sprintf("%v", data)
+	st.Contains(str, "hasquota2:")
+	st.NotContains(str, "hasQuota1:")
 }
 
 func TestDecode(t *testing.T) {
@@ -95,8 +147,12 @@ key = val
 `)
 	data := make(map[string]interface{})
 
-	err := Decode(bts, nil)
+	err := Decode([]byte(""), data)
 	st.Error(err)
+
+	err = Decode(bts, nil)
+	st.Error(err)
+
 	err = Decode(bts, data)
 	st.Error(err)
 
@@ -164,6 +220,7 @@ func TestEncode(t *testing.T) {
 			"key1": 45,
 			"arr0": []int{3,4},
 			"arr1": []string{"c", "d"},
+			"invalid": map[string]int{"k": 23},
 		},
 	}
 
