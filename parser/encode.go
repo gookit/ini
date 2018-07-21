@@ -157,22 +157,6 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 			}
 		}
 
-		// orderedArrayKeys := make([]string, len(options.arrayValues))
-		// counter = 0
-		// for key, _ := range options.arrayValues {
-		// 	orderedArrayKeys[counter] = key
-		// 	counter++
-		// }
-		// sort.Strings(orderedArrayKeys)
-		// for _, key := range orderedArrayKeys {
-		// 	for _, value := range options.arrayValues[key] {
-		// 		thisWrite, err = fmt.Fprintln(out, key, "[]=", value)
-		// 		n += int64(thisWrite)
-		// 		if (err) != nil {
-		// 			return
-		// 		}
-		// 	}
-		// }
 		thisWrite, err = fmt.Fprintln(buf)
 		n += int64(thisWrite)
 		if err != nil {
