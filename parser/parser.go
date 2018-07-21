@@ -56,6 +56,7 @@ var (
 	assignArrRegex = regexp.MustCompile(`^([^=\[\]]+)\[\][^=]*=(.*)$`)
 	// match: key = val
 	assignRegex = regexp.MustCompile(`^([^=]+)=(.*)$`)
+	// quote ' "
 	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
@@ -167,11 +168,7 @@ func (p *parser) WithOptions(opts ...func(*parser)) {
 
 // ParseFrom a data scanner
 func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
-	if p.parseMode == ModeFull {
-		n, err = p.fullParse(in)
-	} else {
-		n, err = p.parse(in)
-	}
+	n, err = p.parse(in)
 
 	return
 }
@@ -188,12 +185,7 @@ func (p *parser) ParseBytes(data []byte) error {
 	buf.Write(data)
 
 	scanner := bufio.NewScanner(buf)
-
-	if p.parseMode == ModeFull {
-		_, err = p.fullParse(scanner)
-	} else {
-		_, err = p.parse(scanner)
-	}
+	_, err = p.parse(scanner)
 
 	return err
 }
@@ -210,12 +202,7 @@ func (p *parser) ParseString(data string) error {
 	buf.WriteString(data)
 
 	scanner := bufio.NewScanner(buf)
-
-	if p.parseMode == ModeFull {
-		_, err = p.fullParse(scanner)
-	} else {
-		_, err = p.parse(scanner)
-	}
+	_, err = p.parse(scanner)
 
 	return err
 }
@@ -252,6 +239,166 @@ func (p *parser) Reset() {
 		p.fullData = make(map[string]interface{})
 	} else {
 		p.simpleData = make(map[string]map[string]string)
+	}
+}
+
+// fullParse will parse array item
+// ref github.com/dombenson/go-ini
+func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
+	if p.parsed {
+		return
+	}
+
+	section := p.DefSection
+	p.parsed = true
+	lineNum := 0
+	bytes = -1
+	readLine := true
+
+	for readLine = in.Scan(); readLine; readLine = in.Scan() {
+		line := in.Text()
+
+		bytes++
+		bytes += int64(len(line))
+
+		lineNum++
+		line = strings.TrimSpace(line)
+		if len(line) == 0 {
+			// Skip blank lines
+			continue
+		}
+		if line[0] == ';' || line[0] == '#' {
+			// Skip comments
+			continue
+		}
+
+		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
+			// skip array parse on simple mode
+			if p.parseMode == ModeSimple {
+				continue
+			}
+
+			key, val := groups[1], groups[2]
+			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+
+			if p.Collector != nil {
+				p.Collector(section, key, val, true)
+			} else {
+				p.collectFullValue(section, key, val, true)
+			}
+		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
+			key, val := groups[1], groups[2]
+			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+
+			if p.Collector != nil {
+				p.Collector(section, key, val, false)
+			} else if p.parseMode == ModeFull {
+				p.collectFullValue(section, key, val, false)
+			} else {
+				p.collectMapValue(section, key, val)
+			}
+		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
+			name := strings.TrimSpace(groups[1])
+			section = name
+		} else {
+			err = errSyntax{lineNum, line}
+			return
+		}
+	}
+
+	if bytes < 0 {
+		bytes = 0
+	}
+
+	err = in.Err()
+
+	return
+}
+
+func (p *parser) collectFullValue(section, key, val string, isArr bool) {
+	defSection := p.DefSection
+
+	if p.IgnoreCase {
+		key = strings.ToLower(key)
+		section = strings.ToLower(section)
+		defSection = strings.ToLower(defSection)
+	}
+
+	// p.NoDefSection and current section is default section
+	if p.NoDefSection && section == defSection {
+		if isArr {
+			curVal, ok := p.fullData[key]
+			if ok {
+				switch cd := curVal.(type) {
+				case []string:
+					p.fullData[key] = append(cd, val)
+				}
+			} else {
+				p.fullData[key] = []string{val}
+			}
+		} else {
+			p.fullData[key] = val
+		}
+
+		return
+	}
+
+	secData, ok := p.fullData[section]
+	// first create
+	if !ok {
+		if isArr {
+			p.fullData[section] = map[string]interface{}{key: []string{val}}
+		} else {
+			p.fullData[section] = map[string]interface{}{key: val}
+		}
+		return
+	}
+
+	switch sd := secData.(type) {
+	case map[string]interface{}: // existed section
+		curVal, ok := sd[key]
+		if ok {
+			switch cv := curVal.(type) {
+			case string:
+				if isArr {
+					sd[key] = []string{cv, val}
+				} else {
+					sd[key] = val
+				}
+			case []string:
+				sd[key] = append(cv, val)
+			default:
+				return
+			}
+		} else {
+			if isArr {
+				sd[key] = []string{val}
+			} else {
+				sd[key] = val
+			}
+		}
+		p.fullData[section] = sd
+	case string: // found default section value
+		if isArr {
+			p.fullData[section] = map[string]interface{}{key: []string{val}}
+		} else {
+			p.fullData[section] = map[string]interface{}{key: val}
+		}
+	}
+}
+
+func (p *parser) collectMapValue(name string, key, val string) {
+	if p.IgnoreCase {
+		name = strings.ToLower(name)
+		key = strings.ToLower(key)
+	}
+
+	if sec, ok := p.simpleData[name]; ok {
+		sec[key] = val
+		p.simpleData[name] = sec
+	} else {
+		// create the section if it does not exist
+		p.simpleData[name] = map[string]string{key: val}
 	}
 }
 

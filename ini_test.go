@@ -102,18 +102,18 @@ func TestLoad(t *testing.T) {
 	st.Nil(err)
 	st.NotEmpty(conf.Data())
 
-	conf,err = LoadStrings("name = inhere")
+	conf, err = LoadStrings("name = inhere")
 	st.Nil(err)
 	st.NotEmpty(conf.Data())
 
-	conf,err = LoadStrings(" ")
+	conf, err = LoadStrings(" ")
 	st.Nil(err)
 	st.Empty(conf.Data())
 
 	// test auto init and load data
 	conf = new(Ini)
 	err = conf.LoadData(map[string]Section{
-		"name": {"k" : "v"},
+		"name": {"k": "v"},
 	})
 	st.Nil(err)
 
@@ -442,4 +442,8 @@ func TestOther(t *testing.T) {
 
 	conf.Reset()
 	st.Empty(conf.Data())
+
+	conf = New()
+	str = conf.Export()
+	st.Equal("", str)
 }
