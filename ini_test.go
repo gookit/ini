@@ -106,6 +106,24 @@ func TestLoad(t *testing.T) {
 	st.Nil(err)
 	st.NotEmpty(conf.Data())
 
+	conf,err = LoadStrings(" ")
+	st.Nil(err)
+	st.Empty(conf.Data())
+
+	// test auto init and load data
+	conf = new(Ini)
+	err = conf.LoadData(map[string]Section{
+		"name": {"k" : "v"},
+	})
+	st.Nil(err)
+
+	// test error
+	err = conf.LoadFiles("testdata/error.ini")
+	st.Error(err)
+
+	err = conf.LoadExists("testdata/error.ini")
+	st.Error(err)
+
 	err = conf.LoadStrings("invalid string")
 	st.Error(err)
 }
@@ -246,6 +264,9 @@ func TestIni_Set(t *testing.T) {
 	st.True(ok)
 	st.Equal("v0", mp["k0"])
 
+	err = conf.NewSection("NewSec2", map[string]string{"kEy0": "val"})
+	st.Nil(err)
+
 	conf.SetInt("int", 345, "newSec")
 	iv, ok := conf.Int("newSec.int")
 	st.True(ok)
@@ -350,6 +371,9 @@ k = v
 	err = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
 	st.Error(err)
 	st.False(conf.HasSection("newSec1"))
+
+	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
+	st.Error(err)
 }
 
 func TestParseEnv(t *testing.T) {
@@ -410,6 +434,11 @@ func TestOther(t *testing.T) {
 	str = conf.PrettyJson()
 	st.Contains(str, "inhere")
 	st.Contains(str, "sec1")
+
+	// export to file
+	n, err := conf.WriteToFile("testdata/export.ini")
+	st.True(n > 0)
+	st.Nil(err)
 
 	conf.Reset()
 	st.Empty(conf.Data())

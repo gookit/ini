@@ -37,6 +37,7 @@ type Ini struct {
 	opts *Options
 	lock sync.RWMutex
 
+	// when has data loaded, will change to true
 	inited bool
 }
 
@@ -149,6 +150,9 @@ func (ini *Ini) LoadFiles(files ...string) (err error) {
 		}
 	}
 
+	if !ini.inited {
+		ini.inited = true
+	}
 	return
 }
 
@@ -163,6 +167,9 @@ func (ini *Ini) LoadExists(files ...string) (err error) {
 		}
 	}
 
+	if !ini.inited {
+		ini.inited = true
+	}
 	return
 }
 
@@ -177,11 +184,15 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 		}
 	}
 
+	if !ini.inited {
+		ini.inited = true
+	}
+
 	return
 }
 
 // LoadData
-func (ini *Ini) LoadData(data map[string]Section) {
+func (ini *Ini) LoadData(data map[string]Section) (err error) {
 	ini.ensureInit()
 	if len(ini.data) == 0 {
 		ini.data = data
@@ -189,8 +200,17 @@ func (ini *Ini) LoadData(data map[string]Section) {
 
 	// append or override setting data
 	for name, sec := range data {
-		ini.SetSection(name, sec)
+		err = ini.SetSection(name, sec)
+		if err != nil {
+			return
+		}
 	}
+
+	if !ini.inited {
+		ini.inited = true
+	}
+
+	return
 }
 
 func (ini *Ini) ensureInit() {
@@ -198,8 +218,8 @@ func (ini *Ini) ensureInit() {
 		ini.data = make(map[string]Section)
 	}
 
-	if !ini.inited {
-		ini.inited = true
+	if ini.opts == nil {
+		ini.opts = &Options{}
 	}
 }
 
