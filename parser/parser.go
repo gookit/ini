@@ -82,7 +82,7 @@ type parser struct {
 	// for simple parse(section only allow map[string]string)
 	simpleData map[string]map[string]string
 
-	parsed    bool
+	// parsed    bool
 	parseMode parseMode
 
 	// options
@@ -185,7 +185,7 @@ func (p *parser) ParseString(data string) error {
 	buf.WriteString(data)
 
 	scanner := bufio.NewScanner(buf)
-	_, err = p.parse(scanner)
+	_, err = p.ParseFrom(scanner)
 
 	return err
 }
@@ -216,7 +216,7 @@ func (p *parser) SimpleData() map[string]map[string]string {
 
 // Reset parser, clear parsed data
 func (p *parser) Reset() {
-	p.parsed = false
+	// p.parsed = false
 
 	if p.parseMode == ModeFull {
 		p.fullData = make(map[string]interface{})
@@ -228,12 +228,7 @@ func (p *parser) Reset() {
 // fullParse will parse array item
 // ref github.com/dombenson/go-ini
 func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
-	if p.parsed {
-		return
-	}
-
 	section := p.DefSection
-	p.parsed = true
 	lineNum := 0
 	bytes = -1
 	readLine := true
@@ -322,7 +317,6 @@ func (p *parser) collectFullValue(section, key, val string, isArr bool) {
 		} else {
 			p.fullData[key] = val
 		}
-
 		return
 	}
 

@@ -167,12 +167,13 @@ func TestIni_Get(t *testing.T) {
 	st.False(ok)
 	st.Equal(0, iv)
 
+	iv = conf.DefInt("age", 34)
+	st.Equal(28, iv)
 	iv = conf.DefInt("notExist", 34)
 	st.Equal(34, iv)
 
 	iv = conf.MustInt("age")
 	st.Equal(28, iv)
-
 	iv = conf.MustInt("notExist")
 	st.Equal(0, iv)
 
@@ -190,12 +191,13 @@ func TestIni_Get(t *testing.T) {
 	st.False(ok)
 	st.False(bv)
 
+	bv = conf.DefBool("debug", false)
+	st.Equal(true, bv)
 	bv = conf.DefBool("notExist", false)
 	st.Equal(false, bv)
 
 	bv = conf.MustBool("debug")
 	st.Equal(true, bv)
-
 	bv = conf.MustBool("notExist")
 	st.Equal(false, bv)
 
@@ -237,6 +239,9 @@ func TestIni_Get(t *testing.T) {
 
 	mp = conf.MustMap("sec1")
 	st.Equal("val0", mp["key"])
+
+	mp = conf.MustMap("notExist")
+	st.Len(mp, 0)
 
 	// def section
 	mp, ok = conf.StringMap("")
@@ -373,6 +378,11 @@ k = v
 	err = conf.Set("newK", "newV")
 	st.Error(err)
 
+	err = conf.LoadData(map[string]Section{
+		"sec1": Section{"k": "v"},
+	})
+	st.Error(err)
+
 	ok := conf.Del("key")
 	st.False(ok)
 
@@ -464,6 +474,11 @@ func TestOther(t *testing.T) {
 	st.Empty(conf.Data())
 
 	conf = New()
+	conf.data = nil
+	str = conf.PrettyJson()
+
+	conf = New()
+	str = conf.PrettyJson()
 	str = conf.Export()
 	st.Equal("", str)
 }

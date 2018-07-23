@@ -74,6 +74,7 @@ func TestSimpleParser(t *testing.T) {
 
 	err := p.ParseString("invalid string")
 	st.Error(err)
+	st.IsType(errSyntax{}, err)
 
 	err = p.ParseString("")
 	st.Nil(err)
@@ -113,6 +114,18 @@ func TestFullParser(t *testing.T) {
 	err := p.ParseString("invalid string")
 	st.Error(err)
 
+	err = p.ParseString(`
+[__default]
+newKey = new val
+[sec1]
+newKey = val5
+[newSec]
+key = val0
+`)
+	st.Nil(err)
+
+	// fmt.Printf("%#v\n", p.ParsedData())
+
 	p.Reset()
 	err = p.ParseString(iniStr)
 	st.Nil(err)
@@ -120,8 +133,9 @@ func TestFullParser(t *testing.T) {
 	v := p.ParsedData()
 	st.NotEmpty(v)
 
-	// ignore case
+	// options: ignore case
 	p = FullParser(IgnoreCase)
+	st.True(p.IgnoreCase)
 	err = p.ParseString(iniStr)
 	st.Nil(err)
 
@@ -132,6 +146,26 @@ func TestFullParser(t *testing.T) {
 	str := fmt.Sprintf("%v", data)
 	st.Contains(str, "hasquota2:")
 	st.NotContains(str, "hasQuota1:")
+
+	// options: NoDefSection
+	p = FullParser(NoDefSection)
+	st.Equal(ModeFull, p.ParseMode())
+	st.False(p.IgnoreCase)
+	st.True(p.NoDefSection)
+
+	err = p.ParseString(iniStr)
+	st.Nil(err)
+
+	err = p.ParseString(`
+[__default]
+newKey = new val
+[sec1]
+newKey = val5
+[newSec]
+key = val0
+`)
+	st.Nil(err)
+	// fmt.Printf("%#v\n", p.ParsedData())
 }
 
 func TestDecode(t *testing.T) {
