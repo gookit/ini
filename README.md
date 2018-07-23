@@ -11,6 +11,7 @@ ini parse by golang. ini config data manage
 - support multi file, data load
 - support data override merge
 - support parse ENV key
+- complete unit test(coverage > 90%)
 
 > **[中文说明](README_cn.md)**
 
