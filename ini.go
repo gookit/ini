@@ -71,7 +71,7 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
  * quick use
  *************************************************************/
 
-// LoadFiles
+// LoadFiles load data from files
 func LoadFiles(files ...string) (ini *Ini, err error) {
 	ini = New()
 	err = ini.LoadFiles(files...)
@@ -79,7 +79,7 @@ func LoadFiles(files ...string) (ini *Ini, err error) {
 	return
 }
 
-// LoadExists
+// LoadExists load files, will ignore not exists
 func LoadExists(files ...string) (ini *Ini, err error) {
 	ini = New()
 	err = ini.LoadExists(files...)
@@ -87,7 +87,7 @@ func LoadExists(files ...string) (ini *Ini, err error) {
 	return
 }
 
-// LoadStrings
+// LoadStrings load data from strings
 func LoadStrings(strings ...string) (ini *Ini, err error) {
 	ini = New()
 	err = ini.LoadStrings(strings...)
@@ -135,11 +135,16 @@ func (ini *Ini) WithOptions(opts ...func(*Options)) {
 	}
 }
 
+// DefSection get default section name
+func (ini *Ini) DefSection() string {
+	return DefSection
+}
+
 /*************************************************************
  * data load
  *************************************************************/
 
-// LoadFiles
+// LoadFiles load data from files
 func (ini *Ini) LoadFiles(files ...string) (err error) {
 	ini.ensureInit()
 
@@ -156,7 +161,7 @@ func (ini *Ini) LoadFiles(files ...string) (err error) {
 	return
 }
 
-// LoadExists
+// LoadExists load files, will ignore not exists
 func (ini *Ini) LoadExists(files ...string) (err error) {
 	ini.ensureInit()
 
@@ -173,7 +178,7 @@ func (ini *Ini) LoadExists(files ...string) (err error) {
 	return
 }
 
-// LoadStrings
+// LoadStrings load data from strings
 func (ini *Ini) LoadStrings(strings ...string) (err error) {
 	ini.ensureInit()
 
@@ -191,7 +196,7 @@ func (ini *Ini) LoadStrings(strings ...string) (err error) {
 	return
 }
 
-// LoadData
+// LoadData load data map
 func (ini *Ini) LoadData(data map[string]Section) (err error) {
 	ini.ensureInit()
 	if len(ini.data) == 0 {

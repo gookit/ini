@@ -143,6 +143,8 @@ func TestBasic(t *testing.T) {
 	st.Panics(func() {
 		conf.WithOptions(IgnoreCase)
 	})
+
+	st.True(conf.DefSection() == DefSection)
 }
 
 func TestIni_Get(t *testing.T) {
@@ -228,9 +230,18 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("value", str)
 
+	// get string map(section data)
 	mp, ok := conf.StringMap("sec1")
 	st.True(ok)
 	st.Equal("val0", mp["key"])
+
+	mp = conf.MustMap("sec1")
+	st.Equal("val0", mp["key"])
+
+	// def section
+	mp, ok = conf.StringMap("")
+	st.True(ok)
+	st.Equal("inhere", mp["name"])
 
 	str, ok = conf.Get(" ")
 	st.False(ok)
@@ -413,9 +424,16 @@ func TestIni_Del(t *testing.T) {
 	st.False(conf.Del(" "))
 	st.False(conf.Del("no-key"))
 
+	ok = conf.Del("sec1.notExist")
+	st.False(ok)
+	ok = conf.Del("sec1.key")
+	st.True(ok)
+
 	st.True(conf.HasSection("sec1"))
+
 	ok = conf.DelSection("sec1")
 	st.True(ok)
+
 	st.False(conf.HasSection("sec1"))
 }
 
@@ -436,7 +454,9 @@ func TestOther(t *testing.T) {
 	st.Contains(str, "sec1")
 
 	// export to file
-	n, err := conf.WriteToFile("testdata/export.ini")
+	n, err := conf.WriteToFile("not/exist/export.ini")
+	st.Error(err)
+	n, err = conf.WriteToFile("testdata/export.ini")
 	st.True(n > 0)
 	st.Nil(err)
 

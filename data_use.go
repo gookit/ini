@@ -161,19 +161,34 @@ func (ini *Ini) MustString(key string) string {
 	return ini.DefString(key, "")
 }
 
-// StringMap
+// StringMap get a section data map
 func (ini *Ini) StringMap(name string) (mp map[string]string, ok bool) {
 	if ini.opts.IgnoreCase {
 		name = strings.ToLower(name)
+	}
+
+	// empty name, return default section
+	if name == "" {
+		name = DefSection
 	}
 
 	mp, ok = ini.data[name]
 	return
 }
 
-// Section
+// Section get a section data map
 func (ini *Ini) Section(name string) (sec map[string]string, ok bool) {
 	return ini.StringMap(name)
+}
+
+// MustMap must return a string map
+func (ini *Ini) MustMap(name string) map[string]string {
+	if mp, ok := ini.StringMap(name); ok {
+		return mp
+	}
+
+	// empty map
+	return map[string]string{}
 }
 
 /*************************************************************
@@ -217,12 +232,12 @@ func (ini *Ini) Set(key, val string, section ...string) (err error) {
 	return
 }
 
-// SetInt
+// SetInt set a int by key
 func (ini *Ini) SetInt(key string, val int, section ...string) {
 	ini.Set(key, fmt.Sprintf("%d", val), section...)
 }
 
-// SetBool
+// SetBool set a bool by key
 func (ini *Ini) SetBool(key string, val bool, section ...string) {
 	valStr := "false"
 	if val {
@@ -232,7 +247,7 @@ func (ini *Ini) SetBool(key string, val bool, section ...string) {
 	ini.Set(key, valStr, section...)
 }
 
-// SetString
+// SetString set a string by key
 func (ini *Ini) SetString(key, val string, section ...string) {
 	ini.Set(key, val, section...)
 }
@@ -281,7 +296,7 @@ func (ini *Ini) NewSection(name string, values map[string]string) (err error) {
 	return
 }
 
-// HasSection
+// HasSection has section
 func (ini *Ini) HasSection(name string) bool {
 	if ini.opts.IgnoreCase {
 		name = strings.ToLower(name)
@@ -291,7 +306,7 @@ func (ini *Ini) HasSection(name string) bool {
 	return ok
 }
 
-// DelSection
+// DelSection del section by name
 func (ini *Ini) DelSection(name string) bool {
 	// if is readonly
 	if ini.opts.Readonly {
