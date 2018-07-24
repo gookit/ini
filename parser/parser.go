@@ -1,5 +1,5 @@
 /*
-This a parser for parse INI format content to golang data
+Package parser is a Parser for parse INI format content to golang data
 
 There are example data:
 
@@ -74,8 +74,8 @@ type parseMode uint8
 // notice: in simple mode, isArr always is false.
 type UserCollector func(section, key, val string, isArr bool)
 
-// parser
-type parser struct {
+// Parser definition
+type Parser struct {
 	// for full parse(allow array, map section)
 	fullData map[string]interface{}
 
@@ -95,9 +95,9 @@ type parser struct {
 	Collector UserCollector
 }
 
-// FullParser create a full mode parser
-func FullParser(opts ...func(*parser)) *parser {
-	p := &parser{
+// FullParser create a full mode Parser with some options
+func FullParser(opts ...func(*Parser)) *Parser {
+	p := &Parser{
 		fullData: make(map[string]interface{}),
 
 		parseMode:  ModeFull,
@@ -110,9 +110,9 @@ func FullParser(opts ...func(*parser)) *parser {
 	return p
 }
 
-// SimpleParser create a simple mode parser
-func SimpleParser(opts ...func(*parser)) *parser {
-	p := &parser{
+// SimpleParser create a simple mode Parser
+func SimpleParser(opts ...func(*Parser)) *Parser {
+	p := &Parser{
 		simpleData: make(map[string]map[string]string),
 
 		parseMode:  ModeSimple,
@@ -126,18 +126,18 @@ func SimpleParser(opts ...func(*parser)) *parser {
 
 // NoDefSection set don't return DefSection title
 // usage:
-// parser.NewWithOptions(ini.ParseEnv)
-func NoDefSection(p *parser) {
+// Parser.NewWithOptions(ini.ParseEnv)
+func NoDefSection(p *Parser) {
 	p.NoDefSection = true
 }
 
 // IgnoreCase set ignore-case
-func IgnoreCase(p *parser) {
+func IgnoreCase(p *Parser) {
 	p.IgnoreCase = true
 }
 
 // Parse a INI data string to golang
-func Parse(data string, mode parseMode, opts ...func(*parser)) (p *parser, err error) {
+func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
@@ -159,7 +159,7 @@ func Parse(data string, mode parseMode, opts ...func(*parser)) (p *parser, err e
 }
 
 // WithOptions apply some options
-func (p *parser) WithOptions(opts ...func(*parser)) {
+func (p *Parser) WithOptions(opts ...func(*Parser)) {
 	// apply options
 	for _, opt := range opts {
 		opt(p)
@@ -167,14 +167,14 @@ func (p *parser) WithOptions(opts ...func(*parser)) {
 }
 
 // ParseFrom a data scanner
-func (p *parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
+func (p *Parser) ParseFrom(in *bufio.Scanner) (n int64, err error) {
 	n, err = p.parse(in)
 
 	return
 }
 
 // ParseString parse from string data
-func (p *parser) ParseString(data string) error {
+func (p *Parser) ParseString(data string) error {
 	var err error
 
 	if strings.TrimSpace(data) == "" {
@@ -191,7 +191,7 @@ func (p *parser) ParseString(data string) error {
 }
 
 // ParsedData get parsed data
-func (p *parser) ParsedData() interface{} {
+func (p *Parser) ParsedData() interface{} {
 	if p.parseMode == ModeFull {
 		return p.fullData
 	}
@@ -200,22 +200,22 @@ func (p *parser) ParsedData() interface{} {
 }
 
 // ParseMode get current mode
-func (p *parser) ParseMode() parseMode {
-	return p.parseMode
+func (p *Parser) ParseMode() uint8 {
+	return uint8(p.parseMode)
 }
 
 // FullData get parsed data by full parse
-func (p *parser) FullData() map[string]interface{} {
+func (p *Parser) FullData() map[string]interface{} {
 	return p.fullData
 }
 
 // SimpleData get parsed data by simple parse
-func (p *parser) SimpleData() map[string]map[string]string {
+func (p *Parser) SimpleData() map[string]map[string]string {
 	return p.simpleData
 }
 
-// Reset parser, clear parsed data
-func (p *parser) Reset() {
+// Reset Parser, clear parsed data
+func (p *Parser) Reset() {
 	// p.parsed = false
 
 	if p.parseMode == ModeFull {
@@ -227,7 +227,7 @@ func (p *parser) Reset() {
 
 // fullParse will parse array item
 // ref github.com/dombenson/go-ini
-func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
+func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 	section := p.DefSection
 	lineNum := 0
 	bytes = -1
@@ -293,7 +293,7 @@ func (p *parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 	return
 }
 
-func (p *parser) collectFullValue(section, key, val string, isArr bool) {
+func (p *Parser) collectFullValue(section, key, val string, isArr bool) {
 	defSection := p.DefSection
 
 	if p.IgnoreCase {
@@ -364,7 +364,7 @@ func (p *parser) collectFullValue(section, key, val string, isArr bool) {
 	}
 }
 
-func (p *parser) collectMapValue(name string, key, val string) {
+func (p *Parser) collectMapValue(name string, key, val string) {
 	if p.IgnoreCase {
 		name = strings.ToLower(name)
 		key = strings.ToLower(key)

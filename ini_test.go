@@ -459,7 +459,7 @@ func TestOther(t *testing.T) {
 	st.Contains(str, "[sec1]")
 
 	// export as formatted JSON string
-	str = conf.PrettyJson()
+	str = conf.PrettyJSON()
 	st.Contains(str, "inhere")
 	st.Contains(str, "sec1")
 
@@ -475,10 +475,10 @@ func TestOther(t *testing.T) {
 
 	conf = New()
 	conf.data = nil
-	str = conf.PrettyJson()
+	str = conf.PrettyJSON()
 
 	conf = New()
-	str = conf.PrettyJson()
+	str = conf.PrettyJSON()
 	str = conf.Export()
 	st.Equal("", str)
 }

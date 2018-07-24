@@ -1,5 +1,5 @@
 /*
-Ini parse by golang. ini config file/data manage
+Package ini is a ini config file/data manage implement
 
 Source code and other details for the project are available at GitHub:
 
@@ -16,15 +16,16 @@ import (
 	"sync"
 )
 
+// some constants
 const (
 	SepSection = "."
 	DefSection = "__default"
 )
 
-// section in ini data
+// Section in ini data
 type Section map[string]string
 
-// Options
+// Options for config
 type Options struct {
 	Readonly   bool
 	ParseEnv   bool
@@ -41,10 +42,10 @@ type Ini struct {
 	inited bool
 }
 
-// DefOptions
+// DefOptions instance
 var DefOptions = &Options{ParseEnv: true}
 
-// New
+// New a instance
 func New() *Ini {
 	return &Ini{
 		data: make(map[string]Section),
@@ -52,7 +53,7 @@ func New() *Ini {
 	}
 }
 
-// NewWithOptions
+// NewWithOptions new a instance and with some options
 // usage:
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
@@ -99,31 +100,31 @@ func LoadStrings(strings ...string) (ini *Ini, err error) {
  * options func
  *************************************************************/
 
-// Readonly
+// Readonly setting
 // usage:
 // ini.NewWithOptions(ini.Readonly)
 func Readonly(opts *Options) {
 	opts.Readonly = true
 }
 
-// ParseEnv
+// ParseEnv on get string
 // usage:
 // ini.NewWithOptions(ini.ParseEnv)
 func ParseEnv(opts *Options) {
 	opts.ParseEnv = true
 }
 
-// IgnoreCase
+// IgnoreCase for get/set value by key
 func IgnoreCase(opts *Options) {
 	opts.IgnoreCase = true
 }
 
-// Options
+// Options get
 func (ini *Ini) Options() *Options {
 	return ini.opts
 }
 
-// WithOptions
+// WithOptions apply some options
 func (ini *Ini) WithOptions(opts ...func(*Options)) {
 	if ini.inited {
 		panic("ini: Cannot set options after initialization is complete")

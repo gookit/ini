@@ -20,8 +20,8 @@ func (ini *Ini) Export() string {
 	return ""
 }
 
-// PrettyJson translate to pretty JSON string
-func (ini *Ini) PrettyJson() string {
+// PrettyJSON translate to pretty JSON string
+func (ini *Ini) PrettyJSON() string {
 	out, err := json.MarshalIndent(ini.data, "", "    ")
 	if err != nil {
 		return ""
@@ -30,7 +30,7 @@ func (ini *Ini) PrettyJson() string {
 	return string(out)
 }
 
-// WriteToFile
+// WriteToFile write config data to a file
 func (ini *Ini) WriteToFile(file string) (n int64, err error) {
 	// open file
 	fd, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)
@@ -41,7 +41,7 @@ func (ini *Ini) WriteToFile(file string) (n int64, err error) {
 	return ini.WriteTo(fd)
 }
 
-// Write out an INI File representing the current state to a writer.
+// WriteTo out an INI File representing the current state to a writer.
 func (ini *Ini) WriteTo(out io.Writer) (n int64, err error) {
 	n = 0
 	counter := 0
@@ -68,7 +68,7 @@ func (ini *Ini) WriteTo(out io.Writer) (n int64, err error) {
 		items := ini.data[section]
 		orderedStringKeys := make([]string, len(items))
 		counter = 0
-		for key, _ := range items {
+		for key := range items {
 			orderedStringKeys[counter] = key
 			counter++
 		}

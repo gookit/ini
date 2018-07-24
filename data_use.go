@@ -9,7 +9,7 @@ import (
 )
 
 // if is readonly
-var cannotSetInReadonly = errors.New("ini: The config manager instance in 'readonly' mode")
+var errSetInReadonly = errors.New("ini: The config manager instance in 'readonly' mode")
 
 /*************************************************************
  * data get
@@ -200,11 +200,12 @@ func (ini *Ini) MustMap(name string) map[string]string {
 func (ini *Ini) Set(key, val string, section ...string) (err error) {
 	// if is readonly
 	if ini.opts.Readonly {
-		return cannotSetInReadonly
-	} else {
-		ini.lock.Lock()
-		defer ini.lock.Unlock()
+		return errSetInReadonly
 	}
+
+	// open lock
+	ini.lock.Lock()
+	defer ini.lock.Unlock()
 
 	key = formatKey(key)
 	if key == "" {
@@ -260,7 +261,7 @@ func (ini *Ini) SetString(key, val string, section ...string) {
 func (ini *Ini) SetSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if ini.opts.Readonly {
-		return cannotSetInReadonly
+		return errSetInReadonly
 	}
 
 	if ini.opts.IgnoreCase {
@@ -284,7 +285,7 @@ func (ini *Ini) SetSection(name string, values map[string]string) (err error) {
 func (ini *Ini) NewSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if ini.opts.Readonly {
-		return cannotSetInReadonly
+		return errSetInReadonly
 	}
 
 	if ini.opts.IgnoreCase {
@@ -329,13 +330,13 @@ func (ini *Ini) DelSection(name string) bool {
  * helper methods
  *************************************************************/
 
-// HasKey
+// HasKey check
 func (ini *Ini) HasKey(key string) (ok bool) {
 	_, ok = ini.Get(key)
 	return
 }
 
-// Del
+// Del key
 func (ini *Ini) Del(key string) (ok bool) {
 	// if is readonly
 	if ini.opts.Readonly {

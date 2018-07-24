@@ -7,7 +7,7 @@ import (
 	"sort"
 )
 
-// Encode
+// Encode golang data to INI
 func Encode(v interface{}, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
 	case map[string]interface{}: // from full mode
@@ -20,7 +20,7 @@ func Encode(v interface{}, defSection ...string) (out []byte, err error) {
 	return
 }
 
-// EncodeFull
+// EncodeFull full mode data to INI
 func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
@@ -106,7 +106,7 @@ func buildSectionBuffer(data map[string]interface{}, buf *bytes.Buffer) (err err
 	return
 }
 
-// EncodeSimple
+// EncodeSimple data to INI
 func EncodeSimple(data map[string]map[string]string, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
@@ -143,7 +143,7 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 		items := data[section]
 		orderedStringKeys := make([]string, len(items))
 		counter = 0
-		for key, _ := range items {
+		for key := range items {
 			orderedStringKeys[counter] = key
 			counter++
 		}

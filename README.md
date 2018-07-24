@@ -122,6 +122,20 @@ set string
  - ok: true, val: new name
 ```
 
+## Tests
+
+- go tests with cover
+
+```bash
+go test ./... -cover
+```
+
+- run lint by GoLint
+
+```bash
+golint ./... 
+```
+
 ## Ref 
 
 - [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage

@@ -221,7 +221,7 @@ func TestEncode(t *testing.T) {
 	// encode simple data
 	sData := map[string]map[string]string{
 		"_def": {"name": "inhere", "age": "100"},
-		"sec": {"key": "val", "key1": "34"},
+		"sec":  {"key": "val", "key1": "34"},
 	}
 	out, err = Encode(sData)
 	st.Nil(err)
@@ -243,17 +243,17 @@ func TestEncode(t *testing.T) {
 
 	// encode full data
 	fData := map[string]interface{}{
-		"name": "inhere",
-		"age": 12,
-		"debug": false,
-		"defArr": []string{"a", "b"},
+		"name":    "inhere",
+		"age":     12,
+		"debug":   false,
+		"defArr":  []string{"a", "b"},
 		"defArr1": []int{1, 2},
 		// section
 		"sec": map[string]interface{}{
-			"key0": "val",
-			"key1": 45,
-			"arr0": []int{3,4},
-			"arr1": []string{"c", "d"},
+			"key0":    "val",
+			"key1":    45,
+			"arr0":    []int{3, 4},
+			"arr1":    []string{"c", "d"},
 			"invalid": map[string]int{"k": 23},
 		},
 	}

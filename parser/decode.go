@@ -6,7 +6,7 @@ import (
 	"reflect"
 )
 
-// Decode
+// Decode INI content to golang data
 func Decode(blob []byte, v interface{}) (err error) {
 	rv := reflect.ValueOf(v)
 
