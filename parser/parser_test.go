@@ -68,7 +68,7 @@ func TestSimpleParser(t *testing.T) {
 
 	// simple mode will ignore all array values
 	p := SimpleParser()
-	st.Equal(ModeSimple, p.ParseMode())
+	st.Equal(ModeSimple.Unit8(), p.ParseMode())
 	st.False(p.IgnoreCase)
 	st.False(p.NoDefSection)
 
@@ -107,7 +107,7 @@ func TestFullParser(t *testing.T) {
 	st := assert.New(t)
 
 	p := FullParser()
-	st.Equal(ModeFull, p.ParseMode())
+	st.Equal(ModeFull.Unit8(), p.ParseMode())
 	st.False(p.IgnoreCase)
 	st.False(p.NoDefSection)
 
@@ -149,7 +149,7 @@ key = val0
 
 	// options: NoDefSection
 	p = FullParser(NoDefSection)
-	st.Equal(ModeFull, p.ParseMode())
+	st.Equal(ModeFull.Unit8(), p.ParseMode())
 	st.False(p.IgnoreCase)
 	st.True(p.NoDefSection)
 

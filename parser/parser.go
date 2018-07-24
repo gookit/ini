@@ -70,6 +70,11 @@ const (
 
 type parseMode uint8
 
+// Unit8 to uint8
+func (m parseMode) Unit8() uint8 {
+	return uint8(m)
+}
+
 // UserCollector custom data collector.
 // notice: in simple mode, isArr always is false.
 type UserCollector func(section, key, val string, isArr bool)
