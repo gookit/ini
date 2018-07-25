@@ -139,8 +139,9 @@ cfg := ini.New()
 // 启用变量解析
 cfg.WithOptions(ini.ParseVar)
 
-fmt.Print(cfg.MustString("url"))
-// OUT: http://localhost:8080/Portal 
+fmt.Print(cfg.MustString("portal.url"))
+// OUT: 
+// http://localhost:8080/Portal 
 ```
 
 ## 测试

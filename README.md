@@ -138,8 +138,9 @@ cfg := ini.New()
 // enable ParseVar
 cfg.WithOptions(ini.ParseVar)
 
-fmt.Print(cfg.MustString("url"))
-// OUT: http://localhost:8080/api 
+fmt.Print(cfg.MustString("portal.url"))
+// OUT: 
+// http://localhost:8080/api 
 ```
 
 ## Tests
