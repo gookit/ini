@@ -13,43 +13,62 @@ package ini
 import (
 	"io/ioutil"
 	"os"
+	"regexp"
 	"sync"
 )
 
-// some constants
+// some default constants
 const (
 	SepSection = "."
 	DefSection = "__default"
+	// EnvValue   = "${NAME}"
 )
 
-// Section in ini data
+// Section in INI config
 type Section map[string]string
 
 // Options for config
 type Options struct {
-	Readonly   bool
-	ParseEnv   bool
+	// set to read-only mode
+	Readonly bool
+	// parse variable reference. %(varName)s
+	ParseVar bool
+
+	// var left open char. default "%("
+	VarOpen string
+	// var right open char. default ")s"
+	VarClose string
+
+	// parse ENV var name. default True
+	ParseEnv bool
+	// ignore the case of the key. default False
 	IgnoreCase bool
+	// default section name. default "__default"
+	DefSection string
+	// sep char for split section. default "."
+	SectionSep string
 }
 
-// Ini data manager
+// Ini config data manager
 type Ini struct {
 	data map[string]Section
 	opts *Options
 	lock sync.RWMutex
 
 	// when has data loaded, will change to true
-	inited bool
+	initialized bool
+	varRegex    *regexp.Regexp
 }
 
-// DefOptions instance
-var DefOptions = &Options{ParseEnv: true}
+/*************************************************************
+ * create config instance
+ *************************************************************/
 
 // New a instance
 func New() *Ini {
 	return &Ini{
 		data: make(map[string]Section),
-		opts: DefOptions,
+		opts: newDefaultOptions(),
 	}
 }
 
@@ -57,15 +76,11 @@ func New() *Ini {
 // usage:
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
-	ini := &Ini{
-		data: make(map[string]Section),
-		opts: &Options{},
-	}
-
+	c := New()
 	// apply options
-	ini.WithOptions(opts...)
+	c.WithOptions(opts...)
 
-	return ini
+	return c
 }
 
 /*************************************************************
@@ -73,25 +88,25 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
  *************************************************************/
 
 // LoadFiles load data from files
-func LoadFiles(files ...string) (ini *Ini, err error) {
-	ini = New()
-	err = ini.LoadFiles(files...)
+func LoadFiles(files ...string) (c *Ini, err error) {
+	c = New()
+	err = c.LoadFiles(files...)
 
 	return
 }
 
 // LoadExists load files, will ignore not exists
-func LoadExists(files ...string) (ini *Ini, err error) {
-	ini = New()
-	err = ini.LoadExists(files...)
+func LoadExists(files ...string) (c *Ini, err error) {
+	c = New()
+	err = c.LoadExists(files...)
 
 	return
 }
 
 // LoadStrings load data from strings
-func LoadStrings(strings ...string) (ini *Ini, err error) {
-	ini = New()
-	err = ini.LoadStrings(strings...)
+func LoadStrings(strings ...string) (c *Ini, err error) {
+	c = New()
+	err = c.LoadStrings(strings...)
 
 	return
 }
@@ -100,6 +115,21 @@ func LoadStrings(strings ...string) (ini *Ini, err error) {
  * options func
  *************************************************************/
 
+// newDefaultOptions create a new default Options
+// Notice:
+// Cannot use package var instead it. That will allow multiple instances to use the same Options
+func newDefaultOptions() *Options {
+	return &Options{
+		ParseEnv: true,
+
+		VarOpen:  "%(",
+		VarClose: ")s",
+
+		DefSection: DefSection,
+		SectionSep: SepSection,
+	}
+}
+
 // Readonly setting
 // usage:
 // ini.NewWithOptions(ini.Readonly)
@@ -107,9 +137,16 @@ func Readonly(opts *Options) {
 	opts.Readonly = true
 }
 
-// ParseEnv on get string
+// ParseVar on get value
 // usage:
-// ini.NewWithOptions(ini.ParseEnv)
+// ini.WithOptions(ini.ParseVar)
+func ParseVar(opts *Options) {
+	opts.ParseVar = true
+}
+
+// ParseEnv on get value
+// usage:
+// ini.WithOptions(ini.ParseEnv)
 func ParseEnv(opts *Options) {
 	opts.ParseEnv = true
 }
@@ -120,25 +157,25 @@ func IgnoreCase(opts *Options) {
 }
 
 // Options get
-func (ini *Ini) Options() *Options {
-	return ini.opts
+func (c *Ini) Options() *Options {
+	return c.opts
 }
 
 // WithOptions apply some options
-func (ini *Ini) WithOptions(opts ...func(*Options)) {
-	if ini.inited {
+func (c *Ini) WithOptions(opts ...func(*Options)) {
+	if c.initialized {
 		panic("ini: Cannot set options after initialization is complete")
 	}
 
 	// apply options
 	for _, opt := range opts {
-		opt(ini.opts)
+		opt(c.opts)
 	}
 }
 
 // DefSection get default section name
-func (ini *Ini) DefSection() string {
-	return DefSection
+func (c *Ini) DefSection() string {
+	return c.opts.DefSection
 }
 
 /*************************************************************
@@ -146,90 +183,105 @@ func (ini *Ini) DefSection() string {
  *************************************************************/
 
 // LoadFiles load data from files
-func (ini *Ini) LoadFiles(files ...string) (err error) {
-	ini.ensureInit()
+func (c *Ini) LoadFiles(files ...string) (err error) {
+	c.ensureInit()
 
 	for _, file := range files {
-		err = ini.loadFile(file, false)
+		err = c.loadFile(file, false)
 		if err != nil {
 			return
 		}
 	}
 
-	if !ini.inited {
-		ini.inited = true
+	if !c.initialized {
+		c.initialized = true
 	}
 	return
 }
 
 // LoadExists load files, will ignore not exists
-func (ini *Ini) LoadExists(files ...string) (err error) {
-	ini.ensureInit()
+func (c *Ini) LoadExists(files ...string) (err error) {
+	c.ensureInit()
 
 	for _, file := range files {
-		err = ini.loadFile(file, true)
+		err = c.loadFile(file, true)
 		if err != nil {
 			return
 		}
 	}
 
-	if !ini.inited {
-		ini.inited = true
+	if !c.initialized {
+		c.initialized = true
 	}
 	return
 }
 
 // LoadStrings load data from strings
-func (ini *Ini) LoadStrings(strings ...string) (err error) {
-	ini.ensureInit()
+func (c *Ini) LoadStrings(strings ...string) (err error) {
+	c.ensureInit()
 
 	for _, str := range strings {
-		err = ini.parse(str)
+		err = c.parse(str)
 		if err != nil {
 			return
 		}
 	}
 
-	if !ini.inited {
-		ini.inited = true
+	if !c.initialized {
+		c.initialized = true
 	}
 
 	return
 }
 
 // LoadData load data map
-func (ini *Ini) LoadData(data map[string]Section) (err error) {
-	ini.ensureInit()
-	if len(ini.data) == 0 {
-		ini.data = data
+func (c *Ini) LoadData(data map[string]Section) (err error) {
+	c.ensureInit()
+	if len(c.data) == 0 {
+		c.data = data
 	}
 
 	// append or override setting data
 	for name, sec := range data {
-		err = ini.SetSection(name, sec)
+		err = c.SetSection(name, sec)
 		if err != nil {
 			return
 		}
 	}
 
-	if !ini.inited {
-		ini.inited = true
+	if !c.initialized {
+		c.initialized = true
 	}
 
 	return
 }
 
-func (ini *Ini) ensureInit() {
-	if ini.data == nil {
-		ini.data = make(map[string]Section)
+func (c *Ini) ensureInit() {
+	if c.initialized {
+		return
 	}
 
-	if ini.opts == nil {
-		ini.opts = &Options{}
+	if c.data == nil {
+		c.data = make(map[string]Section)
+	}
+
+	if c.opts == nil {
+		c.opts = newDefaultOptions()
+	}
+
+	// build var regex. default is `%\(([\w-:]+)\)s`
+	if c.opts.ParseVar && c.varRegex == nil {
+		// regexStr := `%\([\w-:]+\)s`
+		l := regexp.QuoteMeta(c.opts.VarOpen)
+		r := regexp.QuoteMeta(c.opts.VarClose)
+
+		// build like: `%\(([\w-:]+)\)s`
+		regStr := l + `([\w-` + c.opts.SectionSep + `]+)` + r
+		c.varRegex = regexp.MustCompile(regStr)
 	}
 }
 
-func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
+func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 	// open file
 	fd, err := os.Open(file)
 	if err != nil {
@@ -245,7 +297,7 @@ func (ini *Ini) loadFile(file string, loadExist bool) (err error) {
 	// read file content
 	bts, err := ioutil.ReadAll(fd)
 	if err == nil {
-		err = ini.parse(string(bts))
+		err = c.parse(string(bts))
 		if err != nil {
 			return
 		}

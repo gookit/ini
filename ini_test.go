@@ -131,7 +131,15 @@ func TestLoad(t *testing.T) {
 func TestBasic(t *testing.T) {
 	st := assert.New(t)
 
-	conf, err := LoadStrings(iniStr)
+	conf := New()
+	st.Equal(DefSection, conf.DefSection())
+
+	conf.WithOptions(func(opts *Options) {
+		opts.DefSection = "myDef"
+	})
+	st.Equal("myDef", conf.DefSection())
+
+	err := conf.LoadStrings(iniStr)
 	st.Nil(err)
 
 	st.True(conf.HasKey("name"))
@@ -143,8 +151,6 @@ func TestBasic(t *testing.T) {
 	st.Panics(func() {
 		conf.WithOptions(IgnoreCase)
 	})
-
-	st.True(conf.DefSection() == DefSection)
 }
 
 func TestIni_Get(t *testing.T) {
@@ -418,6 +424,42 @@ notExist = ${NotExist|defValue}
 	st.True(ok)
 	st.NotContains(str, "${")
 	st.Equal("defValue", str)
+}
+
+func TestParseVar(t *testing.T) {
+	st := assert.New(t)
+	conf := NewWithOptions(ParseVar)
+	err := conf.LoadStrings(`
+key = val
+ref = %(sec.host)s
+debug = true
+[sec]
+enable = %(debug)s
+url = http://%(host)s/api
+host = localhost
+`)
+	st.Nil(err)
+
+	opts := conf.Options()
+	st.False(opts.IgnoreCase)
+	st.True(opts.ParseVar)
+	// fmt.Println(conf.Data())
+
+	str, ok := conf.Get("sec.host")
+	st.True(ok)
+	st.Equal("localhost", str)
+
+	str, ok = conf.Get("ref")
+	st.True(ok)
+	st.Equal("localhost", str)
+
+	str, ok = conf.Get("sec.enable")
+	st.True(ok)
+	st.Equal("true", str)
+
+	str, ok = conf.Get("sec.url")
+	st.True(ok)
+	st.Equal("http://localhost/api", str)
 }
 
 func TestIni_Del(t *testing.T) {

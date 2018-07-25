@@ -12,6 +12,7 @@
 - 支持数据覆盖合并
 - 支持解析 ENV 变量名
 - 完善的单元测试(coverage > 90%)
+- 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
 
 > **[EN README](README.md)**
 
@@ -120,6 +121,26 @@ get env 'envKey' val: /bin/zsh
 get env 'envKey1' val: defValue
 set string
  - ok: true, val: new name
+```
+
+## 变量参考解析
+
+```ini
+[portal] 
+url = http://%(host)s:%(port)s/Portal
+host = localhost 
+port = 8080
+```
+
+启用变量解析后，将会解析`%(host)s`并替换为响应的变量：
+
+```go
+cfg := ini.New()
+// 启用变量解析
+cfg.WithOptions(ini.ParseVar)
+
+fmt.Print(cfg.MustString("url"))
+// OUT: http://localhost:8080/Portal 
 ```
 
 ## 测试

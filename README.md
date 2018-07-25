@@ -122,6 +122,26 @@ set string
  - ok: true, val: new name
 ```
 
+## Variable reference resolution
+
+```ini
+[portal] 
+url = http://%(host)s:%(port)s/api
+host = localhost 
+port = 8080
+```
+
+If variable resolution is enabled，will parse `%(host)s` and replace it：
+
+```go
+cfg := ini.New()
+// enable ParseVar
+cfg.WithOptions(ini.ParseVar)
+
+fmt.Print(cfg.MustString("url"))
+// OUT: http://localhost:8080/api 
+```
+
 ## Tests
 
 - go tests with cover
