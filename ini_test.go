@@ -415,12 +415,13 @@ notExist = ${NotExist|defValue}
 
 	opts := conf.Options()
 	st.True(opts.ParseEnv)
+	st.False(opts.ParseVar)
 
-	str, ok := conf.String("key")
+	str, ok := conf.Get("key")
 	st.True(ok)
 	st.NotContains(str, "${")
 
-	str, ok = conf.String("notExist")
+	str, ok = conf.Get("notExist")
 	st.True(ok)
 	st.NotContains(str, "${")
 	st.Equal("defValue", str)

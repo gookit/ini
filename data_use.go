@@ -41,7 +41,7 @@ func (c *Ini) Get(key string) (val string, ok bool) {
 
 	val, ok = strMap[key]
 
-	// enable parse var
+	// if enable parse var
 	if c.opts.ParseVar {
 		// must close lock. because parseVarReference() maybe loop call Get()
 		if !c.opts.Readonly {
@@ -51,6 +51,11 @@ func (c *Ini) Get(key string) (val string, ok bool) {
 		} else {
 			val = c.parseVarReference(val, strMap)
 		}
+	}
+
+	// if opts.ParseEnv is true. will parse like: "${SHELL}"
+	if c.opts.ParseEnv {
+		val = c.parseEnvValue(val)
 	}
 
 	return
@@ -130,19 +135,9 @@ func (c *Ini) MustBool(key string) bool {
 	return c.DefBool(key, false)
 }
 
-// GetString like Get method, but will parse ENV value.
+// GetString like Get method
 func (c *Ini) String(key string) (val string, ok bool) {
-	val, ok = c.Get(key)
-	if !ok {
-		return
-	}
-
-	// if opts.ParseEnv is true. will parse like: "${SHELL}"
-	if c.opts.ParseEnv {
-		val = c.parseEnvValue(val)
-	}
-
-	return
+	return c.Get(key)
 }
 
 // DefString get a string value, if not found return default value
