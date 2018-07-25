@@ -269,4 +269,16 @@ func TestEncode(t *testing.T) {
 	st.Contains(str, "defArr[] = a")
 	st.Contains(str, "[sec]")
 	st.Contains(str, "arr1[] = c")
+
+	out, err = Encode(fData, "defSec")
+	st.Nil(err)
+	st.NotEmpty(out)
+	str = string(out)
+	st.Contains(str, "[sec]")
+
+	out, err = Encode(fData, "sec")
+	st.Nil(err)
+	st.NotEmpty(out)
+	str = string(out)
+	st.NotContains(str, "[sec]")
 }

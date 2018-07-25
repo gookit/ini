@@ -12,6 +12,7 @@ ini parse by golang. ini config data manage
 - support data override merge
 - support parse ENV key
 - complete unit test(coverage > 90%)
+- support variable reference, default compatible with Python's configParser format `%(VAR)s`
 
 > **[中文说明](README_cn.md)**
 

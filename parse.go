@@ -56,8 +56,7 @@ func (c *Ini) parseEnvValue(val string) string {
 	var oldNew []string
 	var name, def string
 	for _, fVar := range vars {
-		str := strings.Trim(strings.TrimSpace(fVar), "${}")
-		ss := strings.SplitN(str, "|", 2)
+		ss := strings.SplitN(fVar[2:len(fVar)-1], "|", 2)
 
 		// ${NotExist|defValue}
 		if len(ss) == 2 {
@@ -94,7 +93,7 @@ func (c *Ini) parseVarReference(valStr string, sec Section) string {
 	var name string
 	var oldNew []string
 	for _, fVar := range vars {
-		realVal := ""
+		realVal := fVar
 		name = fVar[2 : len(fVar)-2]
 
 		if val, ok := sec[name]; ok {

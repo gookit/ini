@@ -238,6 +238,9 @@ func TestIni_Get(t *testing.T) {
 	st.True(ok)
 	st.Equal("value", str)
 
+	str, ok = conf.Get("no-sec.some")
+	st.False(ok)
+
 	// get string map(section data)
 	mp, ok := conf.StringMap("sec1")
 	st.True(ok)
@@ -401,6 +404,23 @@ k = v
 
 	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
 	st.Error(err)
+
+	// Readonly and ParseVar
+	conf = NewWithOptions(Readonly, ParseVar)
+	err = conf.LoadStrings(`
+key = val
+[sec]
+k = v
+k1 = %(key)s
+`)
+	st.Nil(err)
+
+	opts = conf.Options()
+	st.True(opts.ParseVar)
+
+	str, ok := conf.Get("sec.k1")
+	st.True(ok)
+	st.Equal("val", str)
 }
 
 func TestParseEnv(t *testing.T) {
@@ -409,6 +429,7 @@ func TestParseEnv(t *testing.T) {
 
 	err := conf.LoadStrings(`
 key = ${PATH}
+invalid = ${invalid
 notExist = ${NotExist|defValue}
 `)
 	st.Nil(err)
@@ -420,6 +441,11 @@ notExist = ${NotExist|defValue}
 	str, ok := conf.Get("key")
 	st.True(ok)
 	st.NotContains(str, "${")
+
+	str, ok = conf.Get("invalid")
+	st.True(ok)
+	st.Contains(str, "${")
+	st.Equal("${invalid", str)
 
 	str, ok = conf.Get("notExist")
 	st.True(ok)
@@ -433,6 +459,8 @@ func TestParseVar(t *testing.T) {
 	err := conf.LoadStrings(`
 key = val
 ref = %(sec.host)s
+invalid = %(secs
+notExist = %(varNotExist)s
 debug = true
 [sec]
 enable = %(debug)s
@@ -446,7 +474,15 @@ host = localhost
 	st.True(opts.ParseVar)
 	// fmt.Println(conf.Data())
 
-	str, ok := conf.Get("sec.host")
+	str, ok := conf.Get("invalid")
+	st.True(ok)
+	st.Equal("%(secs", str)
+
+	str, ok = conf.Get("notExist")
+	st.True(ok)
+	st.Equal("%(varNotExist)s", str)
+
+	str, ok = conf.Get("sec.host")
 	st.True(ok)
 	st.Equal("localhost", str)
 
@@ -481,6 +517,9 @@ func TestIni_Del(t *testing.T) {
 	st.False(ok)
 	ok = conf.Del("sec1.key")
 	st.True(ok)
+
+	ok = conf.Del("no-sec.key")
+	st.False(ok)
 
 	st.True(conf.HasSection("sec1"))
 
