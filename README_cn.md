@@ -132,7 +132,7 @@ host = localhost
 port = 8080
 ```
 
-启用变量解析后，将会解析`%(host)s`并替换为响应的变量：
+启用变量解析后，将会解析这里的 `%(host)s` 并替换为相应的变量值 `localhost`：
 
 ```go
 cfg := ini.New()
@@ -148,23 +148,23 @@ fmt.Print(cfg.MustString("portal.url"))
 
 ```go
 type Options struct {
-	// set to read-only mode
+	// 设置为只读模式. default False
 	Readonly bool
-	// parse ENV var name. default True
+	// 解析 ENV 变量名称. default True
 	ParseEnv bool
-	// parse variable reference. %(varName)s
+	// 解析变量引用 "%(varName)s". default False
 	ParseVar bool
 
-	// var left open char. default "%("
+	// 变量左侧字符. default "%("
 	VarOpen string
-	// var right open char. default ")s"
+	// 变量右侧字符. default ")s"
 	VarClose string
 
-	// ignore the case of the key. default False
+	// 忽略键名称大小写. default False
 	IgnoreCase bool
-	// default section name. default "__default"
+	// 默认的section名称. default "__default"
 	DefSection string
-	// sep char for split key path. default ".", use like "section.subKey"
+	// 路径分隔符，当通过key获取子级值时. default ".", 例如 "section.subKey"
 	SectionSep string
 }
 ```
@@ -181,19 +181,19 @@ cfg.WithOptions(ini.ParseEnv,ini.ParseVar, func (opts *Options) {
 
 ## 测试
 
-- go tests with cover
+- 测试并输出覆盖率
 
 ```bash
 go test ./... -cover
 ```
 
-- run lint by GoLint
+- 运行 GoLint 检查
 
 ```bash
 golint ./... 
 ```
 
-- see cover https://gocover.io/github.com/gookit/ini
+- 查看代码覆盖率 https://gocover.io/github.com/gookit/ini
 
 ## 参考 
 

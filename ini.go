@@ -21,7 +21,6 @@ import (
 const (
 	SepSection = "."
 	DefSection = "__default"
-	// EnvValue   = "${NAME}"
 )
 
 // Section in INI config
@@ -29,19 +28,19 @@ type Section map[string]string
 
 // Options for config
 type Options struct {
-	// set to read-only mode
+	// set to read-only mode. default False
 	Readonly bool
 	// parse ENV var name. default True
 	ParseEnv bool
-	// parse variable reference. %(varName)s
+	// parse variable reference "%(varName)s". default False
 	ParseVar bool
 
 	// var left open char. default "%("
 	VarOpen string
-	// var right open char. default ")s"
+	// var right close char. default ")s"
 	VarClose string
 
-	// ignore the case of the key. default False
+	// ignore key name case. default False
 	IgnoreCase bool
 	// default section name. default "__default"
 	DefSection string
