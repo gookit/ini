@@ -144,6 +144,41 @@ fmt.Print(cfg.MustString("portal.url"))
 // http://localhost:8080/Portal 
 ```
 
+## 可用选项
+
+```go
+type Options struct {
+	// set to read-only mode
+	Readonly bool
+	// parse ENV var name. default True
+	ParseEnv bool
+	// parse variable reference. %(varName)s
+	ParseVar bool
+
+	// var left open char. default "%("
+	VarOpen string
+	// var right open char. default ")s"
+	VarClose string
+
+	// ignore the case of the key. default False
+	IgnoreCase bool
+	// default section name. default "__default"
+	DefSection string
+	// sep char for split key path. default ".", use like "section.subKey"
+	SectionSep string
+}
+```
+
+- 应用选项
+
+```go
+cfg := ini.New()
+cfg.WithOptions(ini.ParseEnv,ini.ParseVar, func (opts *Options) {
+	opts.SectionSep = ":"
+	opts.DefSection = "default"
+})
+```
+
 ## 测试
 
 - go tests with cover
@@ -157,6 +192,8 @@ go test ./... -cover
 ```bash
 golint ./... 
 ```
+
+- see cover https://gocover.io/github.com/gookit/ini
 
 ## 参考 
 

@@ -143,15 +143,15 @@ func IgnoreCase(p *Parser) {
 
 // Parse a INI data string to golang
 func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			if err, ok = r.(errSyntax); ok {
-				return
-			}
-			panic(r)
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		var ok bool
+	// 		if err, ok = r.(errSyntax); ok {
+	// 			return
+	// 		}
+	// 		panic(r)
+	// 	}
+	// }()
 
 	if mode == ModeFull {
 		p = FullParser(opts...)

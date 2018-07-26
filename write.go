@@ -1,7 +1,6 @@
 package ini
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,19 +8,12 @@ import (
 	"sort"
 )
 
-// Export to INI text string
-func (c *Ini) Export() string {
-	buf := &bytes.Buffer{}
-
-	if _, err := c.WriteTo(buf); err == nil {
-		return buf.String()
-	}
-
-	return ""
-}
-
 // PrettyJSON translate to pretty JSON string
 func (c *Ini) PrettyJSON() string {
+	if len(c.data) == 0 {
+		return ""
+	}
+
 	out, err := json.MarshalIndent(c.data, "", "    ")
 	if err != nil {
 		return ""

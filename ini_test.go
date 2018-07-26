@@ -2,6 +2,7 @@ package ini
 
 // test cover details: https://gocover.io/github.com/gookit/ini
 import (
+	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -536,7 +537,11 @@ func TestOther(t *testing.T) {
 	st.Nil(err)
 
 	// export as INI string
-	str := conf.Export()
+	buf := &bytes.Buffer{}
+	_, err = conf.WriteTo(buf)
+	st.Nil(err)
+
+	str := buf.String()
 	st.Contains(str, "inhere")
 	st.Contains(str, "[sec1]")
 
@@ -561,6 +566,5 @@ func TestOther(t *testing.T) {
 
 	conf = New()
 	str = conf.PrettyJSON()
-	str = conf.Export()
 	st.Equal("", str)
 }

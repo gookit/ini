@@ -31,6 +31,8 @@ type Section map[string]string
 type Options struct {
 	// set to read-only mode
 	Readonly bool
+	// parse ENV var name. default True
+	ParseEnv bool
 	// parse variable reference. %(varName)s
 	ParseVar bool
 
@@ -39,13 +41,11 @@ type Options struct {
 	// var right open char. default ")s"
 	VarClose string
 
-	// parse ENV var name. default True
-	ParseEnv bool
 	// ignore the case of the key. default False
 	IgnoreCase bool
 	// default section name. default "__default"
 	DefSection string
-	// sep char for split section. default "."
+	// sep char for split key path. default ".", use like "section.subKey"
 	SectionSep string
 }
 
