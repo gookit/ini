@@ -46,10 +46,10 @@ func (c *Ini) Get(key string) (val string, ok bool) {
 		// must close lock. because parseVarReference() maybe loop call Get()
 		if !c.opts.Readonly {
 			c.lock.Unlock()
-			val = c.parseVarReference(val, strMap)
+			val = c.parseVarReference(key, val, strMap)
 			c.lock.Lock()
 		} else {
-			val = c.parseVarReference(val, strMap)
+			val = c.parseVarReference(key, val, strMap)
 		}
 	}
 
@@ -161,6 +161,14 @@ func (c *Ini) StringMap(name string) (mp map[string]string, ok bool) {
 	}
 
 	mp, ok = c.data[name]
+
+	// parser Var ref
+	if c.opts.ParseVar {
+		for k, v := range mp {
+			mp[k] = c.parseVarReference(k, v, mp)
+		}
+	}
+
 	return
 }
 

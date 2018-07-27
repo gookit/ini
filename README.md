@@ -10,7 +10,7 @@ ini parse by golang. ini config data manage
 - easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
 - support multi file, data load
 - support data override merge
-- support parse ENV key
+- support parse ENV variable
 - complete unit test(coverage > 90%)
 - support variable reference, default compatible with Python's configParser format `%(VAR)s`
 

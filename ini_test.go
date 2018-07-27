@@ -257,6 +257,7 @@ func TestIni_Get(t *testing.T) {
 	mp, ok = conf.StringMap("")
 	st.True(ok)
 	st.Equal("inhere", mp["name"])
+	st.NotContains(mp["notExist"], "${")
 
 	str, ok = conf.Get(" ")
 	st.False(ok)
@@ -503,6 +504,10 @@ host = localhost
 	str, ok = conf.Get("sec.url")
 	st.True(ok)
 	st.Equal("http://localhost/api", str)
+
+	mp, ok := conf.StringMap("sec")
+	st.True(ok)
+	st.Equal("true", mp["enable"])
 }
 
 func TestIni_Del(t *testing.T) {
