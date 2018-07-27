@@ -431,7 +431,8 @@ func TestParseEnv(t *testing.T) {
 	err := conf.LoadStrings(`
 key = ${PATH}
 invalid = ${invalid
-notExist = ${NotExist|defValue}
+notExist = ${NotExist}
+hasDefault = ${HasDef|defValue}
 `)
 	st.Nil(err)
 
@@ -443,12 +444,16 @@ notExist = ${NotExist|defValue}
 	st.True(ok)
 	st.NotContains(str, "${")
 
+	str, ok = conf.Get("notExist")
+	st.True(ok)
+	st.Equal("${NotExist}", str)
+
 	str, ok = conf.Get("invalid")
 	st.True(ok)
 	st.Contains(str, "${")
 	st.Equal("${invalid", str)
 
-	str, ok = conf.Get("notExist")
+	str, ok = conf.Get("hasDefault")
 	st.True(ok)
 	st.NotContains(str, "${")
 	st.Equal("defValue", str)

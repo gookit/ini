@@ -58,11 +58,11 @@ func (c *Ini) parseEnvValue(val string) string {
 	for _, fVar := range vars {
 		ss := strings.SplitN(fVar[2:len(fVar)-1], "|", 2)
 
-		// ${NotExist|defValue}
+		// has default ${NotExist|defValue}
 		if len(ss) == 2 {
 			name, def = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
-			// ${SHELL}
 		} else {
+			def = fVar
 			name = ss[0]
 		}
 
