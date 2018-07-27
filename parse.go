@@ -31,6 +31,11 @@ func (c *Ini) valueCollector(section, key, val string, isArr bool) {
 		key = strings.ToLower(key)
 	}
 
+	// if opts.ParseEnv is true. will parse like: "${SHELL}"
+	if c.opts.ParseEnv {
+		val = c.parseEnvValue(val)
+	}
+
 	if sec, ok := c.data[section]; ok {
 		sec[key] = val
 		c.data[section] = sec

@@ -53,11 +53,6 @@ func (c *Ini) Get(key string) (val string, ok bool) {
 		}
 	}
 
-	// if opts.ParseEnv is true. will parse like: "${SHELL}"
-	if c.opts.ParseEnv {
-		val = c.parseEnvValue(val)
-	}
-
 	return
 }
 
