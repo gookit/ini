@@ -236,8 +236,8 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 	section := p.DefSection
 	lineNum := 0
 	bytes = -1
-	readLine := true
 
+	var readLine bool
 	for readLine = in.Scan(); readLine; readLine = in.Scan() {
 		line := in.Text()
 

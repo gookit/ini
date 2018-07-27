@@ -1,6 +1,5 @@
 package ini
 
-// test cover details: https://gocover.io/github.com/gookit/ini
 import (
 	"bytes"
 	"fmt"
@@ -561,9 +560,9 @@ func TestOther(t *testing.T) {
 	st.Contains(str, "sec1")
 
 	// export to file
-	n, err := conf.WriteToFile("not/exist/export.ini")
+	_, err = conf.WriteToFile("not/exist/export.ini")
 	st.Error(err)
-	n, err = conf.WriteToFile("testdata/export.ini")
+	n, err := conf.WriteToFile("testdata/export.ini")
 	st.True(n > 0)
 	st.Nil(err)
 
@@ -573,6 +572,7 @@ func TestOther(t *testing.T) {
 	conf = New()
 	conf.data = nil
 	str = conf.PrettyJSON()
+	st.Equal("", str)
 
 	conf = New()
 	str = conf.PrettyJSON()
