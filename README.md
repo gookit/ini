@@ -16,6 +16,12 @@ ini parse by golang. ini config data manage
 
 > **[中文说明](README_cn.md)**
 
+## More formats
+
+If you want more support for file content formats, recommended use `gookit/config`
+
+- [gookit/config](https://github/gookit/config) - Support multi formats: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
+
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)

@@ -16,6 +16,12 @@
 
 > **[EN README](README.md)**
 
+## 更多格式
+
+如果你想要更多文件内容格式的支持，推荐使用 `gookit/config`
+
+- [gookit/config](https://github/gookit/config) - 支持多种格式: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
+
 ## Godoc
 
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
