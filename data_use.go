@@ -149,6 +149,16 @@ func (c *Ini) MustString(key string) string {
 	return c.DefString(key, "")
 }
 
+// Strings get a string array, by split a string
+func (c *Ini) Strings(key, sep string) (ss []string, ok bool) {
+	str, ok := c.Get(key)
+	if !ok {
+		return
+	}
+
+	return strings.Split(str, sep), ok
+}
+
 // StringMap get a section data map
 func (c *Ini) StringMap(name string) (mp map[string]string, ok bool) {
 	if c.opts.IgnoreCase {

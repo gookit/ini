@@ -312,6 +312,13 @@ func TestIni_Set(t *testing.T) {
 	str, ok := conf.String("name")
 	st.True(ok)
 	st.Equal("new name", str)
+
+	conf.SetString("can2arr", "va0,val1,val2")
+	_, ok = conf.Strings("can2arr-no", ",")
+	st.False(ok)
+	ss, ok := conf.Strings("can2arr", ",")
+	st.True(ok)
+	st.Equal("[va0 val1 val2]", fmt.Sprint(ss))
 }
 
 func TestIgnoreCase(t *testing.T) {

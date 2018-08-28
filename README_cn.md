@@ -24,6 +24,7 @@
 
 ## Godoc
 
+- [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
@@ -38,24 +39,27 @@ age = 50
 debug = true
 hasQuota1 = 'this is val'
 hasQuota2 = "this is val1"
+can2arr = val0,val1,val2
 shell = ${SHELL}
 noEnv = ${NotExist|defValue}
+nkey = val in default section
 
 ; comments
 [sec1]
 key = val0
 some = value
 stuff = things
+varRef = %(nkey)s
 ```
 
-- 开始使用
+### 载入数据
 
 ```go
 package main
 
 import (
-	"github.com/gookit/ini"
 	"fmt"
+	"github.com/gookit/ini"
 )
 
 // go run ./examples/demo.go
@@ -66,10 +70,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// fmt.Printf("%v\n", config.Data())
-
-	// 加载更多，将按键覆盖之前数据
+	
+	// 加载更多，相同的键覆盖之前数据
 	config.LoadStrings(`
 age = 100
 [sec1]
@@ -77,56 +79,68 @@ newK = newVal
 some = change val
 `)
 	// fmt.Printf("%v\n", config.Data())
-	
-	iv, ok := config.Int("age")
-	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)
-
-	bv, ok := config.Bool("debug")
-	fmt.Printf("get bool\n - ok: %v, val: %v\n", ok, bv)
-
-	name, ok := config.String("name")
-	fmt.Printf("get string\n - ok: %v, val: %v\n", ok, name)
-
-	sec1, ok := config.StringMap("sec1")
-	fmt.Printf("get section\n - ok: %v, val: %#v\n", ok, sec1)
-
-	str, ok := config.String("sec1.key")
-	fmt.Printf("get sub-value by path 'section.key'\n - ok: %v, val: %s\n", ok, str)
-
-	// can parse env name(ParseEnv: true)
-	fmt.Printf("get env 'envKey' val: %s\n", config.MustString("shell"))
-	fmt.Printf("get env 'envKey1' val: %s\n", config.MustString("noEnv"))
-
-	// set value
-	config.Set("name", "new name")
-	name, ok = config.String("name")
-	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
-
-	// export data to file
-	// _, err = config.WriteToFile("testdata/export.ini")
-	// if err != nil {
-	// 	panic(err)
-	// }
 }
 ```
 
-- 输出(by `go run ./examples/demo.go`)
+### 获取数据
 
-```text
-get int
- - ok: true, val: 100
-get bool
- - ok: true, val: true
-get string
- - ok: true, val: inhere
-get section
- - ok: true, val: map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
-get sub-value by path 'section.key'
- - ok: true, val: val0
-get env 'envKey' val: /bin/zsh
-get env 'envKey1' val: defValue
-set string
- - ok: true, val: new name
+- 获取整型
+
+```go
+age, ok := config.Int("age")
+fmt.Print(ok, age) // true 100
+```
+
+- 获取布尔值
+
+```go
+val, ok := config.Bool("debug")
+fmt.Print(ok, age) // true true
+```
+
+- 获取字符串
+
+```go
+name, ok := config.String("name")
+fmt.Print(ok, name) // true inhere
+```
+
+- 获取section数据(string map)
+
+```go
+val, ok := config.StringMap("sec1")
+fmt.Println(ok, val) 
+// true map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
+```
+
+- 获取的值是环境变量
+
+```go
+value, ok := config.String("shell")
+fmt.Print(ok, value) // true /bin/zsh
+```
+
+- 通过key path来直接获取子级值
+
+```go
+value, ok := config.String("sec1.key")
+fmt.Print(ok, value) // true val0
+```
+
+- 支持变量参考
+
+```go
+value, ok := config.String("sec1.varRef")
+fmt.Print(ok, value) // true val in default section
+```
+
+- 设置新的值
+
+```go
+// set value
+config.Set("name", "new name")
+name, ok = config.String("name")
+fmt.Print(ok, name) // true new name
 ```
 
 ## 变量参考解析

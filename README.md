@@ -24,6 +24,7 @@ If you want more support for file content formats, recommended use `gookit/confi
 
 ## Godoc
 
+- [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
@@ -48,7 +49,7 @@ some = value
 stuff = things
 ```
 
-- usage
+### Load data
 
 ```go
 package main
@@ -67,8 +68,6 @@ func main() {
 		panic(err)
 	}
 
-	// fmt.Printf("%v\n", config.Data())
-
 	// load more, will override prev data by key
 	config.LoadStrings(`
 age = 100
@@ -77,56 +76,68 @@ newK = newVal
 some = change val
 `)
 	// fmt.Printf("%v\n", config.Data())
-	
-	iv, ok := config.Int("age")
-	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)
-
-	bv, ok := config.Bool("debug")
-	fmt.Printf("get bool\n - ok: %v, val: %v\n", ok, bv)
-
-	name, ok := config.String("name")
-	fmt.Printf("get string\n - ok: %v, val: %v\n", ok, name)
-
-	sec1, ok := config.StringMap("sec1")
-	fmt.Printf("get section\n - ok: %v, val: %#v\n", ok, sec1)
-
-	str, ok := config.String("sec1.key")
-	fmt.Printf("get sub-value by path 'section.key'\n - ok: %v, val: %s\n", ok, str)
-
-	// can parse env name(ParseEnv: true)
-	fmt.Printf("get env 'envKey' val: %s\n", config.MustString("shell"))
-	fmt.Printf("get env 'envKey1' val: %s\n", config.MustString("noEnv"))
-
-	// set value
-	config.Set("name", "new name")
-	name, ok = config.String("name")
-	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
-
-	// export data to file
-	// _, err = config.WriteToFile("testdata/export.ini")
-	// if err != nil {
-	// 	panic(err)
-	// }
 }
 ```
 
-- output(by `go run ./examples/demo.go`)
+### Read data
 
-```text
-get int
- - ok: true, val: 100
-get bool
- - ok: true, val: true
-get string
- - ok: true, val: inhere
-get section
- - ok: true, val: map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
-get sub-value by path 'section.key'
- - ok: true, val: val0
-get env 'envKey' val: /bin/zsh
-get env 'envKey1' val: defValue
-set string
- - ok: true, val: new name
+- get integer
+
+```go
+age, ok := config.Int("age")
+fmt.Print(ok, age) // true 100
+```
+
+- get bool
+
+```go
+val, ok := config.Bool("debug")
+fmt.Print(ok, age) // true true
+```
+
+- get string
+
+```go
+name, ok := config.String("name")
+fmt.Print(ok, name) // true inhere
+```
+
+- get section data(string map)
+
+```go
+val, ok := config.StringMap("sec1")
+fmt.Println(ok, val) 
+// true map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
+```
+
+- value is ENV var
+
+```go
+value, ok := config.String("shell")
+fmt.Print(ok, value) // true /bin/zsh
+```
+
+- get value by key path
+
+```go
+value, ok := config.String("sec1.key")
+fmt.Print(ok, value) // true val0
+```
+
+- use var refer
+
+```go
+value, ok := config.String("sec1.varRef")
+fmt.Print(ok, value) // true val in default section
+```
+
+- setting new value
+
+```go
+// set value
+config.Set("name", "new name")
+name, ok = config.String("name")
+fmt.Print(ok, name) // true new name
 ```
 
 ## Variable reference resolution
