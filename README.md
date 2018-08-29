@@ -39,14 +39,17 @@ age = 50
 debug = true
 hasQuota1 = 'this is val'
 hasQuota2 = "this is val1"
+can2arr = val0,val1,val2
 shell = ${SHELL}
 noEnv = ${NotExist|defValue}
+nkey = val in default section
 
 ; comments
 [sec1]
 key = val0
 some = value
 stuff = things
+varRef = %(nkey)s
 ```
 
 ### Load data
@@ -56,7 +59,6 @@ package main
 
 import (
 	"github.com/gookit/ini"
-	"fmt"
 )
 
 // go run ./examples/demo.go

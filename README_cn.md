@@ -58,7 +58,6 @@ varRef = %(nkey)s
 package main
 
 import (
-	"fmt"
 	"github.com/gookit/ini"
 )
 
