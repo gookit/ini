@@ -156,7 +156,7 @@ func (c *Ini) Strings(key, sep string) (ss []string, ok bool) {
 		return
 	}
 
-	return strings.Split(str, sep), ok
+	return stringToArray(str, sep), ok
 }
 
 // StringMap get a section data map
@@ -426,4 +426,16 @@ func mapKeyToLower(src map[string]string) map[string]string {
 	}
 
 	return newMp
+}
+
+func stringToArray(str, sep string) (arr []string) {
+	str = strings.TrimSpace(str)
+	ss := strings.Split(str, sep)
+	for _, val := range ss {
+		if val = strings.TrimSpace(val); val != "" {
+			arr = append(arr, val)
+		}
+	}
+
+	return arr
 }
