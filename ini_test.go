@@ -240,6 +240,7 @@ func TestIni_Get(t *testing.T) {
 
 	str, ok = conf.Get("no-sec.some")
 	st.False(ok)
+	st.Equal("", str)
 
 	// get string map(section data)
 	mp, ok := conf.StringMap("sec1")

@@ -116,7 +116,7 @@ fmt.Println(ok, val)
 
 ```go
 value, ok := config.String("shell")
-fmt.Print(ok, value) // true /bin/zsh
+fmt.Printf("%v %q", ok, value)  // true "/bin/zsh"
 ```
 
 - get value by key path
@@ -130,7 +130,7 @@ fmt.Print(ok, value) // true val0
 
 ```go
 value, ok := config.String("sec1.varRef")
-fmt.Print(ok, value) // true val in default section
+fmt.Printf("%v %q", ok, value) // true "val in default section"
 ```
 
 - setting new value
@@ -139,7 +139,7 @@ fmt.Print(ok, value) // true val in default section
 // set value
 config.Set("name", "new name")
 name, ok = config.String("name")
-fmt.Print(ok, name) // true new name
+fmt.Printf("%v %q", ok, value) // true "new name"
 ```
 
 ## Variable reference resolution
@@ -212,9 +212,7 @@ go test ./... -cover
 golint ./...
 ```
 
-- see cover https://gocover.io/github.com/gookit/ini
-
-## Ref 
+## Refer 
 
 - [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
 - [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
