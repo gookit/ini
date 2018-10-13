@@ -22,7 +22,7 @@
 
 - [gookit/config](https://github/gookit/config) - 支持多种格式: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
 
-## Godoc
+## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
@@ -211,8 +211,6 @@ go test ./... -cover
 ```bash
 golint ./... 
 ```
-
-- 查看代码覆盖率 https://gocover.io/github.com/gookit/ini
 
 ## 参考 
 

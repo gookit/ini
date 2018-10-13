@@ -22,7 +22,7 @@ If you want more support for file content formats, recommended use `gookit/confi
 
 - [gookit/config](https://github/gookit/config) - Support multi formats: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
 
-## Godoc
+## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
