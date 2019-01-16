@@ -8,7 +8,7 @@ import (
 )
 
 // parse env value, eg: "${SHELL}" ${NotExist|defValue}
-var envRegex = regexp.MustCompile(`\$\{([\w-| ]+)}`)
+var envRegex = regexp.MustCompile(`\${([\w-| ]+)}`)
 
 // parse and load data
 func (c *Ini) parse(data string) (err error) {
@@ -16,16 +16,16 @@ func (c *Ini) parse(data string) (err error) {
 		return
 	}
 
-	p := parser.SimpleParser()
-	p.DefSection = c.opts.DefSection
+	p := parser.NewSimpled()
 	p.Collector = c.valueCollector
+	p.DefSection = c.opts.DefSection
 	p.IgnoreCase = c.opts.IgnoreCase
 
 	return p.ParseString(data)
 }
 
 // collect value form parser
-func (c *Ini) valueCollector(section, key, val string, isArr bool) {
+func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
 	if c.opts.IgnoreCase {
 		section = strings.ToLower(section)
 		key = strings.ToLower(key)

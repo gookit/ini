@@ -16,7 +16,7 @@ func Example() {
 	}
 
 	// load more, will override prev data by key
-	config.LoadStrings(`
+	_= config.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal
@@ -44,7 +44,7 @@ some = change val
 	fmt.Printf("get env 'envKey1' val: %s\n", config.MustString("noEnv"))
 
 	// set value
-	config.Set("name", "new name")
+	_= config.Set("name", "new name")
 	name, ok = config.String("name")
 	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
 

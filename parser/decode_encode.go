@@ -2,10 +2,36 @@ package parser
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 )
+
+// Decode INI content to golang data
+func Decode(blob []byte, v interface{}) error {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(v))
+	}
+
+	// if rv.IsNil() {
+	// 	return fmt.Errorf("ini: Decode of nil %s", reflect.TypeOf(v))
+	// }
+
+	p, err := Parse(string(blob), ModeFull, NoDefSection)
+	if err != nil {
+		return err
+	}
+
+	bs, err := json.Marshal(p.fullData)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(bs, v)
+}
 
 // Encode golang data to INI
 func Encode(v interface{}, defSection ...string) (out []byte, err error) {
@@ -46,7 +72,6 @@ func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, 
 
 	for _, key := range sections {
 		item := data[key]
-
 		switch tpData := item.(type) {
 		case float32, float64, int, int32, int64, string, bool: // k-v of the default section
 			_, err = defBuf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
@@ -140,9 +165,10 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 			}
 		}
 
+		counter = 0
 		items := data[section]
 		orderedStringKeys := make([]string, len(items))
-		counter = 0
+
 		for key := range items {
 			orderedStringKeys[counter] = key
 			counter++
