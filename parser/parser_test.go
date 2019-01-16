@@ -157,6 +157,7 @@ key = val0
 	err = p.ParseString(iniStr)
 	st.Nil(err)
 
+	p.Reset()
 	err = p.ParseString(`
 [__default]
 newKey = new val
@@ -164,7 +165,12 @@ newKey = new val
 newKey = val5
 [newSec]
 key = val0
+arr[] = val0
+arr[] = val1
+[newSec]
+key1 = val1
+arr[] = val2
 `)
 	st.Nil(err)
-	// fmt.Printf("%#v\n", p.ParsedData())
+	fmt.Printf("%#v\n", p.ParsedData())
 }

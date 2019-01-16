@@ -16,7 +16,7 @@ func Example() {
 	}
 
 	// load more, will override prev data by key
-	_= config.LoadStrings(`
+	_ = config.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal
@@ -44,7 +44,7 @@ some = change val
 	fmt.Printf("get env 'envKey1' val: %s\n", config.MustString("noEnv"))
 
 	// set value
-	_= config.Set("name", "new name")
+	_ = config.Set("name", "new name")
 	name, ok = config.String("name")
 	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
 
@@ -105,6 +105,7 @@ func TestLoad(t *testing.T) {
 	conf, err = LoadStrings("name = inhere")
 	st.Nil(err)
 	st.NotEmpty(conf.Data())
+	st.False(conf.IsEmpty())
 
 	conf, err = LoadStrings(" ")
 	st.Nil(err)
@@ -270,10 +271,16 @@ func TestIni_Set(t *testing.T) {
 	conf, err := LoadStrings(iniStr)
 	st.Nil(err)
 
-	conf.Set(" ", "val")
+	err = conf.Set("float", 34.5)
+	st.Nil(err)
+	st.Equal("34.5", conf.MustString("float"))
+
+	err = conf.Set(" ", "val")
+	st.Error(err)
 	st.False(conf.HasKey(" "))
 
-	conf.Set("key", "val", "newSec")
+	err = conf.Set("key", "val", "newSec")
+	st.Nil(err)
 	st.True(conf.HasSection("newSec"))
 
 	val, ok := conf.Get("newSec.key")
@@ -284,7 +291,8 @@ func TestIni_Set(t *testing.T) {
 	st.True(ok)
 	st.Equal("val", mp["key"])
 
-	conf.SetSection("newSec1", map[string]string{"k0": "v0"})
+	err = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
+	st.Nil(err)
 	st.True(conf.HasSection("newSec1"))
 
 	mp, ok = conf.Section("newSec1")
@@ -294,27 +302,32 @@ func TestIni_Set(t *testing.T) {
 	err = conf.NewSection("NewSec2", map[string]string{"kEy0": "val"})
 	st.Nil(err)
 
-	conf.SetInt("int", 345, "newSec")
+	err = conf.SetInt("int", 345, "newSec")
+	st.Nil(err)
 	iv, ok := conf.Int("newSec.int")
 	st.True(ok)
 	st.Equal(345, iv)
 
-	conf.SetBool("bol", false, "newSec")
+	err = conf.SetBool("bol", false, "newSec")
+	st.Nil(err)
 	bv, ok := conf.Bool("newSec.bol")
 	st.True(ok)
 	st.False(bv)
 
-	conf.SetBool("bol", true, "newSec")
+	err = conf.SetBool("bol", true, "newSec")
+	st.Nil(err)
 	bv, ok = conf.Bool("newSec.bol")
 	st.True(ok)
 	st.True(bv)
 
-	conf.SetString("name", "new name")
+	err = conf.SetString("name", "new name")
+	st.Nil(err)
 	str, ok := conf.String("name")
 	st.True(ok)
 	st.Equal("new name", str)
 
-	conf.SetString("can2arr", "va0,val1,val2")
+	err = conf.SetString("can2arr", "va0,val1,val2")
+	st.Nil(err)
 	_, ok = conf.Strings("can2arr-no", ",")
 	st.False(ok)
 	ss, ok := conf.Strings("can2arr", ",")
@@ -344,11 +357,10 @@ sK = val
 	st.True(ok)
 	st.Equal("val", str)
 
-	st.True(conf.Del("key"))
+	st.True(conf.Delete("key"))
 	st.False(conf.HasKey("kEy"))
 
-	conf.Set("NK", "val1")
-
+	_ = conf.Set("NK", "val1")
 	str, ok = conf.String("nk")
 	st.True(ok)
 	st.Equal("val1", str)
@@ -368,12 +380,12 @@ sK = val
 	st.True(ok)
 	st.Equal("val", sec["key0"])
 
-	conf.SetSection("NewSec", map[string]string{"key1": "val0"})
+	_ = conf.SetSection("NewSec", map[string]string{"key1": "val0"})
 	str, ok = conf.String("newSec.key1")
 	st.True(ok)
 	st.Equal("val0", str)
 
-	conf.SetSection("newSec1", map[string]string{"k0": "v0"})
+	_ = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
 	st.True(conf.HasSection("newSec1"))
 	st.True(conf.HasSection("newsec1"))
 	st.True(conf.DelSection("newsec1"))
@@ -401,7 +413,7 @@ k = v
 	})
 	st.Error(err)
 
-	ok := conf.Del("key")
+	ok := conf.Delete("key")
 	st.False(ok)
 
 	ok = conf.DelSection("sec")
@@ -517,26 +529,26 @@ host = localhost
 	st.Equal("true", mp["enable"])
 }
 
-func TestIni_Del(t *testing.T) {
+func TestIni_Delete(t *testing.T) {
 	st := assert.New(t)
 
 	conf, err := LoadStrings(iniStr)
 	st.Nil(err)
 
 	st.True(conf.HasKey("name"))
-	ok := conf.Del("name")
+	ok := conf.Delete("name")
 	st.True(ok)
 	st.False(conf.HasKey("name"))
 
-	st.False(conf.Del(" "))
-	st.False(conf.Del("no-key"))
+	st.False(conf.Delete(" "))
+	st.False(conf.Delete("no-key"))
 
-	ok = conf.Del("sec1.notExist")
+	ok = conf.Delete("sec1.notExist")
 	st.False(ok)
-	ok = conf.Del("sec1.key")
+	ok = conf.Delete("sec1.key")
 	st.True(ok)
 
-	ok = conf.Del("no-sec.key")
+	ok = conf.Delete("no-sec.key")
 	st.False(ok)
 
 	st.True(conf.HasSection("sec1"))

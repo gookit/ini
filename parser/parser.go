@@ -289,9 +289,9 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 		return
 	}
 
-	secData, ok := p.fullData[section]
+	secData, exists := p.fullData[section]
 	// first create
-	if !ok {
+	if !exists {
 		if isSlice {
 			p.fullData[section] = map[string]interface{}{key: []string{val}}
 		} else {
@@ -376,7 +376,7 @@ func (p *Parser) SimpleData() map[string]map[string]string {
 	return p.simpleData
 }
 
-// Reset Parser, clear parsed data
+// Reset parser, clear parsed data
 func (p *Parser) Reset() {
 	// p.parsed = false
 	if p.parseMode == ModeFull {

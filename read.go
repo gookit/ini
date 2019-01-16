@@ -1,14 +1,9 @@
 package ini
 
 import (
-	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 )
-
-// if is readonly
-var errSetInReadonly = errors.New("ini: The config manager instance in 'readonly' mode")
 
 /*************************************************************
  * data get
@@ -22,16 +17,12 @@ func (c *Ini) Get(key string) (val string, ok bool) {
 		defer c.lock.Unlock()
 	}
 
-	sep := c.opts.SectionSep
-	key = formatKey(key, sep)
+	key = c.formatKey(key)
 	if key == "" {
 		return
 	}
 
-	if c.opts.IgnoreCase {
-		key = strings.ToLower(key)
-	}
-
+	sep := c.opts.SectionSep
 	// get section data
 	name, key := c.splitSectionAndKey(key, sep)
 	strMap, ok := c.data[name]
@@ -161,10 +152,7 @@ func (c *Ini) Strings(key, sep string) (ss []string, ok bool) {
 
 // StringMap get a section data map
 func (c *Ini) StringMap(name string) (mp map[string]string, ok bool) {
-	if c.opts.IgnoreCase {
-		name = strings.ToLower(name)
-	}
-
+	name = c.formatKey(name)
 	// empty name, return default section
 	if name == "" {
 		name = c.opts.DefSection
@@ -178,7 +166,6 @@ func (c *Ini) StringMap(name string) (mp map[string]string, ok bool) {
 			mp[k] = c.parseVarReference(k, v, mp)
 		}
 	}
-
 	return
 }
 
@@ -193,73 +180,8 @@ func (c *Ini) MustMap(name string) map[string]string {
 }
 
 // Section get a section data map
-func (c *Ini) Section(name string) (sec Section, ok bool) {
+func (c *Ini) Section(name string) (Section, bool) {
 	return c.StringMap(name)
-}
-
-/*************************************************************
- * config set
- *************************************************************/
-
-// Set a value to the section by key.
-// if section is empty, will set to default section
-func (c *Ini) Set(key, val string, section ...string) (err error) {
-	// if is readonly
-	if c.opts.Readonly {
-		return errSetInReadonly
-	}
-
-	c.ensureInit()
-
-	// open lock
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	sep := c.opts.SectionSep
-	key = formatKey(key, sep)
-	if key == "" {
-		return
-	}
-
-	name := c.opts.DefSection
-	if len(section) > 0 {
-		name = section[0]
-	}
-
-	if c.opts.IgnoreCase {
-		key = strings.ToLower(key)
-		name = strings.ToLower(name)
-	}
-
-	sec, ok := c.data[name]
-	if ok {
-		sec[key] = val
-	} else {
-		sec = Section{key: val}
-	}
-
-	c.data[name] = sec
-	return
-}
-
-// SetInt set a int by key
-func (c *Ini) SetInt(key string, val int, section ...string) {
-	c.Set(key, fmt.Sprintf("%d", val), section...)
-}
-
-// SetBool set a bool by key
-func (c *Ini) SetBool(key string, val bool, section ...string) {
-	valStr := "false"
-	if val {
-		valStr = "true"
-	}
-
-	c.Set(key, valStr, section...)
-}
-
-// SetString set a string by key
-func (c *Ini) SetString(key, val string, section ...string) {
-	c.Set(key, val, section...)
 }
 
 /*************************************************************
@@ -273,9 +195,7 @@ func (c *Ini) SetSection(name string, values map[string]string) (err error) {
 		return errSetInReadonly
 	}
 
-	if c.opts.IgnoreCase {
-		name = strings.ToLower(name)
-	}
+	name = c.formatKey(name)
 
 	if old, ok := c.data[name]; ok {
 		c.data[name] = mergeStringMap(values, old, c.opts.IgnoreCase)
@@ -283,10 +203,8 @@ func (c *Ini) SetSection(name string, values map[string]string) (err error) {
 		if c.opts.IgnoreCase {
 			values = mapKeyToLower(values)
 		}
-
 		c.data[name] = values
 	}
-
 	return
 }
 
@@ -308,134 +226,21 @@ func (c *Ini) NewSection(name string, values map[string]string) (err error) {
 
 // HasSection has section
 func (c *Ini) HasSection(name string) bool {
-	if c.opts.IgnoreCase {
-		name = strings.ToLower(name)
-	}
-
+	name = c.formatKey(name)
 	_, ok := c.data[name]
 	return ok
 }
 
 // DelSection del section by name
-func (c *Ini) DelSection(name string) bool {
+func (c *Ini) DelSection(name string) (ok bool) {
 	// if is readonly
 	if c.opts.Readonly {
-		return false
+		return
 	}
 
-	if c.opts.IgnoreCase {
-		name = strings.ToLower(name)
-	}
-
-	_, ok := c.data[name]
-	if ok {
+	name = c.formatKey(name)
+	if _, ok = c.data[name]; ok {
 		delete(c.data, name)
 	}
-
-	return ok
-}
-
-/*************************************************************
- * helper methods
- *************************************************************/
-
-// HasKey check
-func (c *Ini) HasKey(key string) (ok bool) {
-	_, ok = c.Get(key)
 	return
-}
-
-// Del key
-func (c *Ini) Del(key string) (ok bool) {
-	// if is readonly
-	if c.opts.Readonly {
-		return
-	}
-
-	sep := c.opts.SectionSep
-	key = formatKey(key, sep)
-	if key == "" {
-		return
-	}
-
-	if c.opts.IgnoreCase {
-		key = strings.ToLower(key)
-	}
-
-	sec, key := c.splitSectionAndKey(key, sep)
-	mp, ok := c.data[sec]
-	if !ok {
-		return
-	}
-
-	if _, ok = mp[key]; ok {
-		delete(mp, key)
-		c.data[sec] = mp
-	}
-
-	return
-}
-
-// Reset all data
-func (c *Ini) Reset() {
-	c.data = make(map[string]Section)
-}
-
-// Data get all data
-func (c *Ini) Data() map[string]Section {
-	return c.data
-}
-
-func (c *Ini) splitSectionAndKey(key, sep string) (string, string) {
-	// default find from default Section
-	name := c.opts.DefSection
-
-	// get val by path. eg "log.dir"
-	if strings.Contains(key, sep) {
-		ss := strings.SplitN(key, sep, 2)
-		name, key = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
-	}
-
-	return name, key
-}
-
-// format key
-func formatKey(key, sep string) string {
-	return strings.Trim(strings.TrimSpace(key), sep)
-}
-
-// simple merge two string map
-func mergeStringMap(src, dst map[string]string, ignoreCase bool) map[string]string {
-	for k, v := range src {
-		if ignoreCase {
-			k = strings.ToLower(k)
-		}
-
-		dst[k] = v
-	}
-
-	return dst
-}
-
-func mapKeyToLower(src map[string]string) map[string]string {
-	newMp := make(map[string]string)
-
-	for k, v := range src {
-		k = strings.ToLower(k)
-		newMp[k] = v
-	}
-
-	return newMp
-}
-
-func stringToArray(str, sep string) (arr []string) {
-	str = strings.TrimSpace(str)
-	ss := strings.Split(str, sep)
-	for _, val := range ss {
-		if val = strings.TrimSpace(val); val != "" {
-			arr = append(arr, val)
-		}
-	}
-
-	return arr
 }

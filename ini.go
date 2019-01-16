@@ -11,9 +11,11 @@ INI parser is: https://github.com/gookit/ini/parser
 package ini
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strings"
 	"sync"
 )
 
@@ -21,6 +23,11 @@ import (
 const (
 	SepSection = "."
 	DefSection = "__default"
+)
+
+var (
+	errEmptyKey      = errors.New("ini: key name cannot be empty")
+	errSetInReadonly = errors.New("ini: config manager instance in 'readonly' mode")
 )
 
 // Section in INI config
@@ -42,7 +49,7 @@ type Options struct {
 
 	// ignore key name case. default False
 	IgnoreCase bool
-	// default section name. default "__default"
+	// default section name. default "__default", it's allow empty string.
 	DefSection string
 	// sep char for split key path. default ".", use like "section.subKey"
 	SectionSep string
@@ -72,7 +79,7 @@ func New() *Ini {
 }
 
 // NewWithOptions new a instance and with some options
-// usage:
+// Usage:
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
 	c := New()
@@ -256,7 +263,7 @@ func (c *Ini) LoadData(data map[string]Section) (err error) {
 }
 
 func (c *Ini) ensureInit() {
-	if c.initialized {
+	if !c.IsEmpty() {
 		return
 	}
 
@@ -301,6 +308,115 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 			return
 		}
 	}
-
 	return
+}
+
+// HasKey check
+func (c *Ini) HasKey(key string) (ok bool) {
+	_, ok = c.Get(key)
+	return
+}
+
+// Delete value by key
+func (c *Ini) Delete(key string) (ok bool) {
+	if c.opts.Readonly {
+		return
+	}
+
+	key = c.formatKey(key)
+	if key == "" {
+		return
+	}
+
+	sep := c.opts.SectionSep
+	sec, key := c.splitSectionAndKey(key, sep)
+	mp, ok := c.data[sec]
+	if !ok {
+		return
+	}
+
+	// key in a section
+	if _, ok = mp[key]; ok {
+		delete(mp, key)
+		c.data[sec] = mp
+	}
+	return
+}
+
+// Reset all data
+func (c *Ini) Reset() {
+	c.data = make(map[string]Section)
+}
+
+// IsEmpty config data is empty
+func (c *Ini) IsEmpty() bool {
+	return len(c.data) == 0
+}
+
+// Data get all data
+func (c *Ini) Data() map[string]Section {
+	return c.data
+}
+
+/*************************************************************
+ * helper methods
+ *************************************************************/
+
+func (c *Ini) splitSectionAndKey(key, sep string) (string, string) {
+	// default find from default Section
+	name := c.opts.DefSection
+
+	// get val by path. eg "log.dir"
+	if strings.Contains(key, sep) {
+		ss := strings.SplitN(key, sep, 2)
+		name, key = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
+	}
+
+	return name, key
+}
+
+// format key by some options
+func (c *Ini) formatKey(key string) string {
+	sep := c.opts.SectionSep
+	key = strings.Trim(strings.TrimSpace(key), sep)
+
+	if c.opts.IgnoreCase {
+		key = strings.ToLower(key)
+	}
+
+	return key
+}
+
+// simple merge two string map
+func mergeStringMap(src, dst map[string]string, ignoreCase bool) map[string]string {
+	for k, v := range src {
+		if ignoreCase {
+			k = strings.ToLower(k)
+		}
+
+		dst[k] = v
+	}
+	return dst
+}
+
+func mapKeyToLower(src map[string]string) map[string]string {
+	newMp := make(map[string]string)
+
+	for k, v := range src {
+		k = strings.ToLower(k)
+		newMp[k] = v
+	}
+	return newMp
+}
+
+func stringToArray(str, sep string) (arr []string) {
+	str = strings.TrimSpace(str)
+	ss := strings.Split(str, sep)
+
+	for _, val := range ss {
+		if val = strings.TrimSpace(val); val != "" {
+			arr = append(arr, val)
+		}
+	}
+	return arr
 }
