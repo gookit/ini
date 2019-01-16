@@ -5,14 +5,14 @@
 [![Coverage Status](https://coveralls.io/repos/github/gookit/ini/badge.svg?branch=master)](https://coveralls.io/github/gookit/ini?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
 
-ini parse by golang. ini config data manage
+INI data parse by golang. INI config data management tool library.
 
-- easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
-- support multi file, data load
-- support data override merge
-- support parse ENV variable
-- complete unit test(coverage > 90%)
-- support variable reference, default compatible with Python's configParser format `%(VAR)s`
+- Easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
+- Support multi file, data load
+- Support data override merge
+- Support parse ENV variable
+- Complete unit test(coverage > 90%)
+- Support variable reference, default compatible with Python's configParser format `%(VAR)s`
 
 > **[中文说明](README_cn.md)**
 
@@ -25,7 +25,6 @@ If you want more support for file content formats, recommended use `gookit/confi
 ## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
-- [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
 ## Usage
@@ -65,13 +64,13 @@ import (
 func main() {
 	// config, err := ini.LoadFiles("testdata/tesdt.ini")
 	// LoadExists will ignore not exists file
-	config, err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
+	err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
 		panic(err)
 	}
 
 	// load more, will override prev data by key
-	config.LoadStrings(`
+	err = ini.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal

@@ -25,7 +25,6 @@
 ## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
-- [godoc for gopkg](https://godoc.org/gopkg.in/gookit/ini.v1)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
 ## 快速使用
@@ -65,13 +64,13 @@ import (
 func main() {
 	// config, err := ini.LoadFiles("testdata/tesdt.ini")
 	// LoadExists 将忽略不存在的文件
-	config, err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
+	err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
 		panic(err)
 	}
 	
 	// 加载更多，相同的键覆盖之前数据
-	config.LoadStrings(`
+	err = ini.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal
