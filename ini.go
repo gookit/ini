@@ -28,6 +28,8 @@ const (
 var (
 	errEmptyKey      = errors.New("ini: key name cannot be empty")
 	errSetInReadonly = errors.New("ini: config manager instance in 'readonly' mode")
+	// default instance
+	dc = New()
 )
 
 // Section in INI config
@@ -57,20 +59,18 @@ type Options struct {
 
 // Ini config data manager
 type Ini struct {
-	data map[string]Section
 	opts *Options
 	lock sync.RWMutex
-
-	// when has data loaded, will change to true
-	initialized bool
-	varRegex    *regexp.Regexp
+	data map[string]Section
+	// regex for match user var
+	varRegex *regexp.Regexp
 }
 
 /*************************************************************
- * create config instance
+ * config instance
  *************************************************************/
 
-// New a instance
+// New a config instance, with default options
 func New() *Ini {
 	return &Ini{
 		data: make(map[string]Section),
@@ -85,36 +85,12 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 	c := New()
 	// apply options
 	c.WithOptions(opts...)
-
 	return c
 }
 
-/*************************************************************
- * quick use
- *************************************************************/
-
-// LoadFiles load data from files
-func LoadFiles(files ...string) (c *Ini, err error) {
-	c = New()
-	err = c.LoadFiles(files...)
-
-	return
-}
-
-// LoadExists load files, will ignore not exists
-func LoadExists(files ...string) (c *Ini, err error) {
-	c = New()
-	err = c.LoadExists(files...)
-
-	return
-}
-
-// LoadStrings load data from strings
-func LoadStrings(strings ...string) (c *Ini, err error) {
-	c = New()
-	err = c.LoadStrings(strings...)
-
-	return
+// Default config instance
+func Default() *Ini {
+	return dc
 }
 
 /*************************************************************
@@ -137,7 +113,7 @@ func newDefaultOptions() *Options {
 }
 
 // Readonly setting
-// usage:
+// Usage:
 // ini.NewWithOptions(ini.Readonly)
 func Readonly(opts *Options) {
 	opts.Readonly = true
@@ -169,8 +145,8 @@ func (c *Ini) Options() *Options {
 
 // WithOptions apply some options
 func (c *Ini) WithOptions(opts ...func(*Options)) {
-	if c.initialized {
-		panic("ini: Cannot set options after initialization is complete")
+	if !c.IsEmpty() {
+		panic("ini: Cannot set options after data has been load")
 	}
 
 	// apply options
@@ -189,6 +165,9 @@ func (c *Ini) DefSection() string {
  *************************************************************/
 
 // LoadFiles load data from files
+func LoadFiles(files ...string) error { return dc.LoadFiles(files...) }
+
+// LoadFiles load data from files
 func (c *Ini) LoadFiles(files ...string) (err error) {
 	c.ensureInit()
 
@@ -198,12 +177,11 @@ func (c *Ini) LoadFiles(files ...string) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
 	return
 }
+
+// LoadExists load files, will ignore not exists
+func LoadExists(files ...string) error { return dc.LoadExists(files...) }
 
 // LoadExists load files, will ignore not exists
 func (c *Ini) LoadExists(files ...string) (err error) {
@@ -215,12 +193,11 @@ func (c *Ini) LoadExists(files ...string) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
 	return
 }
+
+// LoadStrings load data from strings
+func LoadStrings(strings ...string) error { return dc.LoadStrings(strings...) }
 
 // LoadStrings load data from strings
 func (c *Ini) LoadStrings(strings ...string) (err error) {
@@ -232,19 +209,16 @@ func (c *Ini) LoadStrings(strings ...string) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
-
 	return
 }
 
 // LoadData load data map
 func (c *Ini) LoadData(data map[string]Section) (err error) {
 	c.ensureInit()
+
 	if len(c.data) == 0 {
 		c.data = data
+		return
 	}
 
 	// append or override setting data
@@ -254,11 +228,6 @@ func (c *Ini) LoadData(data map[string]Section) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
-
 	return
 }
 
