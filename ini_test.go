@@ -114,6 +114,10 @@ func TestLoad(t *testing.T) {
 	// test auto init and load data
 	conf = new(Ini)
 	err = conf.LoadData(map[string]Section{
+		"sec1": {"k": "v"},
+	})
+	st.Nil(err)
+	err = conf.LoadData(map[string]Section{
 		"name": {"k": "v"},
 	})
 	st.Nil(err)

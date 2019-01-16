@@ -60,10 +60,8 @@ type Ini struct {
 	data map[string]Section
 	opts *Options
 	lock sync.RWMutex
-
-	// when has data loaded, will change to true
-	initialized bool
-	varRegex    *regexp.Regexp
+	// regex for match custom var refers
+	varRegex *regexp.Regexp
 }
 
 /*************************************************************
@@ -83,9 +81,7 @@ func New() *Ini {
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
 	c := New()
-	// apply options
 	c.WithOptions(opts...)
-
 	return c
 }
 
@@ -97,7 +93,6 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 func LoadFiles(files ...string) (c *Ini, err error) {
 	c = New()
 	err = c.LoadFiles(files...)
-
 	return
 }
 
@@ -105,7 +100,6 @@ func LoadFiles(files ...string) (c *Ini, err error) {
 func LoadExists(files ...string) (c *Ini, err error) {
 	c = New()
 	err = c.LoadExists(files...)
-
 	return
 }
 
@@ -113,7 +107,6 @@ func LoadExists(files ...string) (c *Ini, err error) {
 func LoadStrings(strings ...string) (c *Ini, err error) {
 	c = New()
 	err = c.LoadStrings(strings...)
-
 	return
 }
 
@@ -169,8 +162,8 @@ func (c *Ini) Options() *Options {
 
 // WithOptions apply some options
 func (c *Ini) WithOptions(opts ...func(*Options)) {
-	if c.initialized {
-		panic("ini: Cannot set options after initialization is complete")
+	if !c.IsEmpty() {
+		panic("ini: Cannot set options after data has been load")
 	}
 
 	// apply options
@@ -198,10 +191,6 @@ func (c *Ini) LoadFiles(files ...string) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
 	return
 }
 
@@ -214,10 +203,6 @@ func (c *Ini) LoadExists(files ...string) (err error) {
 		if err != nil {
 			return
 		}
-	}
-
-	if !c.initialized {
-		c.initialized = true
 	}
 	return
 }
@@ -232,19 +217,16 @@ func (c *Ini) LoadStrings(strings ...string) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
-
 	return
 }
 
 // LoadData load data map
 func (c *Ini) LoadData(data map[string]Section) (err error) {
 	c.ensureInit()
+
 	if len(c.data) == 0 {
 		c.data = data
+		return
 	}
 
 	// append or override setting data
@@ -254,11 +236,6 @@ func (c *Ini) LoadData(data map[string]Section) (err error) {
 			return
 		}
 	}
-
-	if !c.initialized {
-		c.initialized = true
-	}
-
 	return
 }
 

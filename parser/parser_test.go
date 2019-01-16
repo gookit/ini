@@ -172,5 +172,5 @@ key1 = val1
 arr[] = val2
 `)
 	st.Nil(err)
-	fmt.Printf("%#v\n", p.ParsedData())
+	// fmt.Printf("%#v\n", p.ParsedData())
 }

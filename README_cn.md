@@ -71,7 +71,7 @@ func main() {
 	}
 	
 	// 加载更多，相同的键覆盖之前数据
-	config.LoadStrings(`
+	err = config.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal

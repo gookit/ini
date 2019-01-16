@@ -7,12 +7,12 @@
 
 ini parse by golang. ini config data manage
 
-- easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
-- support multi file, data load
-- support data override merge
-- support parse ENV variable
-- complete unit test(coverage > 90%)
-- support variable reference, default compatible with Python's configParser format `%(VAR)s`
+- Easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
+- Support multi file, data load
+- Support data override merge
+- Support parse ENV variable
+- Support variable reference, default compatible with Python's configParser format `%(VAR)s`
+- Complete unit test(coverage > 90%)
 
 > **[中文说明](README_cn.md)**
 
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	// load more, will override prev data by key
-	config.LoadStrings(`
+	err = config.LoadStrings(`
 age = 100
 [sec1]
 newK = newVal
