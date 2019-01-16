@@ -312,15 +312,24 @@ func (c *Ini) Delete(key string) (ok bool) {
 	return
 }
 
+// Reset all data for the default
+func Reset() { dc.Reset() }
+
 // Reset all data
 func (c *Ini) Reset() {
 	c.data = make(map[string]Section)
 }
 
 // IsEmpty config data is empty
+func IsEmpty() bool { return len(dc.data) == 0 }
+
+// IsEmpty config data is empty
 func (c *Ini) IsEmpty() bool {
 	return len(c.data) == 0
 }
+
+// Data get all data from default instance
+func Data() map[string]Section { return dc.data }
 
 // Data get all data
 func (c *Ini) Data() map[string]Section {
