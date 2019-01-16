@@ -7,12 +7,12 @@
 
 使用INI格式作为配置，配置数据的加载，管理，使用
 
-- 使用简单(获取: `Int` `Bool` `String` `StringMap`, 设置: `SetInt` `SetBool` `SetString` ...)
+- 使用简单(获取: `Int` `Bool` `String` `StringMap`, 设置: `Set` `SetInt` `SetBool` `SetString` ...)
 - 支持多文件，数据加载
 - 支持数据覆盖合并
 - 支持解析 ENV 变量名
-- 完善的单元测试(coverage > 90%)
 - 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
+- 完善的单元测试(coverage > 90%)
 
 > **[EN README](README.md)**
 
