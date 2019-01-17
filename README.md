@@ -7,14 +7,14 @@
 
 INI data parse by golang. INI config data management tool library.
 
-- Easy to use(get: `Int` `Bool` `String` `StringMap`, set: `SetInt` `SetBool` `SetString` ...)
+> **[中文说明](README_cn.md)**
+
+- Easy to use(get: `Int` `Int64` `Bool` `String` `StringMap` ..., set: `Set`)
 - Support multi file, data load
 - Support data override merge
 - Support parse ENV variable
 - Complete unit test(coverage > 90%)
 - Support variable reference, default compatible with Python's configParser format `%(VAR)s`
-
-> **[中文说明](README_cn.md)**
 
 ## More formats
 
@@ -82,63 +82,63 @@ some = change val
 
 ### Read data
 
-- get integer
+- Get integer
 
 ```go
-age, ok := config.Int("age")
-fmt.Print(ok, age) // true 100
+age := config.Int("age")
+fmt.Print(age) // 100
 ```
 
-- get bool
+- Get bool
 
 ```go
-val, ok := config.Bool("debug")
-fmt.Print(ok, age) // true true
+val := config.Bool("debug")
+fmt.Print(age) // true
 ```
 
-- get string
+- Get string
 
 ```go
-name, ok := config.String("name")
-fmt.Print(ok, name) // true inhere
+name := config.String("name")
+fmt.Print(name) // inhere
 ```
 
-- get section data(string map)
+- Get section data(string map)
 
 ```go
-val, ok := config.StringMap("sec1")
-fmt.Println(ok, val) 
-// true map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
+val := config.StringMap("sec1")
+fmt.Println(val) 
+// map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
 ```
 
-- value is ENV var
+- Value is ENV var
 
 ```go
-value, ok := config.String("shell")
-fmt.Printf("%v %q", ok, value)  // true "/bin/zsh"
+value := config.String("shell")
+fmt.Printf("%q", value)  // "/bin/zsh"
 ```
 
-- get value by key path
+- Get value by key path
 
 ```go
-value, ok := config.String("sec1.key")
-fmt.Print(ok, value) // true val0
+value := config.String("sec1.key")
+fmt.Print(value) // val0
 ```
 
-- use var refer
+- Use var refer
 
 ```go
-value, ok := config.String("sec1.varRef")
-fmt.Printf("%v %q", ok, value) // true "val in default section"
+value := config.String("sec1.varRef")
+fmt.Printf("%q", value) // "val in default section"
 ```
 
-- setting new value
+- Setting new value
 
 ```go
 // set value
 config.Set("name", "new name")
-name, ok = config.String("name")
-fmt.Printf("%v %q", ok, value) // true "new name"
+name = config.String("name")
+fmt.Printf("%q", value) // "new name"
 ```
 
 ## Variable reference resolution
