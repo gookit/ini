@@ -32,9 +32,10 @@ func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
 	}
 
 	// if opts.ParseEnv is true. will parse like: "${SHELL}"
-	if c.opts.ParseEnv {
-		val = c.parseEnvValue(val)
-	}
+	// parse on there, will export data error.
+	// if c.opts.ParseEnv {
+	// 	val = c.parseEnvValue(val)
+	// }
 
 	if sec, ok := c.data[section]; ok {
 		sec[key] = val

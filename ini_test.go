@@ -153,7 +153,7 @@ func TestLoad(t *testing.T) {
 func TestBasic(t *testing.T) {
 	st := assert.New(t)
 
-	conf := ini.New()
+	conf := ini.Default()
 	st.Equal(ini.DefSection, conf.DefSection())
 
 	conf.WithOptions(func(opts *ini.Options) {
@@ -273,7 +273,6 @@ k1 = %(key)s
 	st.True(opts.ParseVar)
 
 	str := conf.Get("sec.k1")
-	st.True(ok)
 	st.Equal("val", str)
 }
 
@@ -376,6 +375,7 @@ func TestOther(t *testing.T) {
 	// export to file
 	_, err = conf.WriteToFile("not/exist/export.ini")
 	st.Error(err)
+
 	n, err := conf.WriteToFile("testdata/export.ini")
 	st.True(n > 0)
 	st.Nil(err)

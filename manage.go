@@ -40,7 +40,7 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 
 	val, ok = strMap[key]
 
-	// if enable parse var
+	// if enable parse var refer
 	if c.opts.ParseVar {
 		// must close lock. because parseVarReference() maybe loop call Get()
 		if !c.opts.Readonly {
@@ -50,6 +50,11 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 		} else {
 			val = c.parseVarReference(key, val, strMap)
 		}
+	}
+
+	// if opts.ParseEnv is true. will parse like: "${SHELL}"
+	if c.opts.ParseEnv {
+		val = c.parseEnvValue(val)
 	}
 	return
 }
@@ -206,6 +211,13 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 	if c.opts.ParseVar {
 		for k, v := range mp {
 			mp[k] = c.parseVarReference(k, v, mp)
+		}
+	}
+
+	// if opts.ParseEnv is true. will parse like: "${SHELL}"
+	if c.opts.ParseEnv {
+		for k, v := range mp {
+			mp[k] = c.parseEnvValue(v)
 		}
 	}
 	return

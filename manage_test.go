@@ -12,6 +12,7 @@ func TestIni_Get(t *testing.T) {
 
 	err := ini.LoadStrings(iniStr)
 	st.Nil(err)
+	st.Nil(ini.Error())
 
 	conf := ini.Default()
 
@@ -43,7 +44,8 @@ func TestIni_Get(t *testing.T) {
 
 	iv = ini.Int("name", 23)
 	st.True(ini.HasKey("name"))
-	st.Equal(23, iv)
+	st.Equal(0, iv)
+	st.Error(ini.Error())
 
 	iv = conf.Int("age", 34)
 	st.Equal(28, iv)
@@ -68,8 +70,11 @@ func TestIni_Get(t *testing.T) {
 
 	bv = ini.Bool("debug", false)
 	st.Equal(true, bv)
-	bv = conf.Bool("notExist", false)
+	bv = conf.Bool("notExist")
 	st.Equal(false, bv)
+
+	bv = conf.Bool("notExist", true)
+	st.True(bv)
 
 	// get string
 	val := conf.Get("name")
@@ -102,7 +107,6 @@ func TestIni_Get(t *testing.T) {
 
 	// get string map(section data)
 	mp := conf.StringMap("sec1")
-	st.True(ok)
 	st.Equal("val0", mp["key"])
 
 	mp = ini.StringMap("sec1")
@@ -119,6 +123,28 @@ func TestIni_Get(t *testing.T) {
 	str = conf.Get(" ")
 	st.Equal("", str)
 
+	ss := ini.Strings("themes")
+	st.Equal([]string{"a", "b", "c"}, ss)
+
+	ini.Reset()
+}
+
+func TestInt(t *testing.T) {
+	ini.Reset()
+
+	err := ini.LoadStrings(iniStr)
+	assert.NoError(t, err)
+
+	// uint
+	assert.Equal(t, uint(28), ini.Uint("age"))
+	assert.Equal(t, uint(0), ini.Uint("not-exist"))
+	assert.Equal(t, uint(10), ini.Uint("not-exist", 10))
+
+	// int64
+	assert.Equal(t, int64(28), ini.Int64("age"))
+	assert.Equal(t, int64(0), ini.Int64("not-exist"))
+	assert.Equal(t, int64(10), ini.Int64("not-exist", 10))
+
 	ini.Reset()
 }
 
@@ -134,7 +160,7 @@ func TestIni_Set(t *testing.T) {
 	st.Nil(err)
 	st.Equal("34.5", conf.String("float"))
 
-	err = conf.Set(" ", "val")
+	err = ini.Set(" ", "val")
 	st.Error(err)
 	st.False(conf.HasKey(" "))
 
@@ -142,55 +168,50 @@ func TestIni_Set(t *testing.T) {
 	st.Nil(err)
 	st.True(conf.HasSection("newSec"))
 
-	val, ok := conf.Get("newSec.key")
-	st.True(ok)
+	val := conf.Get("newSec.key")
 	st.Equal("val", val)
 
-	mp, ok := conf.StringMap("newSec")
-	st.True(ok)
+	mp := conf.StringMap("newSec")
 	st.Equal("val", mp["key"])
 
 	err = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
 	st.Nil(err)
 	st.True(conf.HasSection("newSec1"))
 
-	mp, ok = conf.Section("newSec1")
-	st.True(ok)
+	mp = conf.Section("newSec1")
 	st.Equal("v0", mp["k0"])
 
 	err = conf.NewSection("NewSec2", map[string]string{"kEy0": "val"})
 	st.Nil(err)
 
-	err = conf.SetInt("int", 345, "newSec")
+	err = conf.Set("int", 345, "newSec")
 	st.Nil(err)
-	iv, ok := conf.Int("newSec.int")
-	st.True(ok)
+	iv := conf.Int("newSec.int")
 	st.Equal(345, iv)
 
-	err = conf.SetBool("bol", false, "newSec")
+	err = conf.Set("bol", false, "newSec")
 	st.Nil(err)
-	bv, ok := conf.Bool("newSec.bol")
-	st.True(ok)
+	bv := conf.Bool("newSec.bol")
 	st.False(bv)
 
-	err = conf.SetBool("bol", true, "newSec")
+	err = conf.Set("bol", true, "newSec")
 	st.Nil(err)
-	bv, ok = conf.Bool("newSec.bol")
-	st.True(ok)
+	bv = conf.Bool("newSec.bol")
+	st.True(ini.HasKey("newSec.bol"))
 	st.True(bv)
 
-	err = conf.SetString("name", "new name")
+	err = conf.Set("name", "new name")
 	st.Nil(err)
-	str, ok := conf.String("name")
-	st.True(ok)
+	str := conf.String("name")
 	st.Equal("new name", str)
 
-	err = conf.SetString("can2arr", "va0,val1,val2")
+	err = conf.Set("can2arr", "va0,val1,val2")
 	st.Nil(err)
-	_, ok = conf.Strings("can2arr-no", ",")
-	st.False(ok)
-	ss, ok := conf.Strings("can2arr", ",")
-	st.True(ok)
+
+	ss := conf.Strings("can2arr-no", ",")
+	st.Empty(ss)
+
+	ss = conf.Strings("can2arr", ",")
 	st.Equal("[va0 val1 val2]", fmt.Sprint(ss))
 }
 
@@ -203,25 +224,25 @@ func TestIni_Delete(t *testing.T) {
 	conf := ini.Default()
 
 	st.True(conf.HasKey("name"))
-	ok := conf.Delete("name")
+	ok := ini.Delete("name")
 	st.True(ok)
 	st.False(conf.HasKey("name"))
 
 	st.False(conf.Delete(" "))
 	st.False(conf.Delete("no-key"))
 
-	ok = conf.Delete("sec1.notExist")
+	ok = ini.Delete("sec1.notExist")
 	st.False(ok)
 	ok = conf.Delete("sec1.key")
 	st.True(ok)
 
 	ok = conf.Delete("no-sec.key")
 	st.False(ok)
-
 	st.True(conf.HasSection("sec1"))
 
 	ok = conf.DelSection("sec1")
 	st.True(ok)
-
 	st.False(conf.HasSection("sec1"))
+
+	ini.Reset()
 }
