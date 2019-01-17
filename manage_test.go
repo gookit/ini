@@ -15,109 +15,111 @@ func TestIni_Get(t *testing.T) {
 
 	conf := ini.Default()
 
-	// get int
-	str, ok := conf.Get("age")
+	// get value
+	str, ok := conf.GetValue("age")
 	st.True(ok)
 	st.Equal("28", str)
 
-	iv, ok := conf.Int("age")
-	st.True(ok)
+	str, ok = ini.GetValue("not-exist")
+	st.False(ok)
+	st.Equal("", str)
+
+	// get
+	str = conf.Get("age")
+	st.Equal("28", str)
+
+	str = ini.Get("age")
+	st.Equal("28", str)
+
+	str = ini.Get("not-exist", "defval")
+	st.Equal("defval", str)
+
+	// get int
+	iv := conf.Int("age")
 	st.Equal(28, iv)
 
-	// invalid
-	iv, ok = conf.Int("name")
-	st.False(ok)
+	iv = conf.Int("name")
 	st.Equal(0, iv)
 
-	iv = conf.DefInt("age", 34)
+	iv = ini.Int("name", 23)
+	st.True(ini.HasKey("name"))
+	st.Equal(23, iv)
+
+	iv = conf.Int("age", 34)
 	st.Equal(28, iv)
-	iv = conf.DefInt("notExist", 34)
+	iv = conf.Int("notExist", 34)
 	st.Equal(34, iv)
 
-	iv = conf.MustInt("age")
+	iv = conf.Int("age")
 	st.Equal(28, iv)
-	iv = conf.MustInt("notExist")
+	iv = conf.Int("notExist")
 	st.Equal(0, iv)
 
 	// get bool
-	str, ok = conf.Get("debug")
-	st.True(ok)
+	str = conf.Get("debug")
+	st.True(conf.HasKey("debug"))
 	st.Equal("true", str)
 
-	bv, ok := conf.Bool("debug")
-	st.True(ok)
-	st.Equal(true, bv)
+	bv := conf.Bool("debug")
+	st.True(bv)
 
-	// invalid
-	bv, ok = conf.Bool("name")
-	st.False(ok)
+	bv = conf.Bool("name")
 	st.False(bv)
 
-	bv = conf.DefBool("debug", false)
+	bv = ini.Bool("debug", false)
 	st.Equal(true, bv)
-	bv = conf.DefBool("notExist", false)
-	st.Equal(false, bv)
-
-	bv = conf.MustBool("debug")
-	st.Equal(true, bv)
-	bv = conf.MustBool("notExist")
+	bv = conf.Bool("notExist", false)
 	st.Equal(false, bv)
 
 	// get string
-	val, ok := conf.Get("name")
-	st.True(ok)
+	val := conf.Get("name")
 	st.Equal("inhere", val)
 
-	str, ok = conf.String("notExists")
-	st.False(ok)
+	str = conf.String("notExists")
 	st.Equal("", str)
 
-	str = conf.DefString("notExists", "defVal")
+	str = ini.String("notExists", "defVal")
 	st.Equal("defVal", str)
 
-	str = conf.MustString("name")
+	str = conf.String("name")
 	st.Equal("inhere", str)
 
-	str = conf.MustString("notExists")
+	str = conf.String("notExists")
 	st.Equal("", str)
 
-	str, ok = conf.String("hasQuota1")
-	st.True(ok)
+	str = conf.String("hasQuota1")
 	st.Equal("this is val", str)
 
-	str, ok = conf.String("hasquota1")
-	st.False(ok)
+	str = conf.String("hasquota1")
 	st.Equal("", str)
 
 	// get by path
-	str, ok = conf.Get("sec1.some")
-	st.True(ok)
+	str = conf.Get("sec1.some")
 	st.Equal("value", str)
 
-	str, ok = conf.Get("no-sec.some")
-	st.False(ok)
+	str = conf.Get("no-sec.some")
 	st.Equal("", str)
 
 	// get string map(section data)
-	mp, ok := conf.StringMap("sec1")
+	mp := conf.StringMap("sec1")
 	st.True(ok)
 	st.Equal("val0", mp["key"])
 
-	mp = conf.MustMap("sec1")
+	mp = ini.StringMap("sec1")
 	st.Equal("val0", mp["key"])
 
-	mp = conf.MustMap("notExist")
+	mp = conf.StringMap("notExist")
 	st.Len(mp, 0)
 
 	// def section
-	mp, ok = conf.StringMap("")
-	st.True(ok)
+	mp = conf.StringMap("")
 	st.Equal("inhere", mp["name"])
 	st.NotContains(mp["notExist"], "${")
 
-	str, ok = conf.Get(" ")
-	st.False(ok)
+	str = conf.Get(" ")
 	st.Equal("", str)
+
+	ini.Reset()
 }
 
 func TestIni_Set(t *testing.T) {
@@ -130,7 +132,7 @@ func TestIni_Set(t *testing.T) {
 
 	err = conf.Set("float", 34.5)
 	st.Nil(err)
-	st.Equal("34.5", conf.MustString("float"))
+	st.Equal("34.5", conf.String("float"))
 
 	err = conf.Set(" ", "val")
 	st.Error(err)

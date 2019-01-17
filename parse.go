@@ -84,7 +84,7 @@ func (c *Ini) parseEnvValue(val string) string {
 
 // parse var reference
 func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
-	if strings.Index(valStr, c.opts.VarOpen) == -1 {
+	if c.opts.VarOpen != "" && strings.Index(valStr, c.opts.VarOpen) == -1 {
 		return valStr
 	}
 
@@ -103,7 +103,7 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val
-		} else if val, ok := c.Get(name); ok {
+		} else if val, ok := c.GetValue(name); ok {
 			realVal = val
 		}
 

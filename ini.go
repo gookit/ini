@@ -12,6 +12,7 @@ package ini
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -59,6 +60,7 @@ type Options struct {
 
 // Ini config data manager
 type Ini struct {
+	err  error
 	opts *Options
 	lock sync.RWMutex
 	data map[string]Section
@@ -93,6 +95,31 @@ func Default() *Ini {
 	return dc
 }
 
+func (c *Ini) ensureInit() {
+	if !c.IsEmpty() {
+		return
+	}
+
+	if c.data == nil {
+		c.data = make(map[string]Section)
+	}
+
+	if c.opts == nil {
+		c.opts = newDefaultOptions()
+	}
+
+	// build var regex. default is `%\(([\w-:]+)\)s`
+	if c.opts.ParseVar && c.varRegex == nil {
+		// regexStr := `%\([\w-:]+\)s`
+		l := regexp.QuoteMeta(c.opts.VarOpen)
+		r := regexp.QuoteMeta(c.opts.VarClose)
+
+		// build like: `%\(([\w-:]+)\)s`
+		regStr := l + `([\w-` + c.opts.SectionSep + `]+)` + r
+		c.varRegex = regexp.MustCompile(regStr)
+	}
+}
+
 /*************************************************************
  * options func
  *************************************************************/
@@ -120,8 +147,8 @@ func Readonly(opts *Options) {
 }
 
 // ParseVar on get value
-// usage:
-// ini.WithOptions(ini.ParseVar)
+// Usage:
+// 	ini.WithOptions(ini.ParseVar)
 func ParseVar(opts *Options) {
 	opts.ParseVar = true
 }
@@ -141,6 +168,11 @@ func IgnoreCase(opts *Options) {
 // Options get
 func (c *Ini) Options() *Options {
 	return c.opts
+}
+
+// WithOptions apply some options
+func WithOptions(opts ...func(*Options)) {
+	dc.WithOptions(opts...)
 }
 
 // WithOptions apply some options
@@ -213,6 +245,9 @@ func (c *Ini) LoadStrings(strings ...string) (err error) {
 }
 
 // LoadData load data map
+func LoadData(data map[string]Section) error { return dc.LoadData(data) }
+
+// LoadData load data map
 func (c *Ini) LoadData(data map[string]Section) (err error) {
 	c.ensureInit()
 
@@ -229,31 +264,6 @@ func (c *Ini) LoadData(data map[string]Section) (err error) {
 		}
 	}
 	return
-}
-
-func (c *Ini) ensureInit() {
-	if !c.IsEmpty() {
-		return
-	}
-
-	if c.data == nil {
-		c.data = make(map[string]Section)
-	}
-
-	if c.opts == nil {
-		c.opts = newDefaultOptions()
-	}
-
-	// build var regex. default is `%\(([\w-:]+)\)s`
-	if c.opts.ParseVar && c.varRegex == nil {
-		// regexStr := `%\([\w-:]+\)s`
-		l := regexp.QuoteMeta(c.opts.VarOpen)
-		r := regexp.QuoteMeta(c.opts.VarClose)
-
-		// build like: `%\(([\w-:]+)\)s`
-		regStr := l + `([\w-` + c.opts.SectionSep + `]+)` + r
-		c.varRegex = regexp.MustCompile(regStr)
-	}
 }
 
 func (c *Ini) loadFile(file string, loadExist bool) (err error) {
@@ -280,11 +290,17 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 	return
 }
 
-// HasKey check
+// HasKey check key exists
+func HasKey(key string) bool { return dc.HasKey(key) }
+
+// HasKey check key exists
 func (c *Ini) HasKey(key string) (ok bool) {
-	_, ok = c.Get(key)
+	_, ok = c.GetValue(key)
 	return
 }
+
+// Delete value by key
+func Delete(key string) bool { return dc.Delete(key) }
 
 // Delete value by key
 func (c *Ini) Delete(key string) (ok bool) {
@@ -297,8 +313,7 @@ func (c *Ini) Delete(key string) (ok bool) {
 		return
 	}
 
-	sep := c.opts.SectionSep
-	sec, key := c.splitSectionAndKey(key, sep)
+	sec, key := c.splitSectionAndKey(key)
 	mp, ok := c.data[sec]
 	if !ok {
 		return
@@ -336,11 +351,25 @@ func (c *Ini) Data() map[string]Section {
 	return c.data
 }
 
+// Error get
+func Error() error { return dc.Error() }
+
+// Error get
+func (c *Ini) Error() error {
+	return c.err
+}
+
+// format and record error
+func (c *Ini) addErrorf(format string, a ...interface{}) {
+	c.err = fmt.Errorf(format, a...)
+}
+
 /*************************************************************
  * helper methods
  *************************************************************/
 
-func (c *Ini) splitSectionAndKey(key, sep string) (string, string) {
+func (c *Ini) splitSectionAndKey(key string) (string, string) {
+	sep := c.opts.SectionSep
 	// default find from default Section
 	name := c.opts.DefSection
 

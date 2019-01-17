@@ -27,29 +27,29 @@ some = change val
 `)
 	// fmt.Printf("%v\n", config.Data())
 
-	iv, ok := config.Int("age")
-	fmt.Printf("get int\n - ok: %v, val: %v\n", ok, iv)
+	iv := config.Int("age")
+	fmt.Printf("get int\n - val: %v\n", iv)
 
-	bv, ok := config.Bool("debug")
-	fmt.Printf("get bool\n - ok: %v, val: %v\n", ok, bv)
+	bv := config.Bool("debug")
+	fmt.Printf("get bool\n - val: %v\n", bv)
 
-	name, ok := config.String("name")
-	fmt.Printf("get string\n - ok: %v, val: %v\n", ok, name)
+	name := config.String("name")
+	fmt.Printf("get string\n - val: %v\n", name)
 
-	sec1, ok := config.StringMap("sec1")
-	fmt.Printf("get section\n - ok: %v, val: %#v\n", ok, sec1)
+	sec1 := config.StringMap("sec1")
+	fmt.Printf("get section\n - val: %#v\n", sec1)
 
-	str, ok := config.String("sec1.key")
-	fmt.Printf("get sub-value by path 'section.key'\n - ok: %v, val: %s\n", ok, str)
+	str := config.String("sec1.key")
+	fmt.Printf("get sub-value by path 'section.key'\n - val: %s\n", str)
 
 	// can parse env name(ParseEnv: true)
-	fmt.Printf("get env 'envKey' val: %s\n", config.MustString("shell"))
-	fmt.Printf("get env 'envKey1' val: %s\n", config.MustString("noEnv"))
+	fmt.Printf("get env 'envKey' val: %s\n", config.String("shell"))
+	fmt.Printf("get env 'envKey1' val: %s\n", config.String("noEnv"))
 
 	// set value
 	_ = config.Set("name", "new name")
-	name, ok = config.String("name")
-	fmt.Printf("set string\n - ok: %v, val: %v\n", ok, name)
+	name = config.String("name")
+	fmt.Printf("set string\n - val: %v\n", name)
 
 	// export data to file
 	// _, err = config.WriteToFile("testdata/export.ini")
@@ -59,25 +59,26 @@ some = change val
 
 	// Out:
 	// get int
-	// - ok: true, val: 100
+	// - val: 100
 	// get bool
-	// - ok: true, val: true
+	// - val: true
 	// get string
-	// - ok: true, val: inhere
+	// - val: inhere
 	// get section
-	// - ok: true, val: map[string]string{"stuff":"things", "newK":"newVal", "key":"val0", "some":"change val"}
+	// - val: map[string]string{"stuff":"things", "newK":"newVal", "key":"val0", "some":"change val"}
 	// get sub-value by path 'section.key'
-	// - ok: true, val: val0
+	// - val: val0
 	// get env 'envKey' val: /bin/zsh
 	// get env 'envKey1' val: defValue
 	// set string
-	// - ok: true, val: new name
+	// - val: new name
 }
 
 var iniStr = `# comments
 name = inhere
 age = 28
 debug = true
+themes = a,b,c
 hasQuota1 = 'this is val'
 hasQuota2 = "this is val1"
 shell = ${SHELL}
@@ -117,6 +118,13 @@ func TestLoad(t *testing.T) {
 	st.Nil(err)
 	st.Empty(ini.Data())
 
+	// load data
+	err = ini.LoadData(map[string]ini.Section{
+		"sec0": {"k": "v"},
+	})
+	st.Nil(err)
+	st.True(ini.HasKey("sec0.k"))
+
 	// test auto init and load data
 	conf := new(ini.Ini)
 	err = conf.LoadData(map[string]ini.Section{
@@ -137,6 +145,9 @@ func TestLoad(t *testing.T) {
 
 	err = conf.LoadStrings("invalid string")
 	st.Error(err)
+
+	// reset
+	ini.Reset()
 }
 
 func TestBasic(t *testing.T) {
@@ -160,7 +171,7 @@ func TestBasic(t *testing.T) {
 	st.False(conf.HasSection("notExist"))
 
 	st.Panics(func() {
-		conf.WithOptions(ini.IgnoreCase)
+		ini.WithOptions(ini.IgnoreCase)
 	})
 }
 
@@ -178,40 +189,33 @@ sK = val
 	opts := conf.Options()
 	st.True(opts.IgnoreCase)
 
-	str, ok := conf.String("KEY")
-	st.True(ok)
+	str := conf.String("KEY")
 	st.Equal("val", str)
 
-	str, ok = conf.String("key")
-	st.True(ok)
+	str = conf.String("key")
 	st.Equal("val", str)
 
 	st.True(conf.Delete("key"))
 	st.False(conf.HasKey("kEy"))
 
 	_ = conf.Set("NK", "val1")
-	str, ok = conf.String("nk")
-	st.True(ok)
+	str = conf.String("nk")
 	st.Equal("val1", str)
 
-	str, ok = conf.String("Nk")
-	st.True(ok)
+	str = conf.String("Nk")
 	st.Equal("val1", str)
 
-	sec, ok := conf.StringMap("sec")
-	st.True(ok)
+	sec := conf.StringMap("sec")
 	st.Equal("val", sec["sk"])
 
 	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
 	st.Nil(err)
 
-	sec, ok = conf.StringMap("newSec")
-	st.True(ok)
+	sec = conf.StringMap("newSec")
 	st.Equal("val", sec["key0"])
 
 	_ = conf.SetSection("NewSec", map[string]string{"key1": "val0"})
-	str, ok = conf.String("newSec.key1")
-	st.True(ok)
+	str = conf.String("newSec.key1")
 	st.Equal("val0", str)
 
 	_ = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
@@ -268,7 +272,7 @@ k1 = %(key)s
 	opts = conf.Options()
 	st.True(opts.ParseVar)
 
-	str, ok := conf.Get("sec.k1")
+	str := conf.Get("sec.k1")
 	st.True(ok)
 	st.Equal("val", str)
 }
@@ -289,21 +293,17 @@ hasDefault = ${HasDef|defValue}
 	st.True(opts.ParseEnv)
 	st.False(opts.ParseVar)
 
-	str, ok := conf.Get("key")
-	st.True(ok)
+	str := conf.Get("key")
 	st.NotContains(str, "${")
 
-	str, ok = conf.Get("notExist")
-	st.True(ok)
+	str = conf.Get("notExist")
 	st.Equal("${NotExist}", str)
 
-	str, ok = conf.Get("invalid")
-	st.True(ok)
+	str = conf.Get("invalid")
 	st.Contains(str, "${")
 	st.Equal("${invalid", str)
 
-	str, ok = conf.Get("hasDefault")
-	st.True(ok)
+	str = conf.Get("hasDefault")
 	st.NotContains(str, "${")
 	st.Equal("defValue", str)
 }
@@ -329,32 +329,25 @@ host = localhost
 	st.True(opts.ParseVar)
 	// fmt.Println(conf.Data())
 
-	str, ok := conf.Get("invalid")
-	st.True(ok)
+	str := conf.Get("invalid")
 	st.Equal("%(secs", str)
 
-	str, ok = conf.Get("notExist")
-	st.True(ok)
+	str = conf.Get("notExist")
 	st.Equal("%(varNotExist)s", str)
 
-	str, ok = conf.Get("sec.host")
-	st.True(ok)
+	str = conf.Get("sec.host")
 	st.Equal("localhost", str)
 
-	str, ok = conf.Get("ref")
-	st.True(ok)
+	str = conf.Get("ref")
 	st.Equal("localhost", str)
 
-	str, ok = conf.Get("sec.enable")
-	st.True(ok)
+	str = conf.Get("sec.enable")
 	st.Equal("true", str)
 
-	str, ok = conf.Get("sec.url")
-	st.True(ok)
+	str = conf.Get("sec.url")
 	st.Equal("http://localhost/api", str)
 
-	mp, ok := conf.StringMap("sec")
-	st.True(ok)
+	mp := conf.StringMap("sec")
 	st.Equal("true", mp["enable"])
 }
 
