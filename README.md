@@ -93,7 +93,7 @@ fmt.Print(age) // 100
 
 ```go
 val := config.Bool("debug")
-fmt.Print(age) // true
+fmt.Print(val) // true
 ```
 
 - Get string
