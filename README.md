@@ -1,4 +1,4 @@
-# ini
+# INI
 
 [![GoDoc](https://godoc.org/github.com/gookit/ini?status.svg)](https://godoc.org/github.com/gookit/ini)
 [![Build Status](https://travis-ci.org/gookit/ini.svg?branch=master)](https://travis-ci.org/gookit/ini)
@@ -8,6 +8,8 @@
 INI data parse by golang. INI config data management tool library.
 
 > **[中文说明](README_cn.md)**
+
+## Features
 
 - Easy to use(get: `Int` `Int64` `Bool` `String` `StringMap` ..., set: `Set`)
 - Support multi file, data load
