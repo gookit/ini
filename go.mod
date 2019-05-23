@@ -1,4 +1,4 @@
-module github.com/gookit/ini
+module github.com/gookit/ini/v2
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
