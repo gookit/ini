@@ -3,9 +3,10 @@ package ini_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/gookit/ini"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/gookit/ini/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func Example() {

@@ -57,7 +57,7 @@ varRef = %(nkey)s
 package main
 
 import (
-	"github.com/gookit/ini"
+	"github.com/gookit/ini/v2"
 )
 
 // go run ./examples/demo.go

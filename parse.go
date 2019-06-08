@@ -1,10 +1,11 @@
 package ini
 
 import (
-	"github.com/gookit/ini/parser"
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/gookit/ini/v2/parser"
 )
 
 // parse env value, eg: "${SHELL}" ${NotExist|defValue}

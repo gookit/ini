@@ -2,9 +2,10 @@ package ini_test
 
 import (
 	"fmt"
-	"github.com/gookit/ini"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/gookit/ini/v2"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIni_Get(t *testing.T) {

@@ -34,9 +34,10 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // errSyntax is returned when there is a syntax error in an INI file.
