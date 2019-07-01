@@ -416,3 +416,23 @@ func (c *Ini) DelSection(name string) (ok bool) {
 	}
 	return
 }
+
+// SectionKeys get all section names
+func SectionKeys(withDefaultSection bool) (ls []string) {
+	return dc.SectionKeys(withDefaultSection)
+}
+
+// SectionKeys get all section names
+func (c *Ini) SectionKeys(withDefaultSection bool) (ls []string) {
+	// default section name
+	defaultSection := c.opts.DefSection
+	
+	for section := range c.data {
+		if !withDefaultSection && section == defaultSection {
+			
+		}
+		
+		ls = append(ls, section)
+	}
+	return
+}
