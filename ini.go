@@ -165,6 +165,12 @@ func IgnoreCase(opts *Options) {
 	opts.IgnoreCase = true
 }
 
+// GetOptions get options info.
+// Notice: return is value. so, cannot change Ini instance
+func GetOptions() Options {
+	return dc.Options()
+}
+
 // Options get options info.
 // Notice: return is value. so, cannot change Ini instance
 func (c *Ini) Options() Options {

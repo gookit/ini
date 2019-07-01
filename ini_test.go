@@ -357,6 +357,14 @@ func TestOther(t *testing.T) {
 	err := ini.LoadStrings(iniStr)
 	st.Nil(err)
 
+	ns := ini.SectionKeys(false)
+	st.Contains(ns, "sec1")
+	st.NotContains(ns, ini.GetOptions().DefSection)
+
+	ns = ini.SectionKeys(true)
+	st.Contains(ns, "sec1")
+	st.Contains(ns, ini.GetOptions().DefSection)
+
 	conf := ini.Default()
 
 	// export as INI string

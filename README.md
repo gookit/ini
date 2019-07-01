@@ -87,28 +87,28 @@ some = change val
 - Get integer
 
 ```go
-age := config.Int("age")
+age := ini.Int("age")
 fmt.Print(age) // 100
 ```
 
 - Get bool
 
 ```go
-val := config.Bool("debug")
+val := ini.Bool("debug")
 fmt.Print(val) // true
 ```
 
 - Get string
 
 ```go
-name := config.String("name")
+name := ini.String("name")
 fmt.Print(name) // inhere
 ```
 
 - Get section data(string map)
 
 ```go
-val := config.StringMap("sec1")
+val := ini.StringMap("sec1")
 fmt.Println(val) 
 // map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
 ```
@@ -116,21 +116,21 @@ fmt.Println(val)
 - Value is ENV var
 
 ```go
-value := config.String("shell")
+value := ini.String("shell")
 fmt.Printf("%q", value)  // "/bin/zsh"
 ```
 
-- Get value by key path
+- **Get value by key path**
 
 ```go
-value := config.String("sec1.key")
+value := ini.String("sec1.key")
 fmt.Print(value) // val0
 ```
 
 - Use var refer
 
 ```go
-value := config.String("sec1.varRef")
+value := ini.String("sec1.varRef")
 fmt.Printf("%q", value) // "val in default section"
 ```
 
@@ -138,8 +138,8 @@ fmt.Printf("%q", value) // "val in default section"
 
 ```go
 // set value
-config.Set("name", "new name")
-name = config.String("name")
+ini.Set("name", "new name")
+name = ini.String("name")
 fmt.Printf("%q", value) // "new name"
 ```
 
@@ -189,7 +189,13 @@ type Options struct {
 }
 ```
 
-- setting options
+- setting options for default instance
+
+```go
+ini.WithOptions(ini.ParseEnv,ini.ParseVar)
+```
+
+- setting options with new instance
 
 ```go
 cfg := ini.New()
