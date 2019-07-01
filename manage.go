@@ -429,7 +429,7 @@ func (c *Ini) SectionKeys(withDefaultSection bool) (ls []string) {
 	
 	for section := range c.data {
 		if !withDefaultSection && section == defaultSection {
-			
+			continue
 		}
 		
 		ls = append(ls, section)
