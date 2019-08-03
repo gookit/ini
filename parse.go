@@ -1,15 +1,10 @@
 package ini
 
 import (
-	"os"
-	"regexp"
 	"strings"
 
 	"github.com/gookit/ini/v2/parser"
 )
-
-// parse env value, eg: "${SHELL}" ${NotExist|defValue}
-var envRegex = regexp.MustCompile(`\${([\w-| ]+)}`)
 
 // parse and load data
 func (c *Ini) parse(data string) (err error) {
@@ -45,43 +40,6 @@ func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
 		// create the section if it does not exist
 		c.data[section] = Section{key: val}
 	}
-}
-
-// parse Env Value
-func (c *Ini) parseEnvValue(val string) string {
-	if strings.Index(val, "${") == -1 {
-		return val
-	}
-
-	// nodes like: ${VAR} -> [${VAR}]
-	// val = "${GOPATH}/${APP_ENV | prod}/dir" -> [${GOPATH} ${APP_ENV | prod}]
-	vars := envRegex.FindAllString(val, -1)
-	if len(vars) == 0 {
-		return val
-	}
-
-	var oldNew []string
-	var name, def string
-	for _, fVar := range vars {
-		ss := strings.SplitN(fVar[2:len(fVar)-1], "|", 2)
-
-		// has default ${NotExist|defValue}
-		if len(ss) == 2 {
-			name, def = strings.TrimSpace(ss[0]), strings.TrimSpace(ss[1])
-		} else {
-			def = fVar
-			name = ss[0]
-		}
-
-		envVal := os.Getenv(name)
-		if envVal == "" {
-			envVal = def
-		}
-
-		oldNew = append(oldNew, fVar, envVal)
-	}
-
-	return strings.NewReplacer(oldNew...).Replace(val)
 }
 
 // parse var reference
