@@ -7,7 +7,7 @@
 
 INI data parse by golang. INI config data management tool library.
 
-> **[中文说明](README_cn.md)**
+> **[中文说明](README.zh-CN.md)**
 
 ## Features
 

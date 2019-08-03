@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/gookit/goutil/envutil"
 )
 
 /*************************************************************
@@ -54,7 +56,7 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 
 	// if opts.ParseEnv is true. will parse like: "${SHELL}"
 	if c.opts.ParseEnv {
-		val = c.parseEnvValue(val)
+		val = envutil.ParseEnvValue(val)
 	}
 	return
 }
@@ -217,7 +219,7 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 	// if opts.ParseEnv is true. will parse like: "${SHELL}"
 	if c.opts.ParseEnv {
 		for k, v := range mp {
-			mp[k] = c.parseEnvValue(v)
+			mp[k] = envutil.ParseEnvValue(v)
 		}
 	}
 	return
@@ -426,12 +428,12 @@ func SectionKeys(withDefaultSection bool) (ls []string) {
 func (c *Ini) SectionKeys(withDefaultSection bool) (ls []string) {
 	// default section name
 	defaultSection := c.opts.DefSection
-	
+
 	for section := range c.data {
 		if !withDefaultSection && section == defaultSection {
 			continue
 		}
-		
+
 		ls = append(ls, section)
 	}
 	return

@@ -38,23 +38,23 @@ type Section map[string]string
 
 // Options for config
 type Options struct {
-	// set to read-only mode. default False
+	// Readonly set to read-only mode. default False
 	Readonly bool
-	// parse ENV var name. default True
+	// ParseEnv parse ENV var name. default True
 	ParseEnv bool
-	// parse variable reference "%(varName)s". default False
+	// ParseVar parse variable reference "%(varName)s". default False
 	ParseVar bool
 
-	// var left open char. default "%("
+	// VarOpen var left open char. default "%("
 	VarOpen string
-	// var right close char. default ")s"
+	// VarClose var right close char. default ")s"
 	VarClose string
 
-	// ignore key name case. default False
+	// IgnoreCase ignore key name case. default False
 	IgnoreCase bool
-	// default section name. default "__default", it's allow empty string.
+	// DefSection default section name. default "__default", it's allow empty string.
 	DefSection string
-	// sep char for split key path. default ".", use like "section.subKey"
+	// SectionSep sep char for split key path. default ".", use like "section.subKey"
 	SectionSep string
 }
 
@@ -153,9 +153,9 @@ func ParseVar(opts *Options) {
 	opts.ParseVar = true
 }
 
-// ParseEnv on get value
-// usage:
-// ini.WithOptions(ini.ParseEnv)
+// ParseEnv will parse ENV key on get value
+// Usage:
+// 	ini.WithOptions(ini.ParseEnv)
 func ParseEnv(opts *Options) {
 	opts.ParseEnv = true
 }
