@@ -284,6 +284,7 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 
 		return
 	}
+	//noinspection GoUnhandledErrorResult
 	defer fd.Close()
 
 	// read file content
@@ -296,6 +297,10 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 	}
 	return
 }
+
+/*************************************************************
+ * helper methods
+ *************************************************************/
 
 // HasKey check key exists
 func HasKey(key string) bool { return dc.HasKey(key) }
@@ -358,6 +363,11 @@ func (c *Ini) Data() map[string]Section {
 	return c.data
 }
 
+// MapTo struct pointer WIP
+func (c *Ini) MapTo(ptr interface{}) error {
+	return nil
+}
+
 // Error get
 func Error() error { return dc.Error() }
 
@@ -372,7 +382,7 @@ func (c *Ini) addErrorf(format string, a ...interface{}) {
 }
 
 /*************************************************************
- * helper methods
+ * internal helper methods
  *************************************************************/
 
 func (c *Ini) splitSectionAndKey(key string) (string, string) {

@@ -1,4 +1,4 @@
-# ini parser
+# INI Parser
 
 This is a parser for parse INI format content to golang data 
 

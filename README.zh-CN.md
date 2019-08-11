@@ -62,7 +62,7 @@ import (
 
 // go run ./examples/demo.go
 func main() {
-	// config, err := ini.LoadFiles("testdata/tesdt.ini")
+	// err := ini.LoadFiles("testdata/tesdt.ini")
 	// LoadExists 将忽略不存在的文件
 	err := ini.LoadExists("testdata/test.ini", "not-exist.ini")
 	if err != nil {
@@ -76,7 +76,7 @@ age = 100
 newK = newVal
 some = change val
 `)
-	// fmt.Printf("%v\n", config.Data())
+	// fmt.Printf("%v\n", ini.Data())
 }
 ```
 
@@ -85,28 +85,28 @@ some = change val
 - 获取整型
 
 ```go
-age := config.Int("age")
+age := ini.Int("age")
 fmt.Print(age) // 100
 ```
 
 - 获取布尔值
 
 ```go
-val := config.Bool("debug")
+val := ini.Bool("debug")
 fmt.Print(val) // true
 ```
 
 - 获取字符串
 
 ```go
-name := config.String("name")
+name := ini.String("name")
 fmt.Print(name) // inhere
 ```
 
 - 获取section数据(string map)
 
 ```go
-val := config.StringMap("sec1")
+val := ini.StringMap("sec1")
 fmt.Println(val) 
 // map[string]string{"key":"val0", "some":"change val", "stuff":"things", "newK":"newVal"}
 ```
@@ -114,21 +114,21 @@ fmt.Println(val)
 - 获取的值是环境变量
 
 ```go
-value := config.String("shell")
+value := ini.String("shell")
 fmt.Printf("%q", value)  // "/bin/zsh"
 ```
 
 - 通过key path来直接获取子级值
 
 ```go
-value := config.String("sec1.key")
+value := ini.String("sec1.key")
 fmt.Print(value) // val0
 ```
 
 - 支持变量参考
 
 ```go
-value := config.String("sec1.varRef")
+value := ini.String("sec1.varRef")
 fmt.Printf("%q", value)  // "val in default section"
 ```
 
@@ -136,8 +136,8 @@ fmt.Printf("%q", value)  // "val in default section"
 
 ```go
 // set value
-config.Set("name", "new name")
-name = config.String("name")
+ini.Set("name", "new name")
+name = ini.String("name")
 fmt.Printf("%q", value)  // "new name"
 ```
 
