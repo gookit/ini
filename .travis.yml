@@ -3,6 +3,7 @@ dist: bionic
 go:
   - '1.11'
   - '1.12'
+  - '1.13'
 
 #env:
 #  - GO111MODULE=on
