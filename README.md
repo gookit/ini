@@ -30,6 +30,12 @@ If you want more support for file content formats, recommended use `gookit/confi
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
+## Install
+
+```bash
+go get github.com/gookit/ini/v2
+```
+
 ## Usage
 
 - example data(`testdata/test.ini`):

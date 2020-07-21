@@ -28,6 +28,12 @@
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
 - [godoc for github](https://godoc.org/github.com/gookit/ini)
 
+## 安装
+
+```bash
+go get github.com/gookit/ini/v2
+```
+
 ## 快速使用
 
 - 示例数据(`testdata/test.ini`):
