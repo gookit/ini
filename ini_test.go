@@ -58,7 +58,7 @@ some = change val
 	// 	panic(err)
 	// }
 
-	// Out:
+	// Output:
 	// get int
 	// - val: 100
 	// get bool
