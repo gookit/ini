@@ -64,11 +64,11 @@ func TestParse(t *testing.T) {
 	st.True(len(p.SimpleData()) == 0)
 }
 
-func TestSimpleParser(t *testing.T) {
+func TestNewSimpled(t *testing.T) {
 	st := assert.New(t)
 
 	// simple mode will ignore all array values
-	p := SimpleParser()
+	p := NewSimpled()
 	st.Equal(ModeSimple.Unit8(), p.ParseMode())
 	st.False(p.IgnoreCase)
 	st.False(p.NoDefSection)
@@ -105,7 +105,7 @@ func TestSimpleParser(t *testing.T) {
 	st.NotContains(str, "hasQuota1:")
 }
 
-func TestFullParser(t *testing.T) {
+func TestNewFulled(t *testing.T) {
 	st := assert.New(t)
 
 	p := NewFulled()

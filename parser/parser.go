@@ -99,12 +99,6 @@ type Parser struct {
 	Collector UserCollector
 }
 
-// FullParser create a full mode Parser with some options
-// Deprecated: please use NewFulled() instead it.
-func FullParser(opts ...func(*Parser)) *Parser {
-	return NewFulled(opts...)
-}
-
 // NewFulled create a full mode Parser with some options
 func NewFulled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
@@ -116,12 +110,6 @@ func NewFulled(opts ...func(*Parser)) *Parser {
 
 	p.WithOptions(opts...)
 	return p
-}
-
-// SimpleParser create a simple mode Parser.
-// Deprecated: please use NewSimpled() instead it.
-func SimpleParser(opts ...func(*Parser)) *Parser {
-	return NewSimpled(opts...)
 }
 
 // NewSimpled create a simple mode Parser
