@@ -63,12 +63,11 @@ func TestLoadFromMap(t *testing.T) {
 	assert.Equal(t, "val1", Get("DONT_ENV_TEST1"))
 	assert.Equal(t, 23, Int("DONT_ENV_TEST2"))
 
+	assert.Equal(t, "val1", Get("dont_env_test1"))
 	// on windows, os.Getenv() not case sensitive
 	if runtime.GOOS == "windows" {
-		assert.Equal(t, "val1", Get("dont_env_test1"))
 		assert.Equal(t, 23, Int("dont_env_test2"))
 	} else {
-		assert.Equal(t, "", Get("dont_env_test1"))
 		assert.Equal(t, 0, Int("dont_env_test2"))
 	}
 

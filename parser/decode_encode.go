@@ -2,18 +2,22 @@ package parser
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
+
+	"github.com/mitchellh/mapstructure"
 )
 
+// TagName of mapping data to struct
+var TagName = "ini"
+
 // Decode INI content to golang data
-func Decode(blob []byte, v interface{}) error {
-	rv := reflect.ValueOf(v)
+func Decode(blob []byte, ptr interface{}) error {
+	rv := reflect.ValueOf(ptr)
 	if rv.Kind() != reflect.Ptr {
-		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(v))
+		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(ptr))
 	}
 
 	// if rv.IsNil() {
@@ -25,12 +29,20 @@ func Decode(blob []byte, v interface{}) error {
 		return err
 	}
 
-	bs, err := json.Marshal(p.fullData)
+	mapConf := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   ptr,
+		TagName:  TagName,
+		// will auto convert string to int/uint
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(mapConf)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(bs, v)
+	return decoder.Decode(p.fullData)
 }
 
 // Encode golang data to INI
@@ -53,7 +65,6 @@ func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, 
 	}
 
 	defSecName := ""
-
 	if len(defSection) > 0 {
 		defSecName = defSection[0]
 	}
@@ -138,10 +149,10 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 	}
 
 	var n int64
-	defSecName := ""
 	buf := &bytes.Buffer{}
 	counter := 0
 	thisWrite := 0
+	defSecName := ""
 	orderedSections := make([]string, len(data))
 
 	if len(defSection) > 0 {
@@ -154,7 +165,6 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 	}
 
 	sort.Strings(orderedSections)
-
 	for _, section := range orderedSections {
 		// don't add section title for DefSection
 		if section != defSecName {

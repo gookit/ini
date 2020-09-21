@@ -18,17 +18,20 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/gookit/ini/v2/parser"
 )
 
 // some default constants
 const (
 	SepSection = "."
-	DefSection = "__default"
+	DefTagName = "ini"
 )
 
 var (
-	errEmptyKey      = errors.New("ini: key name cannot be empty")
-	errSetInReadonly = errors.New("ini: config manager instance in 'readonly' mode")
+	errEmptyKey = errors.New("ini: key name cannot be empty")
+	errNotFound = errors.New("ini: key does not exist in the config")
+	errReadonly = errors.New("ini: config manager instance in 'readonly' mode")
 	// default instance
 	dc = New()
 )
@@ -44,6 +47,8 @@ type Options struct {
 	ParseEnv bool
 	// ParseVar parse variable reference "%(varName)s". default False
 	ParseVar bool
+	// TagName for binding struct
+	TagName string
 
 	// VarOpen var left open char. default "%("
 	VarOpen string
@@ -133,8 +138,9 @@ func newDefaultOptions() *Options {
 
 		VarOpen:  "%(",
 		VarClose: ")s",
+		TagName:  DefTagName,
 
-		DefSection: DefSection,
+		DefSection: parser.DefSection,
 		SectionSep: SepSection,
 	}
 }
@@ -172,7 +178,7 @@ func GetOptions() Options {
 }
 
 // Options get options info.
-// Notice: return is value. so, cannot change Ini instance
+// Notice: return is value. so, cannot change options
 func (c *Ini) Options() Options {
 	return *c.opts
 }

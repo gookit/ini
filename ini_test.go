@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gookit/ini/v2"
+	"github.com/gookit/ini/v2/parser"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +59,7 @@ some = change val
 	// 	panic(err)
 	// }
 
-	// Output:
+	// Out:
 	// get int
 	// - val: 100
 	// get bool
@@ -87,9 +88,11 @@ noEnv = ${NotExist|defValue}
 
 ; comments
 [sec1]
+age = 23
 key = val0
 some = value
 stuff = things
+user_name = inhere
 `
 
 func TestLoad(t *testing.T) {
@@ -155,7 +158,7 @@ func TestBasic(t *testing.T) {
 	st := assert.New(t)
 
 	conf := ini.Default()
-	st.Equal(ini.DefSection, conf.DefSection())
+	st.Equal(parser.DefSection, conf.DefSection())
 
 	conf.WithOptions(func(opts *ini.Options) {
 		opts.DefSection = "myDef"

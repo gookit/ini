@@ -14,20 +14,22 @@ func (c *Ini) parse(data string) (err error) {
 
 	p := parser.NewSimpled()
 	p.Collector = c.valueCollector
-	p.DefSection = c.opts.DefSection
 	p.IgnoreCase = c.opts.IgnoreCase
+	p.DefSection = c.opts.DefSection
 
 	return p.ParseString(data)
 }
 
 // collect value form parser
 func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
+	// defSec := c.opts.DefSection
 	if c.opts.IgnoreCase {
-		section = strings.ToLower(section)
 		key = strings.ToLower(key)
+		// defSec = strings.ToLower(defSec)
+		section = strings.ToLower(section)
 	}
 
-	// if opts.ParseEnv is true. will parse like: "${SHELL}"
+	// if opts.ParseEnv is true. will parse like: "${SHELL}". CHANGE: parse ENV on get value
 	// parse on there, will export data error.
 	// if c.opts.ParseEnv {
 	// 	val = c.parseEnvValue(val)

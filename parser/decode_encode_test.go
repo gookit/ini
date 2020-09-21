@@ -4,58 +4,79 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gookit/goutil/dump"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDecode(t *testing.T) {
-	st := assert.New(t)
-
+	is := assert.New(t)
 	bts := []byte(`
+age = 23
 name = inhere
 arr[] = a
 arr[] = b
 ; comments
 [sec]
 key = val
+; comments
+[sec1]
+key = val
+number = 2020
+two_words = abc def
 `)
-	data := make(map[string]interface{})
 
+	data := make(map[string]interface{})
 	err := Decode([]byte(""), data)
-	st.Error(err)
+	is.Error(err)
 
 	err = Decode(bts, nil)
-	st.Error(err)
+	is.Error(err)
 
 	err = Decode(bts, data)
-	st.Error(err)
+	is.Error(err)
 
 	err = Decode([]byte(`invalid`), &data)
-	st.Error(err)
+	is.Error(err)
 
 	err = Decode(bts, &data)
-	st.Nil(err)
-	st.True(len(data) > 0)
-	st.Equal("inhere", data["name"])
-	st.Equal("[a b]", fmt.Sprintf("%v", data["arr"]))
-	st.Equal("map[key:val]", fmt.Sprintf("%v", data["sec"]))
+	dump.P(data)
+
+	is.Nil(err)
+	is.True(len(data) > 0)
+	is.Equal("inhere", data["name"])
+	is.Equal("[a b]", fmt.Sprintf("%v", data["arr"]))
+	is.Equal("map[key:val]", fmt.Sprintf("%v", data["sec"]))
+
+	st := struct {
+		Age  int
+		Name string
+		Sec1 struct {
+			Key      string
+			Number   int
+			TwoWords string `ini:"two_words"`
+		}
+	}{}
+
+	is.Nil(Decode(bts, &st))
+	dump.P(st)
 }
 
 func TestEncode(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	out, err := Encode("invalid")
-	st.Nil(out)
-	st.Error(err)
+	is.Nil(out)
+	is.Error(err)
 
 	// empty
 	out, err = Encode(map[string]interface{}{})
-	st.Nil(out)
-	st.Nil(err)
+	is.Nil(out)
+	is.Nil(err)
 
 	// empty
 	out, err = Encode(map[string]map[string]string{})
-	st.Nil(out)
-	st.Nil(err)
+	is.Nil(out)
+	is.Nil(err)
 
 	// encode simple data
 	sData := map[string]map[string]string{
@@ -63,22 +84,22 @@ func TestEncode(t *testing.T) {
 		"sec":  {"key": "val", "key1": "34"},
 	}
 	out, err = Encode(sData)
-	st.Nil(err)
-	st.NotEmpty(out)
+	is.Nil(err)
+	is.NotEmpty(out)
 
 	str := string(out)
-	st.Contains(str, "[_def]")
-	st.Contains(str, "[sec]")
-	st.Contains(str, "name = inhere")
+	is.Contains(str, "[_def]")
+	is.Contains(str, "[sec]")
+	is.Contains(str, "name = inhere")
 
 	out, err = Encode(sData, "_def")
-	st.Nil(err)
-	st.NotEmpty(out)
+	is.Nil(err)
+	is.NotEmpty(out)
 
 	str = string(out)
-	st.NotContains(str, "[_def]")
-	st.Contains(str, "[sec]")
-	st.Contains(str, "name = inhere")
+	is.NotContains(str, "[_def]")
+	is.Contains(str, "[sec]")
+	is.Contains(str, "name = inhere")
 
 	// encode full data
 	fData := map[string]interface{}{
@@ -98,26 +119,27 @@ func TestEncode(t *testing.T) {
 	}
 
 	out, err = Encode(fData)
-	st.Nil(err)
-	st.NotEmpty(out)
+	is.Nil(err)
+	is.NotEmpty(out)
 
 	str = string(out)
-	st.Contains(str, "age = 12")
-	st.Contains(str, "debug = false")
-	st.Contains(str, "name = inhere")
-	st.Contains(str, "defArr[] = a")
-	st.Contains(str, "[sec]")
-	st.Contains(str, "arr1[] = c")
+	dump.Println(str)
+	is.Contains(str, "age = 12")
+	is.Contains(str, "debug = false")
+	is.Contains(str, "name = inhere")
+	is.Contains(str, "defArr[] = a")
+	is.Contains(str, "[sec]")
+	is.Contains(str, "arr1[] = c")
 
 	out, err = Encode(fData, "defSec")
-	st.Nil(err)
-	st.NotEmpty(out)
+	is.Nil(err)
+	is.NotEmpty(out)
 	str = string(out)
-	st.Contains(str, "[sec]")
+	is.Contains(str, "[sec]")
 
 	out, err = Encode(fData, "sec")
-	st.Nil(err)
-	st.NotEmpty(out)
+	is.Nil(err)
+	is.NotEmpty(out)
 	str = string(out)
-	st.NotContains(str, "[sec]")
+	is.NotContains(str, "[sec]")
 }

@@ -247,3 +247,46 @@ func TestIni_Delete(t *testing.T) {
 
 	ini.Reset()
 }
+
+func TestIni_MapStruct(t *testing.T) {
+	is := assert.New(t)
+
+	err := ini.LoadStrings(iniStr)
+	is.Nil(err)
+
+	type User struct {
+		Age      int
+		Some     string
+		UserName string `ini:"user_name"`
+		Subs     struct {
+			Id  string
+			Tag string
+		}
+	}
+
+	u1 := &User{}
+	is.NoError(ini.MapStruct("sec1", u1))
+	is.Equal(23, u1.Age)
+	is.Equal("inhere", u1.UserName)
+	ini.Reset()
+
+	conf := ini.NewWithOptions(func(opt *ini.Options) {
+		opt.DefSection = ""
+	})
+	err = conf.LoadStrings(`
+age = 23
+some = value
+user_name = inhere
+[subs]
+id = 22
+tag = golang
+`)
+
+	is.NoError(err)
+
+	u2 := &User{}
+	is.NoError(conf.MapStruct("", u2))
+	is.Equal(23, u2.Age)
+	is.Equal("inhere", u2.UserName)
+	is.Equal("golang", u2.Subs.Tag)
+}

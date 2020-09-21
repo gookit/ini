@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gookit/goutil/envutil"
+	"github.com/mitchellh/mapstructure"
 )
 
 /*************************************************************
@@ -225,6 +226,60 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 	return
 }
 
+// MapStruct get config data and binding to the structure.
+func MapStruct(key string, ptr interface{}) error { return dc.MapStruct(key, ptr) }
+
+// MapStruct get config data and binding to the structure.
+// Usage:
+// 	user := &Db{}
+// 	ini.MapStruct("user", &user)
+func (c *Ini) MapStruct(key string, ptr interface{}) error {
+	// binding all data
+	if key == "" {
+		defSec := c.opts.DefSection
+		if defMap, ok := c.data[defSec]; ok {
+			data := make(map[string]interface{}, len(defMap)+len(c.data)-1)
+			for key, val := range defMap {
+				data[key] = val
+			}
+			for secKey, secVals := range c.data {
+				if secKey != defSec {
+					data[secKey] = secVals
+				}
+			}
+			return mapStruct(c.opts.TagName, data, ptr)
+		}
+
+		// no data of the default section
+		return mapStruct(c.opts.TagName, c.data, ptr)
+	}
+
+	// parts data of the config
+	data := c.StringMap(key)
+	if len(data) == 0 {
+		return errNotFound
+	}
+
+	return mapStruct(c.opts.TagName, data, ptr)
+}
+
+func mapStruct(tagName string, data interface{}, ptr interface{}) error {
+	mapConf := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   ptr,
+		TagName:  tagName,
+		// will auto convert string to int/uint
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(mapConf)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(data)
+}
+
 /*************************************************************
  * config set
  *************************************************************/
@@ -240,7 +295,7 @@ func Set(key string, val interface{}, section ...string) error {
 func (c *Ini) Set(key string, val interface{}, section ...string) (err error) {
 	// if is readonly
 	if c.opts.Readonly {
-		return errSetInReadonly
+		return errReadonly
 	}
 
 	c.ensureInit()
@@ -366,7 +421,7 @@ func (c *Ini) Section(name string) Section {
 func (c *Ini) SetSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if c.opts.Readonly {
-		return errSetInReadonly
+		return errReadonly
 	}
 
 	name = c.formatKey(name)
@@ -386,7 +441,7 @@ func (c *Ini) SetSection(name string, values map[string]string) (err error) {
 func (c *Ini) NewSection(name string, values map[string]string) (err error) {
 	// if is readonly
 	if c.opts.Readonly {
-		return errSetInReadonly
+		return errReadonly
 	}
 
 	if c.opts.IgnoreCase {

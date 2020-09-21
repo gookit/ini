@@ -61,8 +61,11 @@ var (
 	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
-// parse mode
-// ModeFull - will parse array
+// DefSection default section key name
+const DefSection = "__default"
+
+// mode of parse data
+// ModeFull  - will parse array
 // ModeSimple - don't parse array value
 const (
 	ModeFull   parseMode = 1
@@ -102,27 +105,23 @@ type Parser struct {
 // NewFulled create a full mode Parser with some options
 func NewFulled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		fullData: make(map[string]interface{}),
-
+		DefSection: DefSection,
 		parseMode:  ModeFull,
-		DefSection: "__default",
+		fullData:   make(map[string]interface{}),
 	}
 
-	p.WithOptions(opts...)
-	return p
+	return p.WithOptions(opts...)
 }
 
 // NewSimpled create a simple mode Parser
 func NewSimpled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		simpleData: make(map[string]map[string]string),
-
+		DefSection: DefSection,
 		parseMode:  ModeSimple,
-		DefSection: "__default",
+		simpleData: make(map[string]map[string]string),
 	}
 
-	p.WithOptions(opts...)
-	return p
+	return p.WithOptions(opts...)
 }
 
 // NoDefSection set don't return DefSection title
@@ -138,10 +137,11 @@ func IgnoreCase(p *Parser) {
 }
 
 // WithOptions apply some options
-func (p *Parser) WithOptions(opts ...func(*Parser)) {
+func (p *Parser) WithOptions(opts ...func(*Parser)) *Parser {
 	for _, opt := range opts {
 		opt(p)
 	}
+	return p
 }
 
 /*************************************************************
@@ -208,14 +208,15 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 			continue
 		}
 
+		// array/slice data
 		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
 			// skip array parse on simple mode
 			if p.parseMode == ModeSimple {
 				continue
 			}
 
-			key, val := groups[1], groups[2]
-			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			// key, val := groups[1], groups[2]
+			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, true)
@@ -223,8 +224,8 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 				p.collectFullValue(section, key, val, true)
 			}
 		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
-			key, val := groups[1], groups[2]
-			key, val = strings.TrimSpace(key), trimWithQuotes(val)
+			// key, val := groups[1], groups[2]
+			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, false)
@@ -252,7 +253,6 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 
 func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	defSection := p.DefSection
-
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
 		section = strings.ToLower(section)
@@ -323,8 +323,8 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 
 func (p *Parser) collectMapValue(name string, key, val string) {
 	if p.IgnoreCase {
-		name = strings.ToLower(name)
 		key = strings.ToLower(key)
+		name = strings.ToLower(name)
 	}
 
 	if sec, ok := p.simpleData[name]; ok {
