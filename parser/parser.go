@@ -37,6 +37,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // errSyntax is returned when there is a syntax error in an INI file.
@@ -91,7 +93,11 @@ type Parser struct {
 	simpleData map[string]map[string]string
 	// parsed    bool
 	parseMode parseMode
-	// -- options ---
+
+	// ---- options ----
+
+	// TagName of mapping data to struct
+	TagName string
 	// Ignore case for key name
 	IgnoreCase bool
 	// default section name. default is "__default"
@@ -105,6 +111,7 @@ type Parser struct {
 // NewFulled create a full mode Parser with some options
 func NewFulled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
+		TagName: 	TagName,
 		DefSection: DefSection,
 		parseMode:  ModeFull,
 		fullData:   make(map[string]interface{}),
@@ -116,6 +123,7 @@ func NewFulled(opts ...func(*Parser)) *Parser {
 // NewSimpled create a simple mode Parser
 func NewSimpled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
+		TagName: 	TagName,
 		DefSection: DefSection,
 		parseMode:  ModeSimple,
 		simpleData: make(map[string]map[string]string),
@@ -372,6 +380,33 @@ func (p *Parser) Reset() {
 	} else {
 		p.simpleData = make(map[string]map[string]string)
 	}
+}
+
+// MapStruct mapping the parsed data to struct ptr
+func (p *Parser) MapStruct(ptr interface{}) (err error) {
+	if p.parseMode == ModeFull {
+		err = mapStruct(p.TagName, p.fullData, ptr)
+	} else {
+		err = mapStruct(p.TagName, p.simpleData, ptr)
+	}
+	return
+}
+
+func mapStruct(tagName string, data interface{}, ptr interface{}) error {
+	mapConf := &mapstructure.DecoderConfig{
+		Metadata: nil,
+		Result:   ptr,
+		TagName:  tagName,
+		// will auto convert string to int/uint
+		WeaklyTypedInput: true,
+	}
+
+	decoder, err := mapstructure.NewDecoder(mapConf)
+	if err != nil {
+		return err
+	}
+
+	return decoder.Decode(data)
 }
 
 func trimWithQuotes(inputVal string) (filtered string) {

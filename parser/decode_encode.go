@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-
-	"github.com/mitchellh/mapstructure"
 )
 
-// TagName of mapping data to struct
+// TagName default tag-name of mapping data to struct
 var TagName = "ini"
 
 // Decode INI content to golang data
@@ -29,20 +27,7 @@ func Decode(blob []byte, ptr interface{}) error {
 		return err
 	}
 
-	mapConf := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   ptr,
-		TagName:  TagName,
-		// will auto convert string to int/uint
-		WeaklyTypedInput: true,
-	}
-
-	decoder, err := mapstructure.NewDecoder(mapConf)
-	if err != nil {
-		return err
-	}
-
-	return decoder.Decode(p.fullData)
+	return p.MapStruct(ptr)
 }
 
 // Encode golang data to INI
@@ -97,6 +82,7 @@ func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, 
 					return
 				}
 			}
+		// case map[string]string: // is section
 		case map[string]interface{}: // is section
 			if key != defSecName {
 				secBuf.WriteString("[" + key + "]\n")
@@ -138,7 +124,6 @@ func buildSectionBuffer(data map[string]interface{}, buf *bytes.Buffer) (err err
 			continue
 		}
 	}
-
 	return
 }
 
