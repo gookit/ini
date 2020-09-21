@@ -289,4 +289,6 @@ tag = golang
 	is.Equal(23, u2.Age)
 	is.Equal("inhere", u2.UserName)
 	is.Equal("golang", u2.Subs.Tag)
+
+	is.Error(conf.MapStruct("not-exist", u2))
 }
