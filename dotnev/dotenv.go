@@ -115,6 +115,21 @@ func Get(name string, defVal ...string) (val string) {
 	return
 }
 
+// Bool get a bool value by key
+func Bool(name string, defVal ...bool) (val bool) {
+	if str := os.Getenv(name); str != "" {
+		val, err := strconv.ParseBool(str)
+		if err == nil {
+			return val
+		}
+	}
+
+	if len(defVal) > 0 {
+		val = defVal[0]
+	}
+	return
+}
+
 // Int get a int value by key
 func Int(name string, defVal ...int) (val int) {
 	if str := os.Getenv(name); str != "" {
