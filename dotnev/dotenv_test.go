@@ -50,10 +50,12 @@ func TestLoadFromMap(t *testing.T) {
 		"DONT_ENV_TEST":  "blog",
 		"dont_env_test1": "val1",
 		"dont_env_test2": "23",
+		"dont_env_bool": "true",
 	})
 
 	assert.NoError(t, err)
 
+	// fmt.Println(os.Environ())
 	envStr := fmt.Sprint(os.Environ())
 	assert.Contains(t, envStr, "DONT_ENV_TEST=blog")
 	assert.Contains(t, envStr, "DONT_ENV_TEST1=val1")
@@ -62,17 +64,14 @@ func TestLoadFromMap(t *testing.T) {
 	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
 	assert.Equal(t, "val1", Get("DONT_ENV_TEST1"))
 	assert.Equal(t, 23, Int("DONT_ENV_TEST2"))
+	assert.True(t, Bool("dont_env_bool"))
 
 	assert.Equal(t, "val1", Get("dont_env_test1"))
-	// on windows, os.Getenv() not case sensitive
-	if runtime.GOOS == "windows" {
-		assert.Equal(t, 23, Int("dont_env_test2"))
-	} else {
-		assert.Equal(t, 0, Int("dont_env_test2"))
-	}
+	assert.Equal(t, 23, Int("dont_env_test2"))
 
 	assert.Equal(t, 20, Int("dont_env_test1", 20))
 	assert.Equal(t, 20, Int("dont_env_not_exist", 20))
+	assert.False(t, Bool("dont_env_not_exist", false))
 
 	// check cache
 	assert.Contains(t, LoadedData(), "DONT_ENV_TEST2")

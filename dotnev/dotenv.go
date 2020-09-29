@@ -95,8 +95,6 @@ func LoadFromMap(kv map[string]string) (err error) {
 }
 
 // Get get os ENV value by name
-//
-// NOTICE: if is windows OS, os.Getenv() Key is not case sensitive
 func Get(name string, defVal ...string) (val string) {
 	if UpperEnvKey {
 		name = strings.ToUpper(name)
@@ -105,6 +103,7 @@ func Get(name string, defVal ...string) (val string) {
 		return
 	}
 
+	// NOTICE: if is windows OS, os.Getenv() Key is not case sensitive
 	if val = os.Getenv(name); val != "" {
 		return
 	}
@@ -117,7 +116,7 @@ func Get(name string, defVal ...string) (val string) {
 
 // Bool get a bool value by key
 func Bool(name string, defVal ...bool) (val bool) {
-	if str := os.Getenv(name); str != "" {
+	if str := Get(name); str != "" {
 		val, err := strconv.ParseBool(str)
 		if err == nil {
 			return val
@@ -132,7 +131,7 @@ func Bool(name string, defVal ...bool) (val bool) {
 
 // Int get a int value by key
 func Int(name string, defVal ...int) (val int) {
-	if str := os.Getenv(name); str != "" {
+	if str := Get(name); str != "" {
 		val, err := strconv.ParseInt(str, 10, 0)
 		if err == nil {
 			return int(val)
