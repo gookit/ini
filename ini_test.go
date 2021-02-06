@@ -354,6 +354,63 @@ host = localhost
 	st.Equal("true", mp["enable"])
 }
 
+func TestParseCustomRef(t *testing.T) {
+	st := assert.New(t)
+	conf := ini.NewWithOptions(func(opts *ini.Options) {
+		*opts = ini.Options{
+			IgnoreCase: false,
+			ParseEnv:   false,
+			ParseVar:   true,
+			SectionSep: "|",
+			VarOpen:    "${",
+			VarClose:   "}",
+			Readonly:   true,
+		}
+	})
+	err := conf.LoadStrings(`
+key = val
+ref = ${sec|host}
+invalid = ${secs
+notExist = ${varNotExist}
+debug = true
+[sec]
+enable = ${debug}
+url = http://${host}/api
+host = localhost
+`)
+	st.Nil(err)
+
+	opts := conf.Options()
+	st.False(opts.IgnoreCase)
+	st.False(opts.ParseEnv)
+	st.True(opts.ParseVar)
+	st.Equal("|", opts.SectionSep)
+	st.Equal("${", opts.VarOpen)
+	st.Equal("}", opts.VarClose)
+
+	str := conf.Get("invalid")
+	st.Equal("${secs", str)
+
+	str = conf.Get("notExist")
+	st.Equal("${varNotExist}", str)
+
+	str = conf.Get("sec|host")
+	st.Equal("localhost", str)
+
+	str = conf.Get("ref")
+	st.Equal("localhost", str)
+
+	str = conf.Get("sec|enable")
+	st.Equal("true", str)
+
+	str = conf.Get("sec|url")
+	st.Equal("http://localhost/api", str)
+
+	mp := conf.StringMap("sec")
+	st.Equal("true", mp["enable"])
+
+}
+
 func TestOther(t *testing.T) {
 	st := assert.New(t)
 
