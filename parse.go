@@ -56,12 +56,15 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 	if len(vars) == 0 {
 		return valStr
 	}
+	
+	varOLen := len(c.opts.VarOpen)
+	varCLen := len(c.opts.VarClose)
 
 	var name string
 	var oldNew []string
 	for _, fVar := range vars {
 		realVal := fVar
-		name = fVar[len(c.opts.VarOpen) : len(fVar)-len(c.opts.VarClose)]
+		name = fVar[varOLen : len(fVar)-varCLen]
 
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val
