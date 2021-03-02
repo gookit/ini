@@ -24,7 +24,7 @@ INI data parse by golang. INI config data management tool library.
 
 If you want more support for file content formats, recommended use `gookit/config`
 
-- [gookit/config](https://github/gookit/config) - Support multi formats: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
+- [gookit/config](https://github.com/gookit/config) - Support multi formats: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
 
 ## GoDoc
 

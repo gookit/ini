@@ -22,7 +22,7 @@
 
 如果你想要更多文件内容格式的支持，推荐使用 `gookit/config`
 
-- [gookit/config](https://github/gookit/config) - 支持多种格式: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
+- [gookit/config](https://github.com/gookit/config) - 支持多种格式: `JSON`(default), `INI`, `YAML`, `TOML`, `HCL`
 
 ## GoDoc
 
