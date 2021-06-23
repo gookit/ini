@@ -2,10 +2,10 @@
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/gookit/ini?style=flat-square)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/gookit/ini)](https://github.com/gookit/ini)
-[![GoDoc](https://godoc.org/github.com/gookit/ini?status.svg)](https://godoc.org/github.com/gookit/ini)
-[![Build Status](https://travis-ci.org/gookit/ini.svg?branch=master)](https://travis-ci.org/gookit/ini)
+[![GoDoc](https://pkg.go.dev/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
 [![Coverage Status](https://coveralls.io/repos/github/gookit/ini/badge.svg?branch=master)](https://coveralls.io/github/gookit/ini?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
+[![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)
 
 INI data parse by golang. INI config data management tool library.
 
@@ -15,6 +15,7 @@ INI data parse by golang. INI config data management tool library.
 
 - Easy to use(get: `Int` `Int64` `Bool` `String` `StringMap` ..., set: `Set`)
 - Support multi file, data load
+- Support for rebinding data to structure
 - Support data override merge
 - Support parse ENV variable
 - Complete unit test(coverage > 90%)
@@ -29,7 +30,7 @@ If you want more support for file content formats, recommended use `gookit/confi
 ## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
-- [godoc for github](https://godoc.org/github.com/gookit/ini)
+- [godoc for github](https://pkg.go.dev/github.com/gookit/ini)
 
 ## Install
 
@@ -149,6 +150,20 @@ fmt.Printf("%q", value) // "val in default section"
 ini.Set("name", "new name")
 name = ini.String("name")
 fmt.Printf("%q", value) // "new name"
+```
+
+## Mapping data to struct
+
+```go
+type User struct {
+	Name string
+	Age int
+}
+
+user := &User{}
+ini.MapStruct(ini.DefSection(), user)
+
+dump.P(user)
 ```
 
 ## Variable reference resolution

@@ -2,10 +2,10 @@
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/gookit/ini?style=flat-square)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/gookit/ini)](https://github.com/gookit/ini)
-[![GoDoc](https://godoc.org/github.com/gookit/ini?status.svg)](https://godoc.org/github.com/gookit/ini)
-[![Build Status](https://travis-ci.org/gookit/ini.svg?branch=master)](https://travis-ci.org/gookit/ini)
+[![GoDoc](https://pkg.go.dev/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
 [![Coverage Status](https://coveralls.io/repos/github/gookit/ini/badge.svg?branch=master)](https://coveralls.io/github/gookit/ini?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
+[![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)
 
 使用INI格式作为配置，配置数据的加载，管理，使用。
 
@@ -14,6 +14,7 @@
 - 使用简单(获取: `Int` `Int64` `Bool` `String` `StringMap` ..., 设置: `Set` )
 - 支持多文件，数据加载
 - 支持数据覆盖合并
+- 支持将数据重新绑定到结构体
 - 支持解析 ENV 变量名
 - 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
 - 完善的单元测试(coverage > 90%)
@@ -27,7 +28,7 @@
 ## GoDoc
 
 - [doc on gowalker](https://gowalker.org/github.com/gookit/ini)
-- [godoc for github](https://godoc.org/github.com/gookit/ini)
+- [godoc for github](https://pkg.go.dev/github.com/gookit/ini)
 
 ## 安装
 
@@ -147,6 +148,20 @@ fmt.Printf("%q", value)  // "val in default section"
 ini.Set("name", "new name")
 name = ini.String("name")
 fmt.Printf("%q", value)  // "new name"
+```
+
+### 将数据映射到结构
+
+```go
+type User struct {
+	Name string
+	Age int
+}
+
+user := &User{}
+ini.MapStruct(ini.DefSection(), user)
+
+dump.P(user)
 ```
 
 ## 变量参考解析
