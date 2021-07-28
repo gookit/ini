@@ -200,11 +200,6 @@ func (c *Ini) WithOptions(opts ...func(*Options)) {
 	}
 }
 
-// DefSection get default section name of the default ini object.
-func DefSection() string {
-	return dc.opts.DefSection
-}
-
 // DefSection get default section name
 func DefSection() string {
 	return dc.opts.DefSection
