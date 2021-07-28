@@ -200,6 +200,11 @@ func (c *Ini) WithOptions(opts ...func(*Options)) {
 	}
 }
 
+// DefSection get default section name of the default ini object.
+func DefSection() string {
+	return dc.opts.DefSection
+}
+
 // DefSection get default section name
 func (c *Ini) DefSection() string {
 	return c.opts.DefSection
@@ -367,11 +372,6 @@ func Data() map[string]Section { return dc.data }
 // Data get all data
 func (c *Ini) Data() map[string]Section {
 	return c.data
-}
-
-// MapTo struct pointer WIP
-func (c *Ini) MapTo(ptr interface{}) error {
-	return nil
 }
 
 // Error get

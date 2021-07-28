@@ -230,6 +230,8 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 func MapStruct(key string, ptr interface{}) error { return dc.MapStruct(key, ptr) }
 
 // MapStruct get config data and binding to the structure.
+// If the key is empty, will binding all data to the struct ptr.
+//
 // Usage:
 // 	user := &Db{}
 // 	ini.MapStruct("user", &user)
@@ -261,6 +263,11 @@ func (c *Ini) MapStruct(key string, ptr interface{}) error {
 	}
 
 	return mapStruct(c.opts.TagName, data, ptr)
+}
+
+// MapTo mapping all data to struct pointer
+func (c *Ini) MapTo(ptr interface{}) error {
+	return c.MapStruct("", ptr)
 }
 
 func mapStruct(tagName string, data interface{}, ptr interface{}) error {
