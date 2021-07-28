@@ -206,6 +206,11 @@ func DefSection() string {
 }
 
 // DefSection get default section name
+func DefSection() string {
+	return dc.opts.DefSection
+}
+
+// DefSection get default section name
 func (c *Ini) DefSection() string {
 	return c.opts.DefSection
 }
