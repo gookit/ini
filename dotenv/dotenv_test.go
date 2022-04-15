@@ -1,4 +1,4 @@
-package dotnev
+package dotenv
 
 import (
 	"fmt"
@@ -50,7 +50,7 @@ func TestLoadFromMap(t *testing.T) {
 		"DONT_ENV_TEST":  "blog",
 		"dont_env_test1": "val1",
 		"dont_env_test2": "23",
-		"dont_env_bool": "true",
+		"dont_env_bool":  "true",
 	})
 
 	assert.NoError(t, err)
