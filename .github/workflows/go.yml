@@ -1,37 +1,64 @@
 name: Unit-Tests
-on: [push]
+on:
+  pull_request:
+    paths:
+      - 'go.mod'
+      - '**.go'
+      - '**.yml'
+  push:
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - '**.yml'
+
 jobs:
 
   test:
-    name: Test on go ${{ matrix.go_version }} and ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Test on go ${{ matrix.go_version }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         go_version: [1.15, 1.16, 1.17, 1.18]
-        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
-    # https://github.com/actions/setup-go
-    - name: Use Go ${{ matrix.go_version }}
-      timeout-minutes: 3
-      uses: actions/setup-go@v2
-      with:
-        go-version: ${{ matrix.go_version }}
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Run unit tests
-      #      run: go test -v -cover ./...
-      #      must add " for profile.cov on windows OS
-      run: go test -v -coverprofile="profile.cov" ./...
+      - name: Setup Go Faster
+        uses: WillAbides/setup-go-faster@v1.7.0
+        timeout-minutes: 3
+        with:
+          go-version: ${{ matrix.go_version }}
 
-    - name: Send coverage
-      uses: shogo82148/actions-goveralls@v1
-      if: ${{ matrix.os == 'ubuntu-latest' }}
-      with:
-        path-to-profile: profile.cov
-        flag-name: Go-${{ matrix.go_version }}
-        parallel: true
+      - name: Revive check
+        uses: morphy2k/revive-action@v2.3.1
+        with:
+          # Exclude patterns, separated by semicolons (optional)
+          exclude: "./_examples/..."
+
+      - name: Run static check
+        uses: reviewdog/action-staticcheck@v1
+        if: ${{ github.event_name == 'pull_request'}}
+        with:
+          github_token: ${{ secrets.github_token }}
+          # Change reviewdog reporter if you need [github-pr-check,github-check,github-pr-review].
+          reporter: github-pr-check
+          # Report all results. [added,diff_context,file,nofilter].
+          filter_mode: added
+          # Exit with 1 when it find at least one finding.
+          fail_on_error: true
+
+      - name: Run unit tests
+        #      run: go test -v -cover ./...
+        #      must add " for profile.cov on windows OS
+        run: go test -v -coverprofile="profile.cov" ./...
+
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
+          flag-name: Go-${{ matrix.go_version }}
+          parallel: true
 
   # notifies that all test jobs are finished.
   # https://github.com/shogo82148/actions-goveralls
