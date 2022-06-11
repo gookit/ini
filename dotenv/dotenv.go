@@ -18,7 +18,7 @@ var (
 	// DefaultName default file name
 	DefaultName = ".env"
 
-	// OnlyLoadExists load on file exists
+	// OnlyLoadExists only load on file exists
 	OnlyLoadExists bool
 
 	// save original Env data
@@ -49,6 +49,7 @@ func DontUpperEnvKey() {
 }
 
 // Load parse .env file data to os ENV.
+//
 // Usage:
 // 	dotenv.Load("./", ".env")
 func Load(dir string, filenames ...string) (err error) {
@@ -149,7 +150,6 @@ func loadFile(file string) (err error) {
 	// open file
 	fd, err := os.Open(file)
 	if err != nil {
-		// skip not exist file
 		if os.IsNotExist(err) && OnlyLoadExists {
 			return nil
 		}

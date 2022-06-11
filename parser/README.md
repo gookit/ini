@@ -4,6 +4,10 @@ This is a parser for parse INI format content to golang data
 
 > parser is ref the project: https://github.com/dombenson/go-ini, Thank you very much
 
+## Feature
+
+- Support comments start with  `;` `#`
+
 ## TODO
 
 - [ ] multi line text `'''text'''`

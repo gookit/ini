@@ -18,6 +18,7 @@ INI data parse by golang. INI config data management tool library.
 - Support for rebinding data to structure
 - Support data override merge
 - Support parse ENV variable
+- Support comments start with  `;` `#`
 - Complete unit test(coverage > 90%)
 - Support variable reference, default compatible with Python's configParser format `%(VAR)s`
 
@@ -266,11 +267,6 @@ go test ./... -cover
 golint ./...
 ```
 
-## Refer 
-
-- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
-- [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
-
 ## Gookit packages
 
 - [gookit/ini](https://github.com/gookit/ini) Go config management, use INI files
@@ -285,6 +281,11 @@ golint ./...
 - [gookit/validate](https://github.com/gookit/validate) Use for data validation and filtering. support Map, Struct, Form data
 - [gookit/goutil](https://github.com/gookit/goutil) Some utils for the Go: string, array/slice, map, format, cli, env, filesystem, test and more
 - More, please see https://github.com/gookit
+
+## Related
+
+- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
+- [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
 
 ## License
 

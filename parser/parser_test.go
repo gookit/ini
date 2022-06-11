@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gookit/goutil/dump"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -106,15 +107,15 @@ func TestNewSimpled(t *testing.T) {
 }
 
 func TestNewFulled(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	p := NewFulled()
-	st.Equal(ModeFull.Unit8(), p.ParseMode())
-	st.False(p.IgnoreCase)
-	st.False(p.NoDefSection)
+	is.Equal(ModeFull.Unit8(), p.ParseMode())
+	is.False(p.IgnoreCase)
+	is.False(p.NoDefSection)
 
 	err := p.ParseString("invalid string")
-	st.Error(err)
+	is.Error(err)
 
 	err = p.ParseString(`
 [__default]
@@ -124,39 +125,42 @@ newKey = val5
 [newSec]
 key = val0
 `)
-	st.Nil(err)
-
-	// fmt.Printf("%#v\n", p.ParsedData())
+	is.Nil(err)
+	dump.P(p.ParsedData())
 
 	p.Reset()
 	err = p.ParseString(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
 	v := p.ParsedData()
-	st.NotEmpty(v)
+	is.NotEmpty(v)
 
 	// options: ignore case
 	p = NewFulled(IgnoreCase)
-	st.True(p.IgnoreCase)
+	is.True(p.IgnoreCase)
 	err = p.ParseString(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
 	v = p.ParsedData()
-	st.NotEmpty(v)
+	is.NotEmpty(v)
 
 	data := p.FullData()
 	str := fmt.Sprintf("%v", data)
-	st.Contains(str, "hasquota2:")
-	st.NotContains(str, "hasQuota1:")
+	is.Contains(str, "hasquota2:")
+	is.NotContains(str, "hasQuota1:")
+}
+
+func TestNewFulled_NoDefSection(t *testing.T) {
+	is := assert.New(t)
 
 	// options: NoDefSection
-	p = NewFulled(NoDefSection)
-	st.Equal(ModeFull.Unit8(), p.ParseMode())
-	st.False(p.IgnoreCase)
-	st.True(p.NoDefSection)
+	p := NewFulled(NoDefSection)
+	is.Equal(ModeFull.Unit8(), p.ParseMode())
+	is.False(p.IgnoreCase)
+	is.True(p.NoDefSection)
 
-	err = p.ParseString(iniStr)
-	st.Nil(err)
+	err := p.ParseString(iniStr)
+	is.Nil(err)
 
 	p.Reset()
 	err = p.ParseString(`
@@ -172,6 +176,6 @@ arr[] = val1
 key1 = val1
 arr[] = val2
 `)
-	st.Nil(err)
-	// fmt.Printf("%#v\n", p.ParsedData())
+	is.Nil(err)
+	dump.P(p.ParsedData())
 }

@@ -86,6 +86,7 @@ func New() *Ini {
 }
 
 // NewWithOptions new a instance and with some options
+//
 // Usage:
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
@@ -130,6 +131,7 @@ func (c *Ini) ensureInit() {
  *************************************************************/
 
 // newDefaultOptions create a new default Options
+//
 // Notice:
 // Cannot use package var instead it. That will allow multiple instances to use the same Options
 func newDefaultOptions() *Options {
@@ -146,6 +148,7 @@ func newDefaultOptions() *Options {
 }
 
 // Readonly setting
+//
 // Usage:
 // ini.NewWithOptions(ini.Readonly)
 func Readonly(opts *Options) {
@@ -153,6 +156,7 @@ func Readonly(opts *Options) {
 }
 
 // ParseVar on get value
+//
 // Usage:
 // 	ini.WithOptions(ini.ParseVar)
 func ParseVar(opts *Options) {
@@ -160,6 +164,7 @@ func ParseVar(opts *Options) {
 }
 
 // ParseEnv will parse ENV key on get value
+//
 // Usage:
 // 	ini.WithOptions(ini.ParseEnv)
 func ParseEnv(opts *Options) {
@@ -172,12 +177,14 @@ func IgnoreCase(opts *Options) {
 }
 
 // GetOptions get options info.
+//
 // Notice: return is value. so, cannot change Ini instance
 func GetOptions() Options {
 	return dc.Options()
 }
 
 // Options get options info.
+//
 // Notice: return is value. so, cannot change options
 func (c *Ini) Options() Options {
 	return *c.opts
@@ -191,7 +198,7 @@ func WithOptions(opts ...func(*Options)) {
 // WithOptions apply some options
 func (c *Ini) WithOptions(opts ...func(*Options)) {
 	if !c.IsEmpty() {
-		panic("ini: Cannot set options after data has been load")
+		panic("ini: cannot set options after data has been load")
 	}
 
 	// apply options

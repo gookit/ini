@@ -67,8 +67,9 @@ var (
 const DefSection = "__default"
 
 // mode of parse data
-// ModeFull  - will parse array
-// ModeSimple - don't parse array value
+//
+//  ModeFull   - will parse array
+//  ModeSimple - don't parse array value
 const (
 	ModeFull   parseMode = 1
 	ModeSimple parseMode = 2
@@ -111,7 +112,7 @@ type Parser struct {
 // NewFulled create a full mode Parser with some options
 func NewFulled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		TagName: 	TagName,
+		TagName:    TagName,
 		DefSection: DefSection,
 		parseMode:  ModeFull,
 		fullData:   make(map[string]interface{}),
@@ -123,7 +124,7 @@ func NewFulled(opts ...func(*Parser)) *Parser {
 // NewSimpled create a simple mode Parser
 func NewSimpled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		TagName: 	TagName,
+		TagName:    TagName,
 		DefSection: DefSection,
 		parseMode:  ModeSimple,
 		simpleData: make(map[string]map[string]string),
@@ -133,6 +134,7 @@ func NewSimpled(opts ...func(*Parser)) *Parser {
 }
 
 // NoDefSection set don't return DefSection title
+//
 // Usage:
 // 	Parser.NewWithOptions(ini.ParseEnv)
 func NoDefSection(p *Parser) {
@@ -203,7 +205,7 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 	for readLine = in.Scan(); readLine; readLine = in.Scan() {
 		line := in.Text()
 
-		bytes++
+		bytes++ // newline
 		bytes += int64(len(line))
 
 		lineNum++
@@ -251,11 +253,10 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 		}
 	}
 
+	err = in.Err()
 	if bytes < 0 {
 		bytes = 0
 	}
-
-	err = in.Err()
 	return
 }
 
@@ -353,7 +354,6 @@ func (p *Parser) ParsedData() interface{} {
 	if p.parseMode == ModeFull {
 		return p.fullData
 	}
-
 	return p.simpleData
 }
 

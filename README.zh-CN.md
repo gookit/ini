@@ -16,6 +16,7 @@
 - 支持数据覆盖合并
 - 支持将数据重新绑定到结构体
 - 支持解析 ENV 变量名
+- 支持使用 `;` `#` 进行注释一行
 - 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
 - 完善的单元测试(coverage > 90%)
 
@@ -258,11 +259,6 @@ go test ./... -cover
 golint ./... 
 ```
 
-## 参考 
-
-- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
-- [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
-
 ## Gookit packages
 
 - [gookit/ini](https://github.com/gookit/ini) Go config management, use INI files
@@ -277,6 +273,11 @@ golint ./...
 - [gookit/validate](https://github.com/gookit/validate) Use for data validation and filtering. support Map, Struct, Form data
 - [gookit/goutil](https://github.com/gookit/goutil) Some utils for the Go: string, array/slice, map, format, cli, env, filesystem, test and more
 - More, please see https://github.com/gookit
+
+## 相关项目参考
+
+- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
+- [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
 
 ## License
 
