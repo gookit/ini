@@ -21,6 +21,7 @@ INI data parse by golang. INI config data management tool library.
 - Support comments start with  `;` `#`
 - Complete unit test(coverage > 90%)
 - Support variable reference, default compatible with Python's configParser format `%(VAR)s`
+- Sub-package `dotenv` that supports importing ENV data from files (eg `.env`)
 
 ## More formats
 
@@ -248,6 +249,9 @@ err := dotenv.Load("./", ".env")
 val := dotenv.Get("ENV_KEY")
 // Or use 
 // val := os.Getenv("ENV_KEY")
+
+// get int value
+intVal := dotenv.Int("LOG_LEVEL")
 
 // with default value
 val := dotenv.Get("ENV_KEY", "default value")

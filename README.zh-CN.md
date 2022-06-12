@@ -19,6 +19,7 @@
 - 支持使用 `;` `#` 注释一行
 - 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
 - 完善的单元测试(coverage > 90%)
+- 子包 `dotenv` - 提供了加载解析 `.env` 文件数据为ENV环境变量
 
 ## 更多格式
 
@@ -240,6 +241,9 @@ err := dotenv.Load("./", ".env")
 val := dotenv.Get("ENV_KEY")
 // Or use 
 // val := os.Getenv("ENV_KEY")
+
+// get int value
+intVal := dotenv.Int("LOG_LEVEL")
 
 // with default value
 val := dotenv.Get("ENV_KEY", "default value")
