@@ -10,6 +10,7 @@ import (
 )
 
 func TestLoad(t *testing.T) {
+	defer ClearLoaded()
 	err := Load("./testdata", "not-exist", ".env")
 	assert.Error(t, err)
 
@@ -28,11 +29,22 @@ func TestLoad(t *testing.T) {
 	assert.Error(t, err)
 
 	assert.Equal(t, "def-val", Get("NOT-EXIST", "def-val"))
+}
 
-	ClearLoaded()
+func TestLoadFiles(t *testing.T) {
+	defer Reset()
+	assert.Error(t, LoadFiles("./testdata/not-exist"))
+	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+
+	err := LoadFiles("./testdata/.env")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
 }
 
 func TestLoadExists(t *testing.T) {
+	defer Reset()
 	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err := LoadExists("./testdata", "not-exist", ".env")
@@ -40,7 +52,17 @@ func TestLoadExists(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
 	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
-	ClearLoaded()
+}
+
+func TestLoadExistFiles(t *testing.T) {
+	defer Reset()
+	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+
+	err := LoadExistFiles("./testdata/not-exist", "./testdata/.env")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
 }
 
 func TestLoadFromMap(t *testing.T) {

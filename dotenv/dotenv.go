@@ -33,6 +33,9 @@ func LoadedData() map[string]string {
 	return loadedData
 }
 
+// Reset clear the previously set ENV value
+func Reset() { ClearLoaded() }
+
 // ClearLoaded clear the previously set ENV value
 func ClearLoaded() {
 	for key := range loadedData {
@@ -75,6 +78,27 @@ func LoadExists(dir string, filenames ...string) error {
 	OnlyLoadExists = oldVal
 
 	return err
+}
+
+// LoadFiles load ENV from given file
+func LoadFiles(filePaths ...string) (err error) {
+	for _, filePath := range filePaths {
+		if err = loadFile(filePath); err != nil {
+			break
+		}
+	}
+	return
+}
+
+// LoadExistFiles load ENV from given files, only load exists
+func LoadExistFiles(filePaths ...string) error {
+	oldVal := OnlyLoadExists
+	defer func() {
+		OnlyLoadExists = oldVal
+	}()
+
+	OnlyLoadExists = true
+	return LoadFiles(filePaths...)
 }
 
 // LoadFromMap load data from given string map
