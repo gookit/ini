@@ -2,7 +2,7 @@
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/gookit/ini?style=flat-square)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/gookit/ini)](https://github.com/gookit/ini)
-[![GoDoc](https://pkg.go.dev/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
+[![GoDoc](https://godoc.org/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
 [![Coverage Status](https://coveralls.io/repos/github/gookit/ini/badge.svg?branch=master)](https://coveralls.io/github/gookit/ini?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
 [![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)

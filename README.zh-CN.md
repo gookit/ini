@@ -2,7 +2,7 @@
 
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/gookit/ini?style=flat-square)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/gookit/ini)](https://github.com/gookit/ini)
-[![GoDoc](https://pkg.go.dev/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
+[![GoDoc](https://godoc.org/github.com/gookit/ini?status.svg)](https://pkg.go.dev/github.com/gookit/ini)
 [![Coverage Status](https://coveralls.io/repos/github/gookit/ini/badge.svg?branch=master)](https://coveralls.io/github/gookit/ini?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
 [![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)
@@ -16,7 +16,7 @@
 - 支持数据覆盖合并
 - 支持将数据重新绑定到结构体
 - 支持解析 ENV 变量名
-- 支持使用 `;` `#` 进行注释一行
+- 支持使用 `;` `#` 注释一行
 - 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
 - 完善的单元测试(coverage > 90%)
 
