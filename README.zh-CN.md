@@ -149,7 +149,7 @@ fmt.Printf("%q", value)  // "val in default section"
 // set value
 ini.Set("name", "new name")
 name = ini.String("name")
-fmt.Printf("%q", value)  // "new name"
+fmt.Printf("%q", name)  // "new name"
 ```
 
 ### 将数据映射到结构

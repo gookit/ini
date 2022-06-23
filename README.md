@@ -145,13 +145,13 @@ value := ini.String("sec1.varRef")
 fmt.Printf("%q", value) // "val in default section"
 ```
 
-- Setting new value
+- Set new value
 
 ```go
 // set value
 ini.Set("name", "new name")
 name = ini.String("name")
-fmt.Printf("%q", value) // "new name"
+fmt.Printf("%q", name) // "new name"
 ```
 
 ## Mapping data to struct
