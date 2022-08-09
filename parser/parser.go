@@ -66,12 +66,25 @@ var (
 // DefSection default section key name
 const DefSection = "__default"
 
+// special chars consts
+const (
+	MultiLineValMarkS = "'''"
+	MultiLineValMarkD = `"""`
+)
+
+// token consts
+const (
+	TokMLValMarkS = 'm' // multi line value by single quotes: '''
+	TokMLValMarkD = 'M' // multi line value by double quotes: """
+)
+
 // mode of parse data
 //
-//  ModeFull   - will parse array
-//  ModeSimple - don't parse array value
+//  ModeFull   - will parse inline array
+//  ModeLite/ModeSimple - don't parse array value
 const (
 	ModeFull   parseMode = 1
+	ModeLite   parseMode = 2
 	ModeSimple parseMode = 2
 )
 
@@ -83,6 +96,7 @@ func (m parseMode) Unit8() uint8 {
 }
 
 // UserCollector custom data collector.
+//
 // Notice: in simple mode, isSlice always is false.
 type UserCollector func(section, key, val string, isSlice bool)
 
@@ -136,7 +150,7 @@ func NewSimpled(opts ...func(*Parser)) *Parser {
 // NoDefSection set don't return DefSection title
 //
 // Usage:
-// 	Parser.NewWithOptions(ini.ParseEnv)
+// 	Parser.NewFulled(ini.ParseEnv)
 func NoDefSection(p *Parser) {
 	p.NoDefSection = true
 }
@@ -201,8 +215,8 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 	lineNum := 0
 	section := p.DefSection
 
-	var readLine bool
-	for readLine = in.Scan(); readLine; readLine = in.Scan() {
+	var readOk bool
+	for readOk = in.Scan(); readOk; readOk = in.Scan() {
 		line := in.Text()
 
 		bytes++ // newline

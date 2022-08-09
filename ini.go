@@ -85,7 +85,7 @@ func New() *Ini {
 	}
 }
 
-// NewWithOptions new a instance and with some options
+// NewWithOptions new an instance and with some options
 //
 // Usage:
 // ini.NewWithOptions(ini.ParseEnv, ini.Readonly)

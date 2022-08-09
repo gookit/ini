@@ -92,7 +92,7 @@ func TestEncode(t *testing.T) {
 	is.Contains(str, "[sec]")
 	is.Contains(str, "name = inhere")
 
-	out, err = Encode(sData, "_def")
+	out, err = EncodeWithDefName(sData, "_def")
 	is.Nil(err)
 	is.NotEmpty(out)
 
@@ -131,13 +131,13 @@ func TestEncode(t *testing.T) {
 	is.Contains(str, "[sec]")
 	is.Contains(str, "arr1[] = c")
 
-	out, err = Encode(fData, "defSec")
+	out, err = EncodeWithDefName(fData, "defSec")
 	is.Nil(err)
 	is.NotEmpty(out)
 	str = string(out)
 	is.Contains(str, "[sec]")
 
-	out, err = Encode(fData, "sec")
+	out, err = EncodeWithDefName(fData, "sec")
 	is.Nil(err)
 	is.NotEmpty(out)
 	str = string(out)

@@ -62,7 +62,7 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 	return
 }
 
-// Get get a value by key string.
+// Get a value by key string.
 // you can use '.' split for get value in a special section
 func Get(key string, defVal ...string) string { return dc.Get(key, defVal...) }
 

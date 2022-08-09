@@ -30,20 +30,23 @@ func Decode(blob []byte, ptr interface{}) error {
 	return p.MapStruct(ptr)
 }
 
-// Encode golang data to INI
-func Encode(v interface{}, defSection ...string) (out []byte, err error) {
+// Encode golang data to INI string.
+func Encode(v interface{}) ([]byte, error) { return EncodeWithDefName(v) }
+
+// EncodeWithDefName golang data to INI, can set default section name
+func EncodeWithDefName(v interface{}, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
 	case map[string]interface{}: // from full mode
 		return EncodeFull(vd, defSection...)
 	case map[string]map[string]string: // from simple mode
 		return EncodeSimple(vd, defSection...)
 	default:
-		err = errors.New("ini: invalid data to encode as ini")
+		err = errors.New("ini: invalid data to encode as INI")
 	}
 	return
 }
 
-// EncodeFull full mode data to INI
+// EncodeFull full mode data to INI, can set default section name
 func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
