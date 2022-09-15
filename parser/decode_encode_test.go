@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gookit/goutil/dump"
-	"github.com/stretchr/testify/assert"
+	"github.com/gookit/goutil/testutil/assert"
 )
 
 func TestDecode(t *testing.T) {
@@ -27,25 +27,25 @@ two_words = abc def
 
 	data := make(map[string]interface{})
 	err := Decode([]byte(""), data)
-	is.Error(err)
+	is.Err(err)
 
 	err = Decode(bts, nil)
-	is.Error(err)
+	is.Err(err)
 
 	err = Decode(bts, data)
-	is.Error(err)
+	is.Err(err)
 
 	err = Decode([]byte(`invalid`), &data)
-	is.Error(err)
+	is.Err(err)
 
 	err = Decode(bts, &data)
 	dump.P(data)
 
 	is.Nil(err)
 	is.True(len(data) > 0)
-	is.Equal("inhere", data["name"])
-	is.Equal("[a b]", fmt.Sprintf("%v", data["arr"]))
-	is.Equal("map[key:val]", fmt.Sprintf("%v", data["sec"]))
+	is.Eq("inhere", data["name"])
+	is.Eq("[a b]", fmt.Sprintf("%v", data["arr"]))
+	is.Eq("map[key:val]", fmt.Sprintf("%v", data["sec"]))
 
 	st := struct {
 		Age  int
@@ -66,7 +66,7 @@ func TestEncode(t *testing.T) {
 
 	out, err := Encode("invalid")
 	is.Nil(out)
-	is.Error(err)
+	is.Err(err)
 
 	// empty
 	out, err = Encode(map[string]interface{}{})

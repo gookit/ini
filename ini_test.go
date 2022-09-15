@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gookit/goutil/testutil/assert"
 	"github.com/gookit/ini/v2"
 	"github.com/gookit/ini/v2/parser"
-	"github.com/stretchr/testify/assert"
 )
 
 func Example() {
@@ -96,91 +96,93 @@ user_name = inhere
 `
 
 func TestLoad(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	err := ini.LoadFiles("testdata/test.ini")
-	st.Nil(err)
-	st.False(ini.IsEmpty())
-	st.NotEmpty(ini.Data())
+	is.Nil(err)
+	is.False(ini.IsEmpty())
+	is.NotEmpty(ini.Data())
 
 	err = ini.LoadFiles("no-file.ini")
-	st.Error(err)
+	is.Err(err)
 
 	err = ini.LoadExists("testdata/test.ini", "no-file.ini")
-	st.Nil(err)
-	st.NotEmpty(ini.Data())
+	is.Nil(err)
+	is.NotEmpty(ini.Data())
 
 	err = ini.LoadStrings("name = inhere")
-	st.Nil(err)
-	st.NotEmpty(ini.Data())
-	st.False(ini.IsEmpty())
+	is.Nil(err)
+	is.NotEmpty(ini.Data())
+	is.False(ini.IsEmpty())
 
 	// reset
 	ini.Reset()
 
 	err = ini.LoadStrings(" ")
-	st.Nil(err)
-	st.Empty(ini.Data())
+	is.Nil(err)
+	is.Empty(ini.Data())
 
 	// load data
 	err = ini.LoadData(map[string]ini.Section{
 		"sec0": {"k": "v"},
 	})
-	st.Nil(err)
-	st.True(ini.HasKey("sec0.k"))
+	is.Nil(err)
+	is.True(ini.HasKey("sec0.k"))
 
 	// test auto init and load data
 	conf := new(ini.Ini)
 	err = conf.LoadData(map[string]ini.Section{
 		"sec0": {"k": "v"},
 	})
-	st.Nil(err)
+	is.Nil(err)
 	err = conf.LoadData(map[string]ini.Section{
 		"name": {"k": "v"},
 	})
-	st.Nil(err)
+	is.Nil(err)
 
 	// test error
 	err = conf.LoadFiles("testdata/error.ini")
-	st.Error(err)
+	is.Err(err)
 
 	err = conf.LoadExists("testdata/error.ini")
-	st.Error(err)
+	is.Err(err)
 
 	err = conf.LoadStrings("invalid string")
-	st.Error(err)
+	is.Err(err)
 
 	// reset
 	ini.Reset()
 }
 
 func TestBasic(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
+	defer ini.ResetStd()
 
 	conf := ini.Default()
-	st.Equal(parser.DefSection, conf.DefSection())
+	is.Eq(parser.DefSection, conf.DefSection())
+	is.Eq(parser.DefSection, ini.DefSection())
 
 	conf.WithOptions(func(opts *ini.Options) {
 		opts.DefSection = "myDef"
 	})
-	st.Equal("myDef", conf.DefSection())
+	is.Eq("myDef", conf.DefSection())
 
 	err := conf.LoadStrings(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
-	st.True(conf.HasKey("name"))
-	st.False(conf.HasKey("notExist"))
+	is.True(conf.HasKey("name"))
+	is.False(conf.HasKey("notExist"))
 
-	st.True(conf.HasSection("sec1"))
-	st.False(conf.HasSection("notExist"))
+	is.True(conf.HasSection("sec1"))
+	is.False(conf.HasSection("notExist"))
 
-	st.Panics(func() {
+	is.Panics(func() {
 		ini.WithOptions(ini.IgnoreCase)
 	})
 }
 
 func TestIgnoreCase(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 	conf := ini.NewWithOptions(ini.IgnoreCase)
 
 	err := conf.LoadStrings(`
@@ -188,48 +190,48 @@ kEy = val
 [sEc]
 sK = val
 `)
-	st.Nil(err)
+	is.Nil(err)
 
 	opts := conf.Options()
-	st.True(opts.IgnoreCase)
+	is.True(opts.IgnoreCase)
 
 	str := conf.String("KEY")
-	st.Equal("val", str)
+	is.Eq("val", str)
 
 	str = conf.String("key")
-	st.Equal("val", str)
+	is.Eq("val", str)
 
-	st.True(conf.Delete("key"))
-	st.False(conf.HasKey("kEy"))
+	is.True(conf.Delete("key"))
+	is.False(conf.HasKey("kEy"))
 
 	_ = conf.Set("NK", "val1")
 	str = conf.String("nk")
-	st.Equal("val1", str)
+	is.Eq("val1", str)
 
 	str = conf.String("Nk")
-	st.Equal("val1", str)
+	is.Eq("val1", str)
 
 	sec := conf.StringMap("sec")
-	st.Equal("val", sec["sk"])
+	is.Eq("val", sec["sk"])
 
 	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
-	st.Nil(err)
+	is.Nil(err)
 
 	sec = conf.StringMap("newSec")
-	st.Equal("val", sec["key0"])
+	is.Eq("val", sec["key0"])
 
 	_ = conf.SetSection("NewSec", map[string]string{"key1": "val0"})
 	str = conf.String("newSec.key1")
-	st.Equal("val0", str)
+	is.Eq("val0", str)
 
 	_ = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
-	st.True(conf.HasSection("newSec1"))
-	st.True(conf.HasSection("newsec1"))
-	st.True(conf.DelSection("newsec1"))
+	is.True(conf.HasSection("newSec1"))
+	is.True(conf.HasSection("newsec1"))
+	is.True(conf.DelSection("newsec1"))
 }
 
 func TestReadonly(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 	conf := ini.NewWithOptions(ini.Readonly)
 
 	err := conf.LoadStrings(`
@@ -237,31 +239,31 @@ key = val
 [sec]
 k = v
 `)
-	st.Nil(err)
+	is.Nil(err)
 
 	opts := conf.Options()
-	st.True(opts.Readonly)
+	is.True(opts.Readonly)
 
 	err = conf.Set("newK", "newV")
-	st.Error(err)
+	is.Err(err)
 
 	err = conf.LoadData(map[string]ini.Section{
 		"sec1": {"k": "v"},
 	})
-	st.Error(err)
+	is.Err(err)
 
 	ok := conf.Delete("key")
-	st.False(ok)
+	is.False(ok)
 
 	ok = conf.DelSection("sec")
-	st.False(ok)
+	is.False(ok)
 
 	err = conf.SetSection("newSec1", map[string]string{"k0": "v0"})
-	st.Error(err)
-	st.False(conf.HasSection("newSec1"))
+	is.Err(err)
+	is.False(conf.HasSection("newSec1"))
 
 	err = conf.NewSection("NewSec", map[string]string{"kEy0": "val"})
-	st.Error(err)
+	is.Err(err)
 
 	// Readonly and ParseVar
 	conf = ini.NewWithOptions(ini.Readonly, ini.ParseVar)
@@ -271,13 +273,13 @@ key = val
 k = v
 k1 = %(key)s
 `)
-	st.Nil(err)
+	is.Nil(err)
 
 	opts = conf.Options()
-	st.True(opts.ParseVar)
+	is.True(opts.ParseVar)
 
 	str := conf.Get("sec.k1")
-	st.Equal("val", str)
+	is.Eq("val", str)
 }
 
 func TestParseEnv(t *testing.T) {
@@ -300,19 +302,19 @@ hasDefault = ${HasDef|defValue}
 	st.NotContains(str, "${")
 
 	str = conf.Get("notExist")
-	st.Equal("${NotExist}", str)
+	st.Eq("${NotExist}", str)
 
 	str = conf.Get("invalid")
 	st.Contains(str, "${")
-	st.Equal("${invalid", str)
+	st.Eq("${invalid", str)
 
 	str = conf.Get("hasDefault")
 	st.NotContains(str, "${")
-	st.Equal("defValue", str)
+	st.Eq("defValue", str)
 }
 
 func TestParseVar(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 	conf := ini.NewWithOptions(ini.ParseVar)
 	err := conf.LoadStrings(`
 key = val
@@ -325,37 +327,37 @@ enable = %(debug)s
 url = http://%(host)s/api
 host = localhost
 `)
-	st.Nil(err)
+	is.Nil(err)
 
 	opts := conf.Options()
-	st.False(opts.IgnoreCase)
-	st.True(opts.ParseVar)
+	is.False(opts.IgnoreCase)
+	is.True(opts.ParseVar)
 	// fmt.Println(conf.Data())
 
 	str := conf.Get("invalid")
-	st.Equal("%(secs", str)
+	is.Eq("%(secs", str)
 
 	str = conf.Get("notExist")
-	st.Equal("%(varNotExist)s", str)
+	is.Eq("%(varNotExist)s", str)
 
 	str = conf.Get("sec.host")
-	st.Equal("localhost", str)
+	is.Eq("localhost", str)
 
 	str = conf.Get("ref")
-	st.Equal("localhost", str)
+	is.Eq("localhost", str)
 
 	str = conf.Get("sec.enable")
-	st.Equal("true", str)
+	is.Eq("true", str)
 
 	str = conf.Get("sec.url")
-	st.Equal("http://localhost/api", str)
+	is.Eq("http://localhost/api", str)
 
 	mp := conf.StringMap("sec")
-	st.Equal("true", mp["enable"])
+	is.Eq("true", mp["enable"])
 }
 
 func TestParseCustomRef(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 	conf := ini.NewWithOptions(func(opts *ini.Options) {
 		*opts = ini.Options{
 			IgnoreCase: false,
@@ -378,81 +380,81 @@ enable = ${debug}
 url = http://${host}/api
 host = localhost
 `)
-	st.Nil(err)
+	is.Nil(err)
 
 	opts := conf.Options()
-	st.False(opts.IgnoreCase)
-	st.False(opts.ParseEnv)
-	st.True(opts.ParseVar)
-	st.Equal("|", opts.SectionSep)
-	st.Equal("${", opts.VarOpen)
-	st.Equal("}", opts.VarClose)
+	is.False(opts.IgnoreCase)
+	is.False(opts.ParseEnv)
+	is.True(opts.ParseVar)
+	is.Eq("|", opts.SectionSep)
+	is.Eq("${", opts.VarOpen)
+	is.Eq("}", opts.VarClose)
 
 	str := conf.Get("invalid")
-	st.Equal("${secs", str)
+	is.Eq("${secs", str)
 
 	str = conf.Get("notExist")
-	st.Equal("${varNotExist}", str)
+	is.Eq("${varNotExist}", str)
 
 	str = conf.Get("sec|host")
-	st.Equal("localhost", str)
+	is.Eq("localhost", str)
 
 	str = conf.Get("ref")
-	st.Equal("localhost", str)
+	is.Eq("localhost", str)
 
 	str = conf.Get("sec|enable")
-	st.Equal("true", str)
+	is.Eq("true", str)
 
 	str = conf.Get("sec|url")
-	st.Equal("http://localhost/api", str)
+	is.Eq("http://localhost/api", str)
 
 	mp := conf.StringMap("sec")
-	st.Equal("true", mp["enable"])
+	is.Eq("true", mp["enable"])
 
 }
 
 func TestOther(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	err := ini.LoadStrings(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
 	ns := ini.SectionKeys(false)
-	st.Contains(ns, "sec1")
-	st.NotContains(ns, ini.GetOptions().DefSection)
+	is.Contains(ns, "sec1")
+	is.NotContains(ns, ini.GetOptions().DefSection)
 
 	ns = ini.SectionKeys(true)
-	st.Contains(ns, "sec1")
-	st.Contains(ns, ini.GetOptions().DefSection)
+	is.Contains(ns, "sec1")
+	is.Contains(ns, ini.GetOptions().DefSection)
 
 	conf := ini.Default()
 
 	// export as INI string
 	buf := &bytes.Buffer{}
 	_, err = conf.WriteTo(buf)
-	st.Nil(err)
+	is.Nil(err)
 
 	str := buf.String()
-	st.Contains(str, "inhere")
-	st.Contains(str, "[sec1]")
+	is.Contains(str, "inhere")
+	is.Contains(str, "[sec1]")
 
 	// export as formatted JSON string
 	str = conf.PrettyJSON()
-	st.Contains(str, "inhere")
-	st.Contains(str, "sec1")
+	is.Contains(str, "inhere")
+	is.Contains(str, "sec1")
 
 	// export to file
 	_, err = conf.WriteToFile("not/exist/export.ini")
-	st.Error(err)
+	is.Err(err)
 
 	n, err := conf.WriteToFile("testdata/export.ini")
-	st.True(n > 0)
-	st.Nil(err)
+	is.True(n > 0)
+	is.Nil(err)
 
 	conf.Reset()
-	st.Empty(conf.Data())
+	is.Empty(conf.Data())
 
 	conf = ini.New()
 	str = conf.PrettyJSON()
-	st.Equal("", str)
+	is.Eq("", str)
 }

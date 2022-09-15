@@ -11,7 +11,6 @@ package ini
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -97,9 +96,10 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 }
 
 // Default config instance
-func Default() *Ini {
-	return dc
-}
+func Default() *Ini { return dc }
+
+// ResetStd instance
+func ResetStd() { dc = New() }
 
 func (c *Ini) ensureInit() {
 	if !c.IsEmpty() {
@@ -390,11 +390,6 @@ func Error() error { return dc.Error() }
 // Error get
 func (c *Ini) Error() error {
 	return c.err
-}
-
-// format and record error
-func (c *Ini) addErrorf(format string, a ...interface{}) {
-	c.err = fmt.Errorf(format, a...)
 }
 
 /*************************************************************

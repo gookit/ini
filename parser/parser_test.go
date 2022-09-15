@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/gookit/goutil/dump"
-	"github.com/stretchr/testify/assert"
+	"github.com/gookit/goutil/testutil/assert"
 )
 
 var iniStr = `
@@ -54,68 +54,71 @@ func Example_simpleParse() {
 }
 
 func TestParse(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	p, err := Parse("invalid", ModeFull)
-	st.Error(err)
-	st.True(len(p.FullData()) == 0)
+	is.Err(err)
+	is.True(len(p.FullData()) == 0)
 
 	p, err = Parse("invalid", ModeSimple)
-	st.Error(err)
-	st.True(len(p.SimpleData()) == 0)
+	is.Err(err)
+	is.True(len(p.SimpleData()) == 0)
 }
 
 func TestNewSimpled(t *testing.T) {
-	st := assert.New(t)
+	is := assert.New(t)
 
 	// simple mode will ignore all array values
 	p := NewSimpled()
-	st.Equal(ModeSimple.Unit8(), p.ParseMode())
-	st.False(p.IgnoreCase)
-	st.False(p.NoDefSection)
+	is.Eq(ModeSimple.Unit8(), p.ParseMode())
+	is.False(p.IgnoreCase)
+	is.False(p.NoDefSection)
 
 	err := p.ParseString("invalid string")
-	st.Error(err)
-	st.IsType(errSyntax{}, err)
-	st.Contains(err.Error(), "invalid INI syntax on line")
+	is.Err(err)
+	is.IsType(errSyntax{}, err)
+	is.Contains(err.Error(), "invalid INI syntax on line")
 
 	err = p.ParseString("")
-	st.Error(err)
-	st.True(len(p.SimpleData()) == 0)
+	is.Err(err)
+	is.True(len(p.SimpleData()) == 0)
 
 	p.Reset()
 	err = p.ParseString(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
 	data := p.SimpleData()
 	str := fmt.Sprintf("%v", data)
-	st.Contains(str, "hasQuota2:")
-	st.NotContains(str, "hasquota1:")
+	is.Contains(str, "hasQuota2:")
+	is.NotContains(str, "hasquota1:")
+
+	defSec := p.LiteSection(p.DefSection)
+	is.NotEmpty(defSec)
 
 	// ignore case
 	p = NewSimpled(IgnoreCase)
 	err = p.ParseString(iniStr)
-	st.Nil(err)
+	is.Nil(err)
 
 	v := p.ParsedData()
-	st.NotEmpty(v)
+	is.NotEmpty(v)
 
 	data = p.SimpleData()
 	str = fmt.Sprintf("%v", data)
-	st.Contains(str, "hasquota2:")
-	st.NotContains(str, "hasQuota1:")
+	is.Contains(str, "hasquota2:")
+	is.NotContains(str, "hasQuota1:")
 }
 
 func TestNewFulled(t *testing.T) {
 	is := assert.New(t)
 
 	p := NewFulled()
-	is.Equal(ModeFull.Unit8(), p.ParseMode())
+	is.Eq(ModeFull.Unit8(), p.ParseMode())
 	is.False(p.IgnoreCase)
 	is.False(p.NoDefSection)
 
 	err := p.ParseString("invalid string")
-	is.Error(err)
+	is.Err(err)
 
 	err = p.ParseString(`
 [__default]
@@ -155,7 +158,7 @@ func TestNewFulled_NoDefSection(t *testing.T) {
 
 	// options: NoDefSection
 	p := NewFulled(NoDefSection)
-	is.Equal(ModeFull.Unit8(), p.ParseMode())
+	is.Eq(ModeFull.Unit8(), p.ParseMode())
 	is.False(p.IgnoreCase)
 	is.True(p.NoDefSection)
 
@@ -177,5 +180,19 @@ key1 = val1
 arr[] = val2
 `)
 	is.Nil(err)
+	dump.P(p.ParsedData())
+}
+
+func TestParser_ParseString(t *testing.T) {
+	p := New()
+	err := p.ParseString(`
+key1 = val1
+arr = val2
+arr[] = val3
+arr[] = val4
+`)
+
+	assert.NoErr(t, err)
+	assert.NotEmpty(t, p.fullData)
 	dump.P(p.ParsedData())
 }

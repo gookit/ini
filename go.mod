@@ -5,5 +5,4 @@ go 1.16
 require (
 	github.com/gookit/goutil v0.5.12
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/stretchr/testify v1.8.0
 )

@@ -123,8 +123,13 @@ type Parser struct {
 	Collector UserCollector
 }
 
+// New a full mode Parser with some options
+func New(fns ...func(*Parser)) *Parser {
+	return NewFulled(fns...)
+}
+
 // NewFulled create a full mode Parser with some options
-func NewFulled(opts ...func(*Parser)) *Parser {
+func NewFulled(fns ...func(*Parser)) *Parser {
 	p := &Parser{
 		TagName:    TagName,
 		DefSection: DefSection,
@@ -132,7 +137,7 @@ func NewFulled(opts ...func(*Parser)) *Parser {
 		fullData:   make(map[string]interface{}),
 	}
 
-	return p.WithOptions(opts...)
+	return p.WithOptions(fns...)
 }
 
 // NewSimpled create a simple mode Parser
@@ -152,14 +157,10 @@ func NewSimpled(opts ...func(*Parser)) *Parser {
 // Usage:
 //
 //	Parser.NewFulled(ini.ParseEnv)
-func NoDefSection(p *Parser) {
-	p.NoDefSection = true
-}
+func NoDefSection(p *Parser) { p.NoDefSection = true }
 
 // IgnoreCase set ignore-case
-func IgnoreCase(p *Parser) {
-	p.IgnoreCase = true
-}
+func IgnoreCase(p *Parser) { p.IgnoreCase = true }
 
 // WithOptions apply some options
 func (p *Parser) WithOptions(opts ...func(*Parser)) *Parser {
@@ -190,7 +191,6 @@ func (p *Parser) ParseString(str string) error {
 	if str = strings.TrimSpace(str); str == "" {
 		return errors.New("cannot input empty string to parse")
 	}
-
 	return p.ParseBytes([]byte(str))
 }
 

@@ -6,67 +6,67 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/gookit/goutil/testutil/assert"
 )
 
 func TestLoad(t *testing.T) {
 	defer ClearLoaded()
 	err := Load("./testdata", "not-exist", ".env")
-	assert.Error(t, err)
+	assert.Err(t, err)
 
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err = Load("./testdata")
-	assert.NoError(t, err)
-	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
+	assert.NoErr(t, err)
+	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 	_ = os.Unsetenv("DONT_ENV_TEST") // clear
 
 	err = Load("./testdata", "error.ini")
-	assert.Error(t, err)
+	assert.Err(t, err)
 
 	err = Load("./testdata", "invalid_key.ini")
-	assert.Error(t, err)
+	assert.Err(t, err)
 
-	assert.Equal(t, "def-val", Get("NOT-EXIST", "def-val"))
+	assert.Eq(t, "def-val", Get("NOT-EXIST", "def-val"))
 }
 
 func TestLoadFiles(t *testing.T) {
 	defer Reset()
-	assert.Error(t, LoadFiles("./testdata/not-exist"))
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Err(t, LoadFiles("./testdata/not-exist"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err := LoadFiles("./testdata/.env")
 
-	assert.NoError(t, err)
-	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
+	assert.NoErr(t, err)
+	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 }
 
 func TestLoadExists(t *testing.T) {
 	defer Reset()
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err := LoadExists("./testdata", "not-exist", ".env")
 
-	assert.NoError(t, err)
-	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
+	assert.NoErr(t, err)
+	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 }
 
 func TestLoadExistFiles(t *testing.T) {
 	defer Reset()
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err := LoadExistFiles("./testdata/not-exist", "./testdata/.env")
 
-	assert.NoError(t, err)
-	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
+	assert.NoErr(t, err)
+	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 }
 
 func TestLoadFromMap(t *testing.T) {
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	err := LoadFromMap(map[string]string{
 		"DONT_ENV_TEST":  "blog",
@@ -75,24 +75,24 @@ func TestLoadFromMap(t *testing.T) {
 		"dont_env_bool":  "true",
 	})
 
-	assert.NoError(t, err)
+	assert.NoErr(t, err)
 
 	// fmt.Println(os.Environ())
 	envStr := fmt.Sprint(os.Environ())
 	assert.Contains(t, envStr, "DONT_ENV_TEST=blog")
 	assert.Contains(t, envStr, "DONT_ENV_TEST1=val1")
 
-	assert.Equal(t, "blog", Get("DONT_ENV_TEST"))
-	assert.Equal(t, "blog", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "val1", Get("DONT_ENV_TEST1"))
-	assert.Equal(t, 23, Int("DONT_ENV_TEST2"))
+	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
+	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "val1", Get("DONT_ENV_TEST1"))
+	assert.Eq(t, 23, Int("DONT_ENV_TEST2"))
 	assert.True(t, Bool("dont_env_bool"))
 
-	assert.Equal(t, "val1", Get("dont_env_test1"))
-	assert.Equal(t, 23, Int("dont_env_test2"))
+	assert.Eq(t, "val1", Get("dont_env_test1"))
+	assert.Eq(t, 23, Int("dont_env_test2"))
 
-	assert.Equal(t, 20, Int("dont_env_test1", 20))
-	assert.Equal(t, 20, Int("dont_env_not_exist", 20))
+	assert.Eq(t, 20, Int("dont_env_test1", 20))
+	assert.Eq(t, 20, Int("dont_env_not_exist", 20))
 	assert.False(t, Bool("dont_env_not_exist", false))
 
 	// check cache
@@ -100,17 +100,17 @@ func TestLoadFromMap(t *testing.T) {
 
 	// clear
 	ClearLoaded()
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
-	assert.Equal(t, "", Get("DONT_ENV_TEST1"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", Get("DONT_ENV_TEST1"))
 
 	err = LoadFromMap(map[string]string{
 		"": "val",
 	})
-	assert.Error(t, err)
+	assert.Err(t, err)
 }
 
 func TestDontUpperEnvKey(t *testing.T) {
-	assert.Equal(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
 
 	DontUpperEnvKey()
 
@@ -119,14 +119,14 @@ func TestDontUpperEnvKey(t *testing.T) {
 	})
 
 	assert.Contains(t, fmt.Sprint(os.Environ()), "dont_env_test=val")
-	assert.NoError(t, err)
-	assert.Equal(t, "val", Get("dont_env_test"))
+	assert.NoErr(t, err)
+	assert.Eq(t, "val", Get("dont_env_test"))
 
 	// on windows, os.Getenv() not case sensitive
 	if runtime.GOOS == "windows" {
-		assert.Equal(t, "val", Get("DONT_ENV_TEST"))
+		assert.Eq(t, "val", Get("DONT_ENV_TEST"))
 	} else {
-		assert.Equal(t, "", Get("DONT_ENV_TEST"))
+		assert.Eq(t, "", Get("DONT_ENV_TEST"))
 	}
 
 	UpperEnvKey = true // revert
