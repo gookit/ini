@@ -18,10 +18,6 @@ func Decode(blob []byte, ptr interface{}) error {
 		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(ptr))
 	}
 
-	// if rv.IsNil() {
-	// 	return fmt.Errorf("ini: Decode of nil %s", reflect.TypeOf(v))
-	// }
-
 	p, err := Parse(string(blob), ModeFull, NoDefSection)
 	if err != nil {
 		return err
@@ -30,10 +26,10 @@ func Decode(blob []byte, ptr interface{}) error {
 	return p.MapStruct(ptr)
 }
 
-// Encode golang data to INI string.
+// Encode golang data(map, struct) to INI string.
 func Encode(v interface{}) ([]byte, error) { return EncodeWithDefName(v) }
 
-// EncodeWithDefName golang data to INI, can set default section name
+// EncodeWithDefName golang data(map, struct) to INI, can set default section name
 func EncodeWithDefName(v interface{}, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
 	case map[string]interface{}: // from full mode

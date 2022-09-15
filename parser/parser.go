@@ -80,8 +80,8 @@ const (
 
 // mode of parse data
 //
-//  ModeFull   - will parse inline array
-//  ModeLite/ModeSimple - don't parse array value
+//	ModeFull   - will parse inline array
+//	ModeLite/ModeSimple - don't parse array value
 const (
 	ModeFull   parseMode = 1
 	ModeLite   parseMode = 2
@@ -150,7 +150,8 @@ func NewSimpled(opts ...func(*Parser)) *Parser {
 // NoDefSection set don't return DefSection title
 //
 // Usage:
-// 	Parser.NewFulled(ini.ParseEnv)
+//
+//	Parser.NewFulled(ini.ParseEnv)
 func NoDefSection(p *Parser) {
 	p.NoDefSection = true
 }
@@ -384,6 +385,11 @@ func (p *Parser) FullData() map[string]interface{} {
 // SimpleData get parsed data by simple parse
 func (p *Parser) SimpleData() map[string]map[string]string {
 	return p.simpleData
+}
+
+// LiteSection get parsed data by simple parse
+func (p *Parser) LiteSection(name string) map[string]string {
+	return p.simpleData[name]
 }
 
 // Reset parser, clear parsed data

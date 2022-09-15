@@ -285,7 +285,7 @@ tag = golang
 	is.NoError(err)
 
 	u2 := &User{}
-	is.NoError(conf.MapStruct("", u2))
+	is.NoError(conf.Decode(u2))
 	is.Equal(23, u2.Age)
 	is.Equal("inhere", u2.UserName)
 	is.Equal("golang", u2.Subs.Tag)

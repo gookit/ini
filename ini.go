@@ -6,7 +6,6 @@ Source code and other details for the project are available at GitHub:
 	https://github.com/gookit/ini
 
 INI parser is: https://github.com/gookit/ini/parser
-
 */
 package ini
 
@@ -88,7 +87,8 @@ func New() *Ini {
 // NewWithOptions new an instance and with some options
 //
 // Usage:
-// ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
+//
+//	ini.NewWithOptions(ini.ParseEnv, ini.Readonly)
 func NewWithOptions(opts ...func(*Options)) *Ini {
 	c := New()
 	// apply options
@@ -133,7 +133,8 @@ func (c *Ini) ensureInit() {
 // newDefaultOptions create a new default Options
 //
 // Notice:
-// Cannot use package var instead it. That will allow multiple instances to use the same Options
+//
+//	Cannot use package var instead it. That will allow multiple instances to use the same Options
 func newDefaultOptions() *Options {
 	return &Options{
 		ParseEnv: true,
@@ -158,7 +159,8 @@ func Readonly(opts *Options) {
 // ParseVar on get value
 //
 // Usage:
-// 	ini.WithOptions(ini.ParseVar)
+//
+//	ini.WithOptions(ini.ParseVar)
 func ParseVar(opts *Options) {
 	opts.ParseVar = true
 }
@@ -166,7 +168,8 @@ func ParseVar(opts *Options) {
 // ParseEnv will parse ENV key on get value
 //
 // Usage:
-// 	ini.WithOptions(ini.ParseEnv)
+//
+//	ini.WithOptions(ini.ParseEnv)
 func ParseEnv(opts *Options) {
 	opts.ParseEnv = true
 }
@@ -424,18 +427,6 @@ func (c *Ini) formatKey(key string) string {
 	return key
 }
 
-// simple merge two string map
-func mergeStringMap(src, dst map[string]string, ignoreCase bool) map[string]string {
-	for k, v := range src {
-		if ignoreCase {
-			k = strings.ToLower(k)
-		}
-
-		dst[k] = v
-	}
-	return dst
-}
-
 func mapKeyToLower(src map[string]string) map[string]string {
 	newMp := make(map[string]string)
 
@@ -444,16 +435,4 @@ func mapKeyToLower(src map[string]string) map[string]string {
 		newMp[k] = v
 	}
 	return newMp
-}
-
-func stringToArray(str, sep string) (arr []string) {
-	str = strings.TrimSpace(str)
-	ss := strings.Split(str, sep)
-
-	for _, val := range ss {
-		if val = strings.TrimSpace(val); val != "" {
-			arr = append(arr, val)
-		}
-	}
-	return arr
 }

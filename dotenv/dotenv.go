@@ -54,7 +54,8 @@ func DontUpperEnvKey() {
 // Load parse .env file data to os ENV.
 //
 // Usage:
-// 	dotenv.Load("./", ".env")
+//
+//	dotenv.Load("./", ".env")
 func Load(dir string, filenames ...string) (err error) {
 	if len(filenames) == 0 {
 		filenames = []string{DefaultName}
@@ -128,7 +129,7 @@ func Get(name string, defVal ...string) (val string) {
 		return
 	}
 
-	// NOTICE: if is windows OS, os.Getenv() Key is not case sensitive
+	// NOTICE: if is windows OS, os.Getenv() Key is not case-sensitive
 	if val = os.Getenv(name); val != "" {
 		return
 	}
@@ -171,10 +172,9 @@ func Int(name string, defVal ...int) (val int) {
 
 // load and parse .env file data to os ENV
 func loadFile(file string) (err error) {
-	// open file
 	fd, err := os.Open(file)
 	if err != nil {
-		if os.IsNotExist(err) && OnlyLoadExists {
+		if OnlyLoadExists && os.IsNotExist(err) {
 			return nil
 		}
 		return err
@@ -183,16 +183,14 @@ func loadFile(file string) (err error) {
 	//noinspection GoUnhandledErrorResult
 	defer fd.Close()
 
-	// parse file content
-	s := bufio.NewScanner(fd)
+	// parse file contents
 	p := parser.NewSimpled(parser.NoDefSection)
-
-	if _, err = p.ParseFrom(s); err != nil {
+	if _, err = p.ParseFrom(bufio.NewScanner(fd)); err != nil {
 		return
 	}
 
 	// set data to os ENV
-	if mp, ok := p.SimpleData()[p.DefSection]; ok {
+	if mp := p.LiteSection(p.DefSection); len(mp) > 0 {
 		err = LoadFromMap(mp)
 	}
 	return
