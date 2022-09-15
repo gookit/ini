@@ -7,7 +7,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/gookit/ini)](https://goreportcard.com/report/github.com/gookit/ini)
 [![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)
 
-使用INI格式作为配置，配置数据的加载，管理，使用。
+INI格式内容解析; 使用INI格式作为配置，配置数据的加载，管理，使用。
 
 > **[EN README](README.md)**
 
