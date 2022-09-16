@@ -33,7 +33,7 @@ types[] = x
 types[] = y
 `
 
-func Example_fullParse() {
+func ExampleNewFulled() {
 	p, err := Parse(iniStr, ModeFull)
 	// p, err := Parse(iniStr, ModeFull, NoDefSection)
 	if err != nil {
@@ -43,7 +43,7 @@ func Example_fullParse() {
 	fmt.Printf("full parse:\n%#v\n", p.FullData())
 }
 
-func Example_simpleParse() {
+func ExampleNewSimpled() {
 	// simple mode will ignore all array values
 	p, err := Parse(iniStr, ModeSimple)
 	if err != nil {
@@ -62,6 +62,7 @@ func TestParse(t *testing.T) {
 
 	p, err = Parse("invalid", ModeSimple)
 	is.Err(err)
+	is.True(len(p.LiteData()) == 0)
 	is.True(len(p.SimpleData()) == 0)
 }
 
@@ -70,7 +71,8 @@ func TestNewSimpled(t *testing.T) {
 
 	// simple mode will ignore all array values
 	p := NewSimpled()
-	is.Eq(ModeSimple.Unit8(), p.ParseMode())
+	is.Eq(ModeLite, p.ParseMode)
+	is.Eq(ModeLite.Unit8(), p.ParseMode.Unit8())
 	is.False(p.IgnoreCase)
 	is.False(p.NoDefSection)
 
@@ -103,7 +105,7 @@ func TestNewSimpled(t *testing.T) {
 	v := p.ParsedData()
 	is.NotEmpty(v)
 
-	data = p.SimpleData()
+	data = p.LiteData()
 	str = fmt.Sprintf("%v", data)
 	is.Contains(str, "hasquota2:")
 	is.NotContains(str, "hasQuota1:")
@@ -113,7 +115,7 @@ func TestNewFulled(t *testing.T) {
 	is := assert.New(t)
 
 	p := NewFulled()
-	is.Eq(ModeFull.Unit8(), p.ParseMode())
+	is.Eq(ModeFull, p.ParseMode)
 	is.False(p.IgnoreCase)
 	is.False(p.NoDefSection)
 
@@ -158,7 +160,7 @@ func TestNewFulled_NoDefSection(t *testing.T) {
 
 	// options: NoDefSection
 	p := NewFulled(NoDefSection)
-	is.Eq(ModeFull.Unit8(), p.ParseMode())
+	is.Eq(ModeFull, p.ParseMode)
 	is.False(p.IgnoreCase)
 	is.True(p.NoDefSection)
 

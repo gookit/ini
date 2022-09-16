@@ -35,6 +35,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
@@ -43,8 +44,9 @@ import (
 
 // errSyntax is returned when there is a syntax error in an INI file.
 type errSyntax struct {
-	Line   int
-	Source string // The contents of the erroneous line, without leading or trailing whitespace
+	Line int
+	// Source The contents of the erroneous line, without leading or trailing whitespace
+	Source string
 }
 
 // Error message return
@@ -63,9 +65,6 @@ var (
 	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
 )
 
-// DefSection default section key name
-const DefSection = "__default"
-
 // special chars consts
 const (
 	MultiLineValMarkS = "'''"
@@ -78,101 +77,39 @@ const (
 	TokMLValMarkD = 'M' // multi line value by double quotes: """
 )
 
-// mode of parse data
-//
-//	ModeFull   - will parse inline array
-//	ModeLite/ModeSimple - don't parse array value
-const (
-	ModeFull   parseMode = 1
-	ModeLite   parseMode = 2
-	ModeSimple parseMode = 2
-)
-
-type parseMode uint8
-
-// Unit8 mode value to uint8
-func (m parseMode) Unit8() uint8 {
-	return uint8(m)
-}
-
-// UserCollector custom data collector.
-//
-// Notice: in simple mode, isSlice always is false.
-type UserCollector func(section, key, val string, isSlice bool)
-
 // Parser definition
 type Parser struct {
+	*Options
+	// parsed bool
+
 	// for full parse(allow array, map section)
 	fullData map[string]interface{}
 	// for simple parse(section only allow map[string]string)
-	simpleData map[string]map[string]string
-	// parsed    bool
-	parseMode parseMode
-
-	// ---- options ----
-
-	// TagName of mapping data to struct
-	TagName string
-	// Ignore case for key name
-	IgnoreCase bool
-	// default section name. default is "__default"
-	DefSection string
-	// only for full parse mode
-	NoDefSection bool
-	// you can custom data collector
-	Collector UserCollector
+	liteData map[string]map[string]string
 }
 
 // New a full mode Parser with some options
-func New(fns ...func(*Parser)) *Parser {
-	return NewFulled(fns...)
+func New(fns ...OptFunc) *Parser {
+	return &Parser{
+		Options: NewOptions(fns...),
+	}
 }
 
 // NewFulled create a full mode Parser with some options
 func NewFulled(fns ...func(*Parser)) *Parser {
 	p := &Parser{
-		TagName:    TagName,
-		DefSection: DefSection,
-		parseMode:  ModeFull,
-		fullData:   make(map[string]interface{}),
+		Options: NewOptions(WithParseMode(ModeFull)),
 	}
-
 	return p.WithOptions(fns...)
 }
 
 // NewSimpled create a simple mode Parser
 func NewSimpled(opts ...func(*Parser)) *Parser {
 	p := &Parser{
-		TagName:    TagName,
-		DefSection: DefSection,
-		parseMode:  ModeSimple,
-		simpleData: make(map[string]map[string]string),
+		Options: NewOptions(WithParseMode(ModeLite)),
 	}
-
 	return p.WithOptions(opts...)
 }
-
-// NoDefSection set don't return DefSection title
-//
-// Usage:
-//
-//	Parser.NewFulled(ini.ParseEnv)
-func NoDefSection(p *Parser) { p.NoDefSection = true }
-
-// IgnoreCase set ignore-case
-func IgnoreCase(p *Parser) { p.IgnoreCase = true }
-
-// WithOptions apply some options
-func (p *Parser) WithOptions(opts ...func(*Parser)) *Parser {
-	for _, opt := range opts {
-		opt(p)
-	}
-	return p
-}
-
-/*************************************************************
- * do parsing
- *************************************************************/
 
 // Parse a INI data string to golang
 func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err error) {
@@ -186,21 +123,47 @@ func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err e
 	return
 }
 
+// NoDefSection set don't return DefSection title
+//
+// Usage:
+//
+//	Parser.NoDefSection()
+func NoDefSection(p *Parser) { p.NoDefSection = true }
+
+// IgnoreCase set ignore-case
+func IgnoreCase(p *Parser) { p.IgnoreCase = true }
+
+// WithOptions apply some options
+func (p *Parser) WithOptions(opts ...func(p *Parser)) *Parser {
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+/*************************************************************
+ * do parsing
+ *************************************************************/
+
 // ParseString parse from string data
 func (p *Parser) ParseString(str string) error {
 	if str = strings.TrimSpace(str); str == "" {
 		return errors.New("cannot input empty string to parse")
 	}
-	return p.ParseBytes([]byte(str))
+	return p.ParseReader(strings.NewReader(str))
 }
 
 // ParseBytes parse from bytes data
 func (p *Parser) ParseBytes(bts []byte) (err error) {
-	buf := &bytes.Buffer{}
-	buf.Write(bts)
+	if len(bts) == 0 {
+		return errors.New("cannot input empty string to parse")
+	}
+	return p.ParseReader(bytes.NewBuffer(bts))
+}
 
-	scanner := bufio.NewScanner(buf)
-	_, err = p.ParseFrom(scanner)
+// ParseReader parse from io reader
+func (p *Parser) ParseReader(r io.Reader) (err error) {
+	_, err = p.ParseFrom(bufio.NewScanner(r))
 	return
 }
 
@@ -209,9 +172,19 @@ func (p *Parser) ParseFrom(in *bufio.Scanner) (int64, error) {
 	return p.parse(in)
 }
 
+// init parser
+func (p *Parser) init() {
+	if p.ParseMode == ModeFull {
+		p.fullData = make(map[string]interface{})
+	} else {
+		p.liteData = make(map[string]map[string]string)
+	}
+}
+
 // fullParse will parse array item
-// ref github.com/dombenson/go-ini
 func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
+	p.init()
+
 	bytes = -1
 	lineNum := 0
 	section := p.DefSection
@@ -236,7 +209,7 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 		// array/slice data
 		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
 			// skip array parse on simple mode
-			if p.parseMode == ModeSimple {
+			if p.ParseMode == ModeLite {
 				continue
 			}
 
@@ -254,10 +227,10 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 
 			if p.Collector != nil {
 				p.Collector(section, key, val, false)
-			} else if p.parseMode == ModeFull {
+			} else if p.ParseMode == ModeFull {
 				p.collectFullValue(section, key, val, false)
 			} else {
-				p.collectMapValue(section, key, val)
+				p.collectLiteValue(section, key, val)
 			}
 		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
 			name := strings.TrimSpace(groups[1])
@@ -276,15 +249,19 @@ func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
 }
 
 func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
-	defSection := p.DefSection
+	defSec := p.DefSection
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
+		defSec = strings.ToLower(defSec)
 		section = strings.ToLower(section)
-		defSection = strings.ToLower(defSection)
+	}
+
+	if p.ReplaceNl {
+		val = strings.ReplaceAll(val, `\n`, "\n")
 	}
 
 	// p.NoDefSection and current section is default section
-	if p.NoDefSection && section == defSection {
+	if p.NoDefSection && section == defSec {
 		if isSlice {
 			curVal, ok := p.fullData[key]
 			if ok {
@@ -345,18 +322,22 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	}
 }
 
-func (p *Parser) collectMapValue(name string, key, val string) {
+func (p *Parser) collectLiteValue(group, key, val string) {
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
-		name = strings.ToLower(name)
+		group = strings.ToLower(group)
 	}
 
-	if sec, ok := p.simpleData[name]; ok {
+	if p.ReplaceNl {
+		val = strings.ReplaceAll(val, `\n`, "\n")
+	}
+
+	if sec, ok := p.liteData[group]; ok {
 		sec[key] = val
-		p.simpleData[name] = sec
+		p.liteData[group] = sec
 	} else {
 		// create the section if it does not exist
-		p.simpleData[name] = map[string]string{key: val}
+		p.liteData[group] = map[string]string{key: val}
 	}
 }
 
@@ -366,15 +347,10 @@ func (p *Parser) collectMapValue(name string, key, val string) {
 
 // ParsedData get parsed data
 func (p *Parser) ParsedData() interface{} {
-	if p.parseMode == ModeFull {
+	if p.ParseMode == ModeFull {
 		return p.fullData
 	}
-	return p.simpleData
-}
-
-// ParseMode get current mode
-func (p *Parser) ParseMode() uint8 {
-	return uint8(p.parseMode)
+	return p.liteData
 }
 
 // FullData get parsed data by full parse
@@ -382,32 +358,37 @@ func (p *Parser) FullData() map[string]interface{} {
 	return p.fullData
 }
 
+// LiteData get parsed data by simple parse
+func (p *Parser) LiteData() map[string]map[string]string {
+	return p.liteData
+}
+
 // SimpleData get parsed data by simple parse
 func (p *Parser) SimpleData() map[string]map[string]string {
-	return p.simpleData
+	return p.liteData
 }
 
 // LiteSection get parsed data by simple parse
 func (p *Parser) LiteSection(name string) map[string]string {
-	return p.simpleData[name]
+	return p.liteData[name]
 }
 
 // Reset parser, clear parsed data
 func (p *Parser) Reset() {
 	// p.parsed = false
-	if p.parseMode == ModeFull {
+	if p.ParseMode == ModeFull {
 		p.fullData = make(map[string]interface{})
 	} else {
-		p.simpleData = make(map[string]map[string]string)
+		p.liteData = make(map[string]map[string]string)
 	}
 }
 
 // MapStruct mapping the parsed data to struct ptr
 func (p *Parser) MapStruct(ptr interface{}) (err error) {
-	if p.parseMode == ModeFull {
+	if p.ParseMode == ModeFull {
 		err = mapStruct(p.TagName, p.fullData, ptr)
 	} else {
-		err = mapStruct(p.TagName, p.simpleData, ptr)
+		err = mapStruct(p.TagName, p.liteData, ptr)
 	}
 	return
 }

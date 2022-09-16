@@ -8,9 +8,6 @@ import (
 	"sort"
 )
 
-// TagName default tag-name of mapping data to struct
-var TagName = "ini"
-
 // Decode INI content to golang data
 func Decode(blob []byte, ptr interface{}) error {
 	rv := reflect.ValueOf(ptr)
