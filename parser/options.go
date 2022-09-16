@@ -35,7 +35,7 @@ type UserCollector func(section, key, val string, isSlice bool)
 type Options struct {
 	// TagName of mapping data to struct
 	TagName string
-	// ParseMode setting
+	// ParseMode setting. default is ModeLite
 	ParseMode parseMode
 	// Ignore case for key name
 	IgnoreCase bool

@@ -9,7 +9,7 @@ import (
 )
 
 // Decode INI content to golang data
-func Decode(blob []byte, ptr interface{}) error {
+func Decode(blob []byte, ptr any) error {
 	rv := reflect.ValueOf(ptr)
 	if rv.Kind() != reflect.Ptr {
 		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(ptr))
@@ -24,12 +24,12 @@ func Decode(blob []byte, ptr interface{}) error {
 }
 
 // Encode golang data(map, struct) to INI string.
-func Encode(v interface{}) ([]byte, error) { return EncodeWithDefName(v) }
+func Encode(v any) ([]byte, error) { return EncodeWithDefName(v) }
 
 // EncodeWithDefName golang data(map, struct) to INI, can set default section name
-func EncodeWithDefName(v interface{}, defSection ...string) (out []byte, err error) {
+func EncodeWithDefName(v any, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
-	case map[string]interface{}: // from full mode
+	case map[string]any: // from full mode
 		return EncodeFull(vd, defSection...)
 	case map[string]map[string]string: // from simple mode
 		return EncodeSimple(vd, defSection...)
@@ -40,7 +40,7 @@ func EncodeWithDefName(v interface{}, defSection ...string) (out []byte, err err
 }
 
 // EncodeFull full mode data to INI, can set default section name
-func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, err error) {
+func EncodeFull(data map[string]any, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -79,7 +79,7 @@ func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, 
 				}
 			}
 		// case map[string]string: // is section
-		case map[string]interface{}: // is section
+		case map[string]any: // is section
 			if key != defSecName {
 				secBuf.WriteString("[" + key + "]\n")
 				err = buildSectionBuffer(tpData, secBuf)
@@ -100,7 +100,7 @@ func EncodeFull(data map[string]interface{}, defSection ...string) (out []byte, 
 	return
 }
 
-func buildSectionBuffer(data map[string]interface{}, buf *bytes.Buffer) (err error) {
+func buildSectionBuffer(data map[string]any, buf *bytes.Buffer) (err error) {
 	for key, item := range data {
 		switch tpData := item.(type) {
 		case float32, float64, int, int32, int64, string, bool: // k-v of the section
