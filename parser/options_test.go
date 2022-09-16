@@ -8,7 +8,58 @@ import (
 	"github.com/gookit/ini/v2/parser"
 )
 
-func TestOptions_ReplaceNl(t *testing.T) {
+// User struct
+type User struct {
+	Age  int      `ini:"age"`
+	Name string   `ini:"name"`
+	Tags []string `ini:"tags"`
+}
+
+func TestNoDefSection(t *testing.T) {
+	is := assert.New(t)
+
+	// options: NoDefSection
+	p := parser.NewFulled(parser.NoDefSection)
+	is.Eq(parser.ModeFull, p.ParseMode)
+	is.False(p.IgnoreCase)
+	is.True(p.NoDefSection)
+
+	err := p.ParseString(`
+name = inhere
+desc = i'm a developer`)
+	is.Nil(err)
+
+	p.Reset()
+	is.Empty(p.ParsedData())
+
+	err = p.ParseString(`
+age = 345
+name = inhere
+[sec1]
+newKey = val5
+[newSec]
+key = val0
+arr[] = val0
+arr[] = val1
+[newSec]
+key1 = val1
+arr[] = val2
+`)
+	is.Nil(err)
+	is.NotEmpty(p.ParsedData())
+
+	mp := p.FullData()
+	is.ContainsKey(mp, "age")
+	is.ContainsKey(mp, "name")
+
+	u := &User{}
+	err = p.Decode(u)
+	assert.NoErr(t, err)
+	assert.Eq(t, 345, u.Age)
+	assert.Eq(t, "inhere", u.Name)
+}
+
+func TestReplaceNl(t *testing.T) {
 	text := `
 name = inhere
 desc = i'm a developer, use\n go,php,java
@@ -38,19 +89,13 @@ tags[] = java
 github = github.com/inhere
 `
 
-	// User struct
-	type User struct {
-		Age  int      `ini:"age"`
-		Name string   `ini:"name"`
-		Tags []string `ini:"tags"`
-	}
-
 	// lite mode
 	p := parser.New()
 	err := p.ParseBytes([]byte(text))
 	assert.NoErr(t, err)
 	assert.NotEmpty(t, p.LiteData())
 	dump.P(p.ParsedData())
+
 	u := &User{}
 	err = p.Decode(u)
 	assert.NoErr(t, err)
@@ -64,6 +109,7 @@ github = github.com/inhere
 	assert.NoErr(t, err)
 	assert.NotEmpty(t, p.FullData())
 	dump.P(p.ParsedData())
+
 	u1 := &User{}
 	err = p.Decode(u1)
 	assert.NoErr(t, err)

@@ -4,24 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"reflect"
 	"sort"
 )
-
-// Decode INI content to golang data
-func Decode(blob []byte, ptr any) error {
-	rv := reflect.ValueOf(ptr)
-	if rv.Kind() != reflect.Ptr {
-		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(ptr))
-	}
-
-	p, err := Parse(string(blob), ModeFull, NoDefSection)
-	if err != nil {
-		return err
-	}
-
-	return p.MapStruct(ptr)
-}
 
 // Encode golang data(map, struct) to INI string.
 func Encode(v any) ([]byte, error) { return EncodeWithDefName(v) }
@@ -66,61 +50,43 @@ func EncodeFull(data map[string]any, defSection ...string) (out []byte, err erro
 		item := data[key]
 		switch tpData := item.(type) {
 		case float32, float64, int, int32, int64, string, bool: // k-v of the default section
-			_, err = defBuf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
-			if err != nil {
-				return
-			}
+			_, _ = defBuf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				_, err = defBuf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
-				if err != nil {
-					return
-				}
+				_, _ = defBuf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
 			}
 		// case map[string]string: // is section
 		case map[string]any: // is section
 			if key != defSecName {
 				secBuf.WriteString("[" + key + "]\n")
-				err = buildSectionBuffer(tpData, secBuf)
+				buildSectionBuffer(tpData, secBuf)
 			} else {
-				err = buildSectionBuffer(tpData, defBuf)
+				buildSectionBuffer(tpData, defBuf)
 			}
-
-			if err != nil {
-				return
-			}
+			secBuf.WriteByte('\n')
 		}
 	}
 
-	defBuf.WriteString(secBuf.String())
+	defBuf.WriteByte('\n')
+	defBuf.Write(secBuf.Bytes())
 	out = defBuf.Bytes()
 	secBuf = nil
-
 	return
 }
 
-func buildSectionBuffer(data map[string]any, buf *bytes.Buffer) (err error) {
+func buildSectionBuffer(data map[string]any, buf *bytes.Buffer) {
 	for key, item := range data {
 		switch tpData := item.(type) {
-		case float32, float64, int, int32, int64, string, bool: // k-v of the section
-			_, err = buf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
-			if err != nil {
-				return
-			}
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				_, err = buf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
-				if err != nil {
-					return
-				}
+				_, _ = buf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
 			}
-		default: // skip invalid data
-			continue
+		default: // k-v of the section
+			_, _ = buf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
 		}
 	}
-	return
 }
 
 // EncodeSimple data to INI
@@ -129,10 +95,8 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 		return
 	}
 
-	var n int64
 	buf := &bytes.Buffer{}
 	counter := 0
-	thisWrite := 0
 	defSecName := ""
 	orderedSections := make([]string, len(data))
 
@@ -149,11 +113,7 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 	for _, section := range orderedSections {
 		// don't add section title for DefSection
 		if section != defSecName {
-			thisWrite, err = fmt.Fprintln(buf, "["+section+"]")
-			n += int64(thisWrite)
-			if err != nil {
-				return
-			}
+			_, _ = buf.WriteString("[" + section + "]\n")
 		}
 
 		counter = 0
@@ -167,18 +127,10 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 
 		sort.Strings(orderedStringKeys)
 		for _, key := range orderedStringKeys {
-			thisWrite, err = fmt.Fprintln(buf, key, "=", items[key])
-			n += int64(thisWrite)
-			if err != nil {
-				return
-			}
+			_, _ = buf.WriteString(key + " = " + items[key] + "\n")
 		}
 
-		thisWrite, err = fmt.Fprintln(buf)
-		n += int64(thisWrite)
-		if err != nil {
-			return
-		}
+		buf.WriteByte('\n')
 	}
 
 	out = buf.Bytes()

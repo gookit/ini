@@ -4,62 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gookit/goutil/dump"
 	"github.com/gookit/goutil/testutil/assert"
 )
-
-func TestDecode(t *testing.T) {
-	is := assert.New(t)
-	bts := []byte(`
-age = 23
-name = inhere
-arr[] = a
-arr[] = b
-; comments
-[sec]
-key = val
-; comments
-[sec1]
-key = val
-number = 2020
-two_words = abc def
-`)
-
-	data := make(map[string]interface{})
-	err := Decode([]byte(""), data)
-	is.Err(err)
-
-	err = Decode(bts, nil)
-	is.Err(err)
-
-	err = Decode(bts, data)
-	is.Err(err)
-
-	err = Decode([]byte(`invalid`), &data)
-	is.Err(err)
-
-	err = Decode(bts, &data)
-	dump.P(data)
-
-	is.Nil(err)
-	is.True(len(data) > 0)
-	is.Eq("inhere", data["name"])
-	is.Eq("[a b]", fmt.Sprintf("%v", data["arr"]))
-	is.Eq("map[key:val]", fmt.Sprintf("%v", data["sec"]))
-
-	st := struct {
-		Age  int
-		Name string
-		Sec1 struct {
-			Key      string
-			Number   int
-			TwoWords string `ini:"two_words"`
-		}
-	}{}
-
-	is.Nil(Decode(bts, &st))
-	dump.P(st)
-}
 
 func TestEncode(t *testing.T) {
 	is := assert.New(t)
@@ -97,6 +43,8 @@ func TestEncode(t *testing.T) {
 	is.NotEmpty(out)
 
 	str = string(out)
+	fmt.Println("---- lite mode: ----")
+	fmt.Println(str)
 	is.NotContains(str, "[_def]")
 	is.Contains(str, "[sec]")
 	is.Contains(str, "name = inhere")
@@ -123,7 +71,8 @@ func TestEncode(t *testing.T) {
 	is.NotEmpty(out)
 
 	str = string(out)
-	dump.Println(str)
+	fmt.Println("---- full mode: ----")
+	fmt.Println(str)
 	is.Contains(str, "age = 12")
 	is.Contains(str, "debug = false")
 	is.Contains(str, "name = inhere")

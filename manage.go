@@ -315,26 +315,23 @@ func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	}
 
 	// section name
-	name := c.opts.DefSection
-	if len(section) > 0 {
-		name = section[0]
-	}
-
-	strVal, isString := val.(string)
-	if !isString {
-		strVal = fmt.Sprint(val)
+	group := c.opts.DefSection
+	if len(section) > 0 && section[0] != "" {
+		group = section[0]
 	}
 
 	// allow section name is empty string ""
-	name = c.formatKey(name)
-	sec, ok := c.data[name]
+	group = c.formatKey(group)
+	strVal := strutil.QuietString(val)
+
+	sec, ok := c.data[group]
 	if ok {
 		sec[key] = strVal
 	} else {
 		sec = Section{key: strVal}
 	}
 
-	c.data[name] = sec
+	c.data[group] = sec
 	return
 }
 
