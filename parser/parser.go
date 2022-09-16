@@ -83,7 +83,7 @@ type Parser struct {
 	// parsed bool
 
 	// for full parse(allow array, map section)
-	fullData map[string]interface{}
+	fullData map[string]any
 	// for simple parse(section only allow map[string]string)
 	liteData map[string]map[string]string
 }
@@ -95,6 +95,17 @@ func New(fns ...OptFunc) *Parser {
 	}
 }
 
+// NewLite create a lite mode Parser. alias of New()
+func NewLite(fns ...OptFunc) *Parser { return New(fns...) }
+
+// NewSimpled create a lite mode Parser
+func NewSimpled(fns ...func(*Parser)) *Parser {
+	p := &Parser{
+		Options: NewOptions(),
+	}
+	return p.WithOptions(fns...)
+}
+
 // NewFulled create a full mode Parser with some options
 func NewFulled(fns ...func(*Parser)) *Parser {
 	p := &Parser{
@@ -103,22 +114,9 @@ func NewFulled(fns ...func(*Parser)) *Parser {
 	return p.WithOptions(fns...)
 }
 
-// NewSimpled create a simple mode Parser
-func NewSimpled(opts ...func(*Parser)) *Parser {
-	p := &Parser{
-		Options: NewOptions(WithParseMode(ModeLite)),
-	}
-	return p.WithOptions(opts...)
-}
-
 // Parse a INI data string to golang
 func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err error) {
-	if mode == ModeFull {
-		p = NewFulled(opts...)
-	} else {
-		p = NewSimpled(opts...)
-	}
-
+	p = New(WithParseMode(mode))
 	err = p.ParseString(data)
 	return
 }
@@ -167,22 +165,17 @@ func (p *Parser) ParseReader(r io.Reader) (err error) {
 	return
 }
 
-// ParseFrom a data scanner
-func (p *Parser) ParseFrom(in *bufio.Scanner) (int64, error) {
-	return p.parse(in)
-}
-
 // init parser
 func (p *Parser) init() {
 	if p.ParseMode == ModeFull {
-		p.fullData = make(map[string]interface{})
+		p.fullData = make(map[string]any)
 	} else {
 		p.liteData = make(map[string]map[string]string)
 	}
 }
 
-// fullParse will parse array item
-func (p *Parser) parse(in *bufio.Scanner) (bytes int64, err error) {
+// ParseFrom a data scanner
+func (p *Parser) ParseFrom(in *bufio.Scanner) (bytes int64, err error) {
 	p.init()
 
 	bytes = -1
@@ -282,15 +275,15 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	// first create
 	if !exists {
 		if isSlice {
-			p.fullData[section] = map[string]interface{}{key: []string{val}}
+			p.fullData[section] = map[string]any{key: []string{val}}
 		} else {
-			p.fullData[section] = map[string]interface{}{key: val}
+			p.fullData[section] = map[string]any{key: val}
 		}
 		return
 	}
 
 	switch sd := secData.(type) {
-	case map[string]interface{}: // existed section
+	case map[string]any: // existed section
 		curVal, ok := sd[key]
 		if ok {
 			switch cv := curVal.(type) {
@@ -315,9 +308,9 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 		p.fullData[section] = sd
 	case string: // found default section value
 		if isSlice {
-			p.fullData[section] = map[string]interface{}{key: []string{val}}
+			p.fullData[section] = map[string]any{key: []string{val}}
 		} else {
-			p.fullData[section] = map[string]interface{}{key: val}
+			p.fullData[section] = map[string]any{key: val}
 		}
 	}
 }
@@ -377,23 +370,63 @@ func (p *Parser) LiteSection(name string) map[string]string {
 func (p *Parser) Reset() {
 	// p.parsed = false
 	if p.ParseMode == ModeFull {
-		p.fullData = make(map[string]interface{})
+		p.fullData = make(map[string]any)
 	} else {
 		p.liteData = make(map[string]map[string]string)
 	}
 }
 
-// MapStruct mapping the parsed data to struct ptr
-func (p *Parser) MapStruct(ptr interface{}) (err error) {
-	if p.ParseMode == ModeFull {
-		err = mapStruct(p.TagName, p.fullData, ptr)
-	} else {
-		err = mapStruct(p.TagName, p.liteData, ptr)
-	}
-	return
+// Decode mapping the parsed data to struct ptr
+func (p *Parser) Decode(ptr any) error {
+	return p.MapStruct(ptr)
 }
 
-func mapStruct(tagName string, data interface{}, ptr interface{}) error {
+// MapStruct mapping the parsed data to struct ptr
+func (p *Parser) MapStruct(ptr any) (err error) {
+	if p.ParseMode == ModeFull {
+		if p.NoDefSection {
+			return mapStruct(p.TagName, p.fullData, ptr)
+		}
+
+		// collect all default section data to top
+		anyMap := make(map[string]any, len(p.fullData)+4)
+		if defData, ok := p.fullData[p.DefSection]; ok {
+			for key, val := range defData.(map[string]any) {
+				anyMap[key] = val
+			}
+		}
+
+		for group, mp := range p.fullData {
+			if group == p.DefSection {
+				continue
+			}
+			anyMap[group] = mp
+		}
+		return mapStruct(p.TagName, anyMap, ptr)
+	}
+
+	defData := p.liteData[p.DefSection]
+	defLen := len(defData)
+	anyMap := make(map[string]any, len(p.liteData)+defLen)
+
+	// collect all default section data to top
+	if defLen > 0 {
+		for key, val := range defData {
+			anyMap[key] = val
+		}
+	}
+
+	for group, smp := range p.liteData {
+		if group == p.DefSection {
+			continue
+		}
+		anyMap[group] = smp
+	}
+
+	return mapStruct(p.TagName, anyMap, ptr)
+}
+
+func mapStruct(tagName string, data any, ptr any) error {
 	mapConf := &mapstructure.DecoderConfig{
 		Metadata: nil,
 		Result:   ptr,
@@ -406,7 +439,6 @@ func mapStruct(tagName string, data interface{}, ptr interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	return decoder.Decode(data)
 }
 

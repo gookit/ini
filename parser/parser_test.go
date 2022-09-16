@@ -186,7 +186,7 @@ arr[] = val2
 }
 
 func TestParser_ParseString(t *testing.T) {
-	p := New()
+	p := New(WithParseMode(ModeFull))
 	err := p.ParseString(`
 key1 = val1
 arr = val2

@@ -224,7 +224,13 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 }
 
 // MapStruct get config data and binding to the structure.
-func MapStruct(key string, ptr interface{}) error { return dc.MapStruct(key, ptr) }
+func MapStruct(key string, ptr any) error { return dc.MapStruct(key, ptr) }
+
+// Decode all data to struct pointer
+func (c *Ini) Decode(ptr any) error { return c.MapStruct("", ptr) }
+
+// MapTo mapping all data to struct pointer
+func (c *Ini) MapTo(ptr any) error { return c.MapStruct("", ptr) }
 
 // MapStruct get config data and binding to the structure.
 // If the key is empty, will bind all data to the struct ptr.
@@ -233,15 +239,16 @@ func MapStruct(key string, ptr interface{}) error { return dc.MapStruct(key, ptr
 //
 //	user := &Db{}
 //	ini.MapStruct("user", &user)
-func (c *Ini) MapStruct(key string, ptr interface{}) error {
+func (c *Ini) MapStruct(key string, ptr any) error {
 	// binding all data
 	if key == "" {
 		defSec := c.opts.DefSection
 		if defMap, ok := c.data[defSec]; ok {
-			data := make(map[string]interface{}, len(defMap)+len(c.data)-1)
+			data := make(map[string]any, len(defMap)+len(c.data)-1)
 			for key, val := range defMap {
 				data[key] = val
 			}
+
 			for secKey, secVals := range c.data {
 				if secKey != defSec {
 					data[secKey] = secVals
@@ -250,7 +257,7 @@ func (c *Ini) MapStruct(key string, ptr interface{}) error {
 			return mapStruct(c.opts.TagName, data, ptr)
 		}
 
-		// no data of the default section
+		// no default section
 		return mapStruct(c.opts.TagName, c.data, ptr)
 	}
 
@@ -259,17 +266,10 @@ func (c *Ini) MapStruct(key string, ptr interface{}) error {
 	if len(data) == 0 {
 		return errNotFound
 	}
-
 	return mapStruct(c.opts.TagName, data, ptr)
 }
 
-// Decode all data to struct pointer
-func (c *Ini) Decode(ptr interface{}) error { return c.MapStruct("", ptr) }
-
-// MapTo mapping all data to struct pointer
-func (c *Ini) MapTo(ptr interface{}) error { return c.MapStruct("", ptr) }
-
-func mapStruct(tagName string, data interface{}, ptr interface{}) error {
+func mapStruct(tagName string, data any, ptr any) error {
 	mapConf := &mapstructure.DecoderConfig{
 		Metadata: nil,
 		Result:   ptr,
@@ -282,7 +282,6 @@ func mapStruct(tagName string, data interface{}, ptr interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	return decoder.Decode(data)
 }
 
@@ -300,7 +299,7 @@ func Set(key string, val interface{}, section ...string) error {
 // Set a value to the section by key.
 //
 // if section is empty, will set to default section
-func (c *Ini) Set(key string, val interface{}, section ...string) (err error) {
+func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	// if is readonly
 	if c.opts.Readonly {
 		return errReadonly

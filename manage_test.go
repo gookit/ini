@@ -250,7 +250,6 @@ func TestIni_Delete(t *testing.T) {
 
 func TestIni_MapStruct(t *testing.T) {
 	is := assert.New(t)
-
 	err := ini.LoadStrings(iniStr)
 	is.Nil(err)
 
@@ -281,7 +280,6 @@ user_name = inhere
 id = 22
 tag = golang
 `)
-
 	is.NoErr(err)
 
 	u2 := &User{}
@@ -289,6 +287,13 @@ tag = golang
 	is.Eq(23, u2.Age)
 	is.Eq("inhere", u2.UserName)
 	is.Eq("golang", u2.Subs.Tag)
-
 	is.Err(conf.MapStruct("not-exist", u2))
+
+	// UserErr struct
+	type UserErr struct {
+		Age map[int]string `json:"age"`
+	}
+
+	ue := &UserErr{}
+	err = conf.Decode(ue)
 }
