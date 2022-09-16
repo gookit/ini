@@ -29,11 +29,16 @@ func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
 		section = strings.ToLower(section)
 	}
 
-	// if opts.ParseEnv is true. will parse like: "${SHELL}". CHANGE: parse ENV on get value
-	// parse on there, will export data error.
+	// if opts.ParseEnv is true. will parse like: "${SHELL}".
+	// CHANGE: parse ENV on get value
+	// - if parse on there, will loss vars on exported data.
 	// if c.opts.ParseEnv {
 	// 	val = c.parseEnvValue(val)
 	// }
+
+	if c.opts.ReplaceNl {
+		val = strings.ReplaceAll(val, `\n`, "\n")
+	}
 
 	if sec, ok := c.data[section]; ok {
 		sec[key] = val
@@ -56,7 +61,7 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 	if len(vars) == 0 {
 		return valStr
 	}
-	
+
 	varOLen := len(c.opts.VarOpen)
 	varCLen := len(c.opts.VarClose)
 

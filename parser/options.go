@@ -71,10 +71,8 @@ func WithParseMode(mode parseMode) OptFunc {
 }
 
 // WithReplaceNl for parse
-func WithReplaceNl(rpl bool) OptFunc {
-	return func(opt *Options) {
-		opt.ReplaceNl = rpl
-	}
+func WithReplaceNl(opt *Options) {
+	opt.ReplaceNl = true
 }
 
 // WithDefSection name for parse
