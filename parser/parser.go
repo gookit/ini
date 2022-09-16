@@ -33,9 +33,9 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -90,9 +90,7 @@ type Parser struct {
 
 // New a full mode Parser with some options
 func New(fns ...OptFunc) *Parser {
-	return &Parser{
-		Options: NewOptions(fns...),
-	}
+	return &Parser{Options: NewOptions(fns...)}
 }
 
 // NewLite create a lite mode Parser. alias of New()
@@ -100,25 +98,34 @@ func NewLite(fns ...OptFunc) *Parser { return New(fns...) }
 
 // NewSimpled create a lite mode Parser
 func NewSimpled(fns ...func(*Parser)) *Parser {
-	p := &Parser{
-		Options: NewOptions(),
-	}
-	return p.WithOptions(fns...)
+	return New().WithOptions(fns...)
 }
 
 // NewFulled create a full mode Parser with some options
 func NewFulled(fns ...func(*Parser)) *Parser {
-	p := &Parser{
-		Options: NewOptions(WithParseMode(ModeFull)),
-	}
-	return p.WithOptions(fns...)
+	return New(WithParseMode(ModeFull)).WithOptions(fns...)
 }
 
 // Parse a INI data string to golang
 func Parse(data string, mode parseMode, opts ...func(*Parser)) (p *Parser, err error) {
-	p = New(WithParseMode(mode))
+	p = New(WithParseMode(mode)).WithOptions(opts...)
 	err = p.ParseString(data)
 	return
+}
+
+// Decode INI content to golang data
+func Decode(blob []byte, ptr any) error {
+	rv := reflect.ValueOf(ptr)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("ini: Decode of non-pointer %s", reflect.TypeOf(ptr))
+	}
+
+	p, err := Parse(string(blob), ModeFull, NoDefSection)
+	if err != nil {
+		return err
+	}
+
+	return p.MapStruct(ptr)
 }
 
 // NoDefSection set don't return DefSection title
@@ -146,7 +153,7 @@ func (p *Parser) WithOptions(opts ...func(p *Parser)) *Parser {
 // ParseString parse from string data
 func (p *Parser) ParseString(str string) error {
 	if str = strings.TrimSpace(str); str == "" {
-		return errors.New("cannot input empty string to parse")
+		return nil
 	}
 	return p.ParseReader(strings.NewReader(str))
 }
@@ -154,7 +161,7 @@ func (p *Parser) ParseString(str string) error {
 // ParseBytes parse from bytes data
 func (p *Parser) ParseBytes(bts []byte) (err error) {
 	if len(bts) == 0 {
-		return errors.New("cannot input empty string to parse")
+		return nil
 	}
 	return p.ParseReader(bytes.NewBuffer(bts))
 }
@@ -169,8 +176,16 @@ func (p *Parser) ParseReader(r io.Reader) (err error) {
 func (p *Parser) init() {
 	if p.ParseMode == ModeFull {
 		p.fullData = make(map[string]any)
+
+		if p.Collector == nil {
+			p.Collector = p.collectFullValue
+		}
 	} else {
 		p.liteData = make(map[string]map[string]string)
+
+		if p.Collector == nil {
+			p.Collector = p.collectLiteValue
+		}
 	}
 }
 
@@ -201,33 +216,20 @@ func (p *Parser) ParseFrom(in *bufio.Scanner) (bytes int64, err error) {
 
 		// array/slice data
 		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
-			// skip array parse on simple mode
+			// skip array parse on lite mode
 			if p.ParseMode == ModeLite {
 				continue
 			}
 
-			// key, val := groups[1], groups[2]
 			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
-			if p.Collector != nil {
-				p.Collector(section, key, val, true)
-			} else {
-				p.collectFullValue(section, key, val, true)
-			}
+			p.Collector(section, key, val, true)
 		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
-			// key, val := groups[1], groups[2]
 			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
 
-			if p.Collector != nil {
-				p.Collector(section, key, val, false)
-			} else if p.ParseMode == ModeFull {
-				p.collectFullValue(section, key, val, false)
-			} else {
-				p.collectLiteValue(section, key, val)
-			}
+			p.Collector(section, key, val, false)
 		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
-			name := strings.TrimSpace(groups[1])
-			section = name
+			section = strings.TrimSpace(groups[1])
 		} else {
 			err = errSyntax{lineNum, line}
 			return
@@ -315,7 +317,7 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	}
 }
 
-func (p *Parser) collectLiteValue(group, key, val string) {
+func (p *Parser) collectLiteValue(group, key, val string, _ bool) {
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
 		group = strings.ToLower(group)

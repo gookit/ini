@@ -28,7 +28,7 @@ type OptFunc func(opt *Options)
 
 // UserCollector custom data collector.
 //
-// Notice: in simple mode, isSlice always is false.
+// Notice: in lite mode, isSlice always is false.
 type UserCollector func(section, key, val string, isSlice bool)
 
 // Options for parser
@@ -45,7 +45,9 @@ type Options struct {
 	DefSection string
 	// NoDefSection setting. only for full parse mode
 	NoDefSection bool
-	// Collector you can custom data collector
+	// Collector allow you custom the value collector.
+	//
+	// Notice: in lite mode, isSlice always is false.
 	Collector UserCollector
 }
 

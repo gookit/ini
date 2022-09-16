@@ -66,6 +66,59 @@ func TestParse(t *testing.T) {
 	is.True(len(p.SimpleData()) == 0)
 }
 
+func TestDecode(t *testing.T) {
+	is := assert.New(t)
+	bts := []byte(`
+age = 23
+name = inhere
+arr[] = a
+arr[] = b
+; comments
+[sec]
+key = val
+; comments
+[sec1]
+key = val
+number = 2020
+two_words = abc def
+`)
+
+	data := make(map[string]interface{})
+	err := Decode([]byte(""), data)
+	is.Err(err)
+
+	err = Decode(bts, nil)
+	is.Err(err)
+
+	err = Decode(bts, data)
+	is.Err(err)
+
+	err = Decode([]byte(`invalid`), &data)
+	is.Err(err)
+
+	err = Decode(bts, &data)
+	dump.P(data)
+
+	is.Nil(err)
+	is.True(len(data) > 0)
+	is.Eq("inhere", data["name"])
+	is.Eq("[a b]", fmt.Sprintf("%v", data["arr"]))
+	is.Eq("map[key:val]", fmt.Sprintf("%v", data["sec"]))
+
+	st := struct {
+		Age  int
+		Name string
+		Sec1 struct {
+			Key      string
+			Number   int
+			TwoWords string `ini:"two_words"`
+		}
+	}{}
+
+	is.Nil(Decode(bts, &st))
+	dump.P(st)
+}
+
 func TestNewSimpled(t *testing.T) {
 	is := assert.New(t)
 
@@ -82,7 +135,7 @@ func TestNewSimpled(t *testing.T) {
 	is.Contains(err.Error(), "invalid INI syntax on line")
 
 	err = p.ParseString("")
-	is.Err(err)
+	is.NoErr(err)
 	is.True(len(p.SimpleData()) == 0)
 
 	p.Reset()
@@ -155,34 +208,14 @@ key = val0
 	is.NotContains(str, "hasQuota1:")
 }
 
-func TestNewFulled_NoDefSection(t *testing.T) {
+func TestParser_ParseBytes(t *testing.T) {
+	p := NewLite()
+
 	is := assert.New(t)
+	err := p.ParseBytes(nil)
 
-	// options: NoDefSection
-	p := NewFulled(NoDefSection)
-	is.Eq(ModeFull, p.ParseMode)
-	is.False(p.IgnoreCase)
-	is.True(p.NoDefSection)
-
-	err := p.ParseString(iniStr)
-	is.Nil(err)
-
-	p.Reset()
-	err = p.ParseString(`
-[__default]
-newKey = new val
-[sec1]
-newKey = val5
-[newSec]
-key = val0
-arr[] = val0
-arr[] = val1
-[newSec]
-key1 = val1
-arr[] = val2
-`)
-	is.Nil(err)
-	dump.P(p.ParsedData())
+	is.NoErr(err)
+	is.Len(p.LiteData(), 0)
 }
 
 func TestParser_ParseString(t *testing.T) {
