@@ -295,5 +295,5 @@ tag = golang
 	}
 
 	ue := &UserErr{}
-	err = conf.Decode(ue)
+	err = conf.MapTo(ue)
 }

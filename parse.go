@@ -12,7 +12,7 @@ func (c *Ini) parse(data string) (err error) {
 		return
 	}
 
-	p := parser.NewSimpled()
+	p := parser.NewLite()
 	p.Collector = c.valueCollector
 	p.IgnoreCase = c.opts.IgnoreCase
 	p.DefSection = c.opts.DefSection
@@ -22,10 +22,8 @@ func (c *Ini) parse(data string) (err error) {
 
 // collect value form parser
 func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
-	// defSec := c.opts.DefSection
 	if c.opts.IgnoreCase {
 		key = strings.ToLower(key)
-		// defSec = strings.ToLower(defSec)
 		section = strings.ToLower(section)
 	}
 
@@ -62,8 +60,7 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 		return valStr
 	}
 
-	varOLen := len(c.opts.VarOpen)
-	varCLen := len(c.opts.VarClose)
+	varOLen, varCLen := len(c.opts.VarOpen), len(c.opts.VarClose)
 
 	var name string
 	var oldNew []string
@@ -71,9 +68,10 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 		realVal := fVar
 		name = fVar[varOLen : len(fVar)-varCLen]
 
+		// first, find from current section
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val
-		} else if val, ok := c.GetValue(name); ok {
+		} else if val, ok := c.getValue(name); ok {
 			realVal = val
 		}
 

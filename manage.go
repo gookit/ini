@@ -26,7 +26,6 @@ func GetValue(key string) (string, bool) { return dc.GetValue(key) }
 //
 // you can use '.' split for get value in a special section
 func (c *Ini) GetValue(key string) (val string, ok bool) {
-	// if not is readonly
 	if !c.opts.Readonly {
 		c.lock.Lock()
 		defer c.lock.Unlock()
@@ -47,19 +46,27 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 
 	// if enable parse var refer
 	if c.opts.ParseVar {
-		// must close lock. because parseVarReference() maybe loop call Get()
-		if !c.opts.Readonly {
-			c.lock.Unlock()
-			val = c.parseVarReference(key, val, strMap)
-			c.lock.Lock()
-		} else {
-			val = c.parseVarReference(key, val, strMap)
-		}
+		val = c.parseVarReference(key, val, strMap)
 	}
 
 	// if opts.ParseEnv is true. will parse like: "${SHELL}"
 	if c.opts.ParseEnv {
 		val = envutil.ParseEnvValue(val)
+	}
+	return
+}
+
+func (c *Ini) getValue(key string) (val string, ok bool) {
+	if key = c.formatKey(key); key == "" {
+		return
+	}
+
+	// get section data
+	name, key := c.splitSectionAndKey(key)
+
+	// get value
+	if strMap, ok := c.data[name]; ok {
+		val, ok = strMap[key]
 	}
 	return
 }
@@ -190,6 +197,9 @@ func (c *Ini) Strings(key string, sep ...string) (ss []string) {
 // StringMap get a section data map
 func StringMap(name string) map[string]string { return dc.StringMap(name) }
 
+// Section get a section data map. is alias of StringMap()
+func (c *Ini) Section(name string) Section { return c.StringMap(name) }
+
 // StringMap get a section data map by name
 func (c *Ini) StringMap(name string) (mp map[string]string) {
 	name = c.formatKey(name)
@@ -228,7 +238,9 @@ func MapStruct(key string, ptr any) error { return dc.MapStruct(key, ptr) }
 // Decode all data to struct pointer
 func (c *Ini) Decode(ptr any) error { return c.MapStruct("", ptr) }
 
-// MapTo mapping all data to struct pointer
+// MapTo mapping all data to struct pointer.
+//
+// Deprecated: please use Decode()
 func (c *Ini) MapTo(ptr any) error { return c.MapStruct("", ptr) }
 
 // MapStruct get config data and binding to the structure.
@@ -299,7 +311,6 @@ func Set(key string, val interface{}, section ...string) error {
 //
 // if section is empty, will set to default section
 func (c *Ini) Set(key string, val any, section ...string) (err error) {
-	// if is readonly
 	if c.opts.Readonly {
 		return errReadonly
 	}
@@ -413,9 +424,6 @@ func (c *Ini) WriteTo(out io.Writer) (n int64, err error) {
 /*************************************************************
  * section operate
  *************************************************************/
-
-// Section get a section data map. is alias of StringMap()
-func (c *Ini) Section(name string) Section { return c.StringMap(name) }
 
 // HasSection has section
 func (c *Ini) HasSection(name string) bool {
