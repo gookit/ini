@@ -90,7 +90,12 @@ func buildSectionBuffer(data map[string]any, buf *bytes.Buffer) {
 }
 
 // EncodeSimple data to INI
-func EncodeSimple(data map[string]map[string]string, defSection ...string) (out []byte, err error) {
+func EncodeSimple(data map[string]map[string]string, defSection ...string) ([]byte, error) {
+	return EncodeLite(data, defSection...)
+}
+
+// EncodeLite data to INI
+func EncodeLite(data map[string]map[string]string, defSection ...string) (out []byte, err error) {
 	if len(data) == 0 {
 		return
 	}
@@ -98,19 +103,19 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) (out 
 	buf := &bytes.Buffer{}
 	counter := 0
 	defSecName := ""
-	orderedSections := make([]string, len(data))
+	sortedSections := make([]string, len(data))
 
 	if len(defSection) > 0 {
 		defSecName = defSection[0]
 	}
 
 	for section := range data {
-		orderedSections[counter] = section
+		sortedSections[counter] = section
 		counter++
 	}
 
-	sort.Strings(orderedSections)
-	for _, section := range orderedSections {
+	sort.Strings(sortedSections)
+	for _, section := range sortedSections {
 		// don't add section title for DefSection
 		if section != defSecName {
 			_, _ = buf.WriteString("[" + section + "]\n")

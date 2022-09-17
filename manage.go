@@ -2,16 +2,15 @@ package ini
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/goutil/maputil"
 	"github.com/gookit/goutil/strutil"
+	"github.com/gookit/ini/v2/parser"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -335,6 +334,40 @@ func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	return
 }
 
+// SetSection if not exist, add new section. If existed, will merge to old section.
+func (c *Ini) SetSection(name string, values map[string]string) (err error) {
+	if c.opts.Readonly {
+		return errReadonly
+	}
+
+	name = c.formatKey(name)
+	if old, ok := c.data[name]; ok {
+		c.data[name] = maputil.MergeStringMap(values, old, c.opts.IgnoreCase)
+		return
+	}
+
+	if c.opts.IgnoreCase {
+		values = mapKeyToLower(values)
+	}
+	c.data[name] = values
+	return
+}
+
+// NewSection add new section data, existed will be replaced
+func (c *Ini) NewSection(name string, values map[string]string) (err error) {
+	if c.opts.Readonly {
+		return errReadonly
+	}
+
+	if c.opts.IgnoreCase {
+		name = strings.ToLower(name)
+		c.data[name] = mapKeyToLower(values)
+	} else {
+		c.data[name] = values
+	}
+	return
+}
+
 /*************************************************************
  * config dump
  *************************************************************/
@@ -352,63 +385,29 @@ func (c *Ini) PrettyJSON() string {
 // WriteToFile write config data to a file
 func (c *Ini) WriteToFile(file string) (int64, error) {
 	fd, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0664)
-
 	if err != nil {
 		return 0, err
 	}
+
+	defer fd.Close()
 	return c.WriteTo(fd)
 }
 
 // WriteTo out an INI File representing the current state to a writer.
 func (c *Ini) WriteTo(out io.Writer) (n int64, err error) {
-	n = 0
-	counter := 0
-	thisWrite := 0
-	// section
-	defaultSection := c.opts.DefSection
-	orderedSections := make([]string, len(c.data))
-
-	for section := range c.data {
-		orderedSections[counter] = section
-		counter++
+	mp := make(map[string]map[string]string, len(c.data))
+	for group, secMp := range c.data {
+		mp[group] = secMp
 	}
 
-	sort.Strings(orderedSections)
-
-	for _, section := range orderedSections {
-		// don't add section title for DefSection
-		if section != defaultSection {
-			thisWrite, err = fmt.Fprintln(out, "["+section+"]")
-			n += int64(thisWrite)
-			if err != nil {
-				return
-			}
-		}
-
-		items := c.data[section]
-		orderedStringKeys := make([]string, len(items))
-		counter = 0
-		for key := range items {
-			orderedStringKeys[counter] = key
-			counter++
-		}
-
-		sort.Strings(orderedStringKeys)
-		for _, key := range orderedStringKeys {
-			thisWrite, err = fmt.Fprintln(out, key, "=", items[key])
-			n += int64(thisWrite)
-			if err != nil {
-				return
-			}
-		}
-
-		thisWrite, err = fmt.Fprintln(out)
-		n += int64(thisWrite)
-		if err != nil {
-			return
-		}
+	bs, err := parser.EncodeLite(mp, c.opts.DefSection)
+	if err != nil {
+		return 0, err
 	}
-	return
+
+	var ni int
+	ni, err = out.Write(bs)
+	return int64(ni), err
 }
 
 /*************************************************************
@@ -417,43 +416,6 @@ func (c *Ini) WriteTo(out io.Writer) (n int64, err error) {
 
 // Section get a section data map. is alias of StringMap()
 func (c *Ini) Section(name string) Section { return c.StringMap(name) }
-
-// SetSection if not exist, add new section. If existed, will merge to old section.
-func (c *Ini) SetSection(name string, values map[string]string) (err error) {
-	// if is readonly
-	if c.opts.Readonly {
-		return errReadonly
-	}
-
-	name = c.formatKey(name)
-
-	if old, ok := c.data[name]; ok {
-		c.data[name] = maputil.MergeStringMap(values, old, c.opts.IgnoreCase)
-		return
-	}
-
-	if c.opts.IgnoreCase {
-		values = mapKeyToLower(values)
-	}
-	c.data[name] = values
-	return
-}
-
-// NewSection add new section data, existed will be replace
-func (c *Ini) NewSection(name string, values map[string]string) (err error) {
-	// if is readonly
-	if c.opts.Readonly {
-		return errReadonly
-	}
-
-	if c.opts.IgnoreCase {
-		name = strings.ToLower(name)
-		c.data[name] = mapKeyToLower(values)
-	} else {
-		c.data[name] = values
-	}
-	return
-}
 
 // HasSection has section
 func (c *Ini) HasSection(name string) bool {
@@ -476,17 +438,16 @@ func (c *Ini) DelSection(name string) (ok bool) {
 }
 
 // SectionKeys get all section names
-func SectionKeys(withDefaultSection bool) (ls []string) {
-	return dc.SectionKeys(withDefaultSection)
+func SectionKeys(withDefSection bool) (ls []string) {
+	return dc.SectionKeys(withDefSection)
 }
 
 // SectionKeys get all section names
-func (c *Ini) SectionKeys(withDefaultSection bool) (ls []string) {
-	// default section name
+func (c *Ini) SectionKeys(withDefSection bool) (ls []string) {
 	defaultSection := c.opts.DefSection
 
 	for section := range c.data {
-		if !withDefaultSection && section == defaultSection {
+		if !withDefSection && section == defaultSection {
 			continue
 		}
 
