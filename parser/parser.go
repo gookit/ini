@@ -88,7 +88,7 @@ type Parser struct {
 	liteData map[string]map[string]string
 }
 
-// New a full mode Parser with some options
+// New a lite mode Parser with some options
 func New(fns ...OptFunc) *Parser {
 	return &Parser{Options: NewOptions(fns...)}
 }
@@ -146,6 +146,14 @@ func (p *Parser) WithOptions(opts ...func(p *Parser)) *Parser {
 	return p
 }
 
+// Unmarshal parse ini text and decode to struct
+func (p *Parser) Unmarshal(v []byte, ptr any) error {
+	if err := p.ParseBytes(v); err != nil {
+		return err
+	}
+	return p.MapStruct(ptr)
+}
+
 /*************************************************************
  * do parsing
  *************************************************************/
@@ -174,6 +182,10 @@ func (p *Parser) ParseReader(r io.Reader) (err error) {
 
 // init parser
 func (p *Parser) init() {
+	// if p.IgnoreCase {
+	// 	p.DefSection = strings.ToLower(p.DefSection)
+	// }
+
 	if p.ParseMode == ModeFull {
 		p.fullData = make(map[string]any)
 
@@ -215,21 +227,21 @@ func (p *Parser) ParseFrom(in *bufio.Scanner) (bytes int64, err error) {
 		}
 
 		// array/slice data
-		if groups := assignArrRegex.FindStringSubmatch(line); groups != nil {
+		if matched := assignArrRegex.FindStringSubmatch(line); matched != nil {
 			// skip array parse on lite mode
 			if p.ParseMode == ModeLite {
 				continue
 			}
 
-			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
+			key, val := strings.TrimSpace(matched[1]), trimWithQuotes(matched[2])
 
-			p.Collector(section, key, val, true)
-		} else if groups := assignRegex.FindStringSubmatch(line); groups != nil {
-			key, val := strings.TrimSpace(groups[1]), trimWithQuotes(groups[2])
+			p.collectValue(section, key, val, true)
+		} else if matched := assignRegex.FindStringSubmatch(line); matched != nil {
+			key, val := strings.TrimSpace(matched[1]), trimWithQuotes(matched[2])
 
-			p.Collector(section, key, val, false)
-		} else if groups := sectionRegex.FindStringSubmatch(line); groups != nil {
-			section = strings.TrimSpace(groups[1])
+			p.collectValue(section, key, val, false)
+		} else if matched := sectionRegex.FindStringSubmatch(line); matched != nil {
+			section = strings.TrimSpace(matched[1])
 		} else {
 			err = errSyntax{lineNum, line}
 			return
@@ -243,18 +255,25 @@ func (p *Parser) ParseFrom(in *bufio.Scanner) (bytes int64, err error) {
 	return
 }
 
-func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
-	defSec := p.DefSection
+func (p *Parser) collectValue(section, key, val string, isSlice bool) {
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
-		defSec = strings.ToLower(defSec)
 		section = strings.ToLower(section)
+	}
+
+	if p.InlineComment {
+		val, _ = splitInlineComment(val)
 	}
 
 	if p.ReplaceNl {
 		val = strings.ReplaceAll(val, `\n`, "\n")
 	}
 
+	p.Collector(section, key, val, false)
+}
+
+func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
+	defSec := p.DefSection
 	// p.NoDefSection and current section is default section
 	if p.NoDefSection && section == defSec {
 		if isSlice {
@@ -317,66 +336,35 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 	}
 }
 
-func (p *Parser) collectLiteValue(group, key, val string, _ bool) {
+func (p *Parser) collectLiteValue(sec, key, val string, _ bool) {
 	if p.IgnoreCase {
 		key = strings.ToLower(key)
-		group = strings.ToLower(group)
+		sec = strings.ToLower(sec)
 	}
 
-	if p.ReplaceNl {
-		val = strings.ReplaceAll(val, `\n`, "\n")
-	}
-
-	if sec, ok := p.liteData[group]; ok {
-		sec[key] = val
-		p.liteData[group] = sec
+	if strMap, ok := p.liteData[sec]; ok {
+		strMap[key] = val
+		p.liteData[sec] = strMap
 	} else {
 		// create the section if it does not exist
-		p.liteData[group] = map[string]string{key: val}
+		p.liteData[sec] = map[string]string{key: val}
 	}
+}
+
+func splitInlineComment(val string) (string, string) {
+	if pos := strings.IndexRune(val, '#'); pos > -1 {
+		return strings.TrimRight(val[0:pos], " "), val[pos:]
+	}
+
+	if pos := strings.Index(val, "//"); pos > -1 {
+		return strings.TrimRight(val[0:pos], " "), val[pos:]
+	}
+	return val, ""
 }
 
 /*************************************************************
- * helper methods
+ * export data
  *************************************************************/
-
-// ParsedData get parsed data
-func (p *Parser) ParsedData() interface{} {
-	if p.ParseMode == ModeFull {
-		return p.fullData
-	}
-	return p.liteData
-}
-
-// FullData get parsed data by full parse
-func (p *Parser) FullData() map[string]interface{} {
-	return p.fullData
-}
-
-// LiteData get parsed data by simple parse
-func (p *Parser) LiteData() map[string]map[string]string {
-	return p.liteData
-}
-
-// SimpleData get parsed data by simple parse
-func (p *Parser) SimpleData() map[string]map[string]string {
-	return p.liteData
-}
-
-// LiteSection get parsed data by simple parse
-func (p *Parser) LiteSection(name string) map[string]string {
-	return p.liteData[name]
-}
-
-// Reset parser, clear parsed data
-func (p *Parser) Reset() {
-	// p.parsed = false
-	if p.ParseMode == ModeFull {
-		p.fullData = make(map[string]any)
-	} else {
-		p.liteData = make(map[string]map[string]string)
-	}
-}
 
 // Decode mapping the parsed data to struct ptr
 func (p *Parser) Decode(ptr any) error {
@@ -442,6 +430,48 @@ func mapStruct(tagName string, data any, ptr any) error {
 		return err
 	}
 	return decoder.Decode(data)
+}
+
+/*************************************************************
+ * helper methods
+ *************************************************************/
+
+// ParsedData get parsed data
+func (p *Parser) ParsedData() interface{} {
+	if p.ParseMode == ModeFull {
+		return p.fullData
+	}
+	return p.liteData
+}
+
+// FullData get parsed data by full parse
+func (p *Parser) FullData() map[string]interface{} {
+	return p.fullData
+}
+
+// LiteData get parsed data by simple parse
+func (p *Parser) LiteData() map[string]map[string]string {
+	return p.liteData
+}
+
+// SimpleData get parsed data by simple parse
+func (p *Parser) SimpleData() map[string]map[string]string {
+	return p.liteData
+}
+
+// LiteSection get parsed data by simple parse
+func (p *Parser) LiteSection(name string) map[string]string {
+	return p.liteData[name]
+}
+
+// Reset parser, clear parsed data
+func (p *Parser) Reset() {
+	// p.parsed = false
+	if p.ParseMode == ModeFull {
+		p.fullData = make(map[string]any)
+	} else {
+		p.liteData = make(map[string]map[string]string)
+	}
 }
 
 func trimWithQuotes(inputVal string) (filtered string) {

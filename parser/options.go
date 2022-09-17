@@ -45,6 +45,8 @@ type Options struct {
 	DefSection string
 	// NoDefSection setting. only for full parse mode
 	NoDefSection bool
+	// InlineComment support parse inline comments. default is false
+	InlineComment bool
 	// Collector allow you custom the value collector.
 	//
 	// Notice: in lite mode, isSlice always is false.
@@ -70,6 +72,11 @@ func WithParseMode(mode parseMode) OptFunc {
 	return func(opt *Options) {
 		opt.ParseMode = mode
 	}
+}
+
+// InlineComment for parse
+func InlineComment(opt *Options) {
+	opt.InlineComment = true
 }
 
 // WithReplaceNl for parse
