@@ -65,7 +65,7 @@ func (c *Ini) getValue(key string) (val string, ok bool) {
 	name, key := c.splitSectionAndKey(key)
 
 	// get value
-	if strMap, ok := c.data[name]; ok {
+	if strMap, has := c.data[name]; has {
 		val, ok = strMap[key]
 	}
 	return
