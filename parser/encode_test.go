@@ -92,3 +92,24 @@ func TestEncode(t *testing.T) {
 	str = string(out)
 	is.NotContains(str, "[sec]")
 }
+
+func TestEncodeLite(t *testing.T) {
+	is := assert.New(t)
+
+	// encode simple data
+	sData := map[string]map[string]string{
+		"z_def": {"name": "inhere", "age": "100"},
+		"sec":   {"key": "val", "key1": "34"},
+	}
+
+	out, err := EncodeLite(sData, "z_def")
+	is.Nil(err)
+	is.NotEmpty(out)
+
+	str := string(out)
+	fmt.Println("---- lite mode: ----")
+	fmt.Println(str)
+	is.NotContains(str, "[z_def]")
+	is.Contains(str, "[sec]")
+	is.Contains(str, "name = inhere")
+}

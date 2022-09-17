@@ -413,7 +413,7 @@ host = localhost
 
 }
 
-func TestOther(t *testing.T) {
+func TestIni_WriteTo(t *testing.T) {
 	is := assert.New(t)
 
 	err := ini.LoadStrings(iniStr)

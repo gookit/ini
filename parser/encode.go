@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+
+	"github.com/gookit/goutil/timex"
 )
 
 // Encode golang data(map, struct) to INI string.
@@ -15,7 +17,7 @@ func EncodeWithDefName(v any, defSection ...string) (out []byte, err error) {
 	switch vd := v.(type) {
 	case map[string]any: // from full mode
 		return EncodeFull(vd, defSection...)
-	case map[string]map[string]string: // from simple mode
+	case map[string]map[string]string: // from lite mode
 		return EncodeSimple(vd, defSection...)
 	default:
 		err = errors.New("ini: invalid data to encode as INI")
@@ -25,7 +27,8 @@ func EncodeWithDefName(v any, defSection ...string) (out []byte, err error) {
 
 // EncodeFull full mode data to INI, can set default section name
 func EncodeFull(data map[string]any, defSection ...string) (out []byte, err error) {
-	if len(data) == 0 {
+	ln := len(data)
+	if ln == 0 {
 		return
 	}
 
@@ -34,57 +37,64 @@ func EncodeFull(data map[string]any, defSection ...string) (out []byte, err erro
 		defSecName = defSection[0]
 	}
 
-	// sort data
-	counter := 0
-	sections := make([]string, len(data))
+	sortedGroups := make([]string, 0, ln)
 	for section := range data {
-		sections[counter] = section
-		counter++
+		sortedGroups = append(sortedGroups, section)
 	}
-	sort.Strings(sections)
 
-	defBuf := &bytes.Buffer{}
+	buf := &bytes.Buffer{}
+	buf.Grow(ln * 4)
+	buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
 	secBuf := &bytes.Buffer{}
 
-	for _, key := range sections {
-		item := data[key]
+	sort.Strings(sortedGroups)
+	max := len(sortedGroups) - 1
+	for idx, section := range sortedGroups {
+		item := data[section]
 		switch tpData := item.(type) {
-		case float32, float64, int, int32, int64, string, bool: // k-v of the default section
-			_, _ = defBuf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				_, _ = defBuf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
+				buf.WriteString(fmt.Sprintf("%s[] = %v\n", section, v))
 			}
 		// case map[string]string: // is section
 		case map[string]any: // is section
-			if key != defSecName {
-				secBuf.WriteString("[" + key + "]\n")
-				buildSectionBuffer(tpData, secBuf)
+			if section != defSecName {
+				secBuf.WriteString("[" + section + "]\n")
+				writeAnyMap(secBuf, tpData)
 			} else {
-				buildSectionBuffer(tpData, defBuf)
+				writeAnyMap(buf, tpData)
 			}
-			secBuf.WriteByte('\n')
+
+			if idx < max {
+				secBuf.WriteByte('\n')
+			}
+		default: // k-v of the default section
+			buf.WriteString(fmt.Sprintf("%s = %v\n", section, tpData))
 		}
 	}
 
-	defBuf.WriteByte('\n')
-	defBuf.Write(secBuf.Bytes())
-	out = defBuf.Bytes()
+	buf.WriteByte('\n')
+	buf.Write(secBuf.Bytes())
+	out = buf.Bytes()
 	secBuf = nil
 	return
 }
 
-func buildSectionBuffer(data map[string]any, buf *bytes.Buffer) {
+func writeAnyMap(buf *bytes.Buffer, data map[string]any) {
 	for key, item := range data {
 		switch tpData := item.(type) {
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				_, _ = buf.WriteString(fmt.Sprintf("%s[] = %v\n", key, v))
+				buf.WriteString(key + "[] = ")
+				buf.WriteString(fmt.Sprint(v))
+				buf.WriteByte('\n')
 			}
 		default: // k-v of the section
-			_, _ = buf.WriteString(fmt.Sprintf("%s = %v\n", key, tpData))
+			buf.WriteString(key + " = ")
+			buf.WriteString(fmt.Sprint(tpData))
+			buf.WriteByte('\n')
 		}
 	}
 }
@@ -96,48 +106,58 @@ func EncodeSimple(data map[string]map[string]string, defSection ...string) ([]by
 
 // EncodeLite data to INI
 func EncodeLite(data map[string]map[string]string, defSection ...string) (out []byte, err error) {
-	if len(data) == 0 {
+	ln := len(data)
+	if ln == 0 {
 		return
 	}
 
-	buf := &bytes.Buffer{}
-	counter := 0
 	defSecName := ""
-	sortedSections := make([]string, len(data))
-
 	if len(defSection) > 0 {
 		defSecName = defSection[0]
 	}
 
+	sortedGroups := make([]string, 0, ln)
 	for section := range data {
-		sortedSections[counter] = section
-		counter++
+		// don't add section title for default section
+		if section != defSecName {
+			sortedGroups = append(sortedGroups, section)
+		}
 	}
 
-	sort.Strings(sortedSections)
-	for _, section := range sortedSections {
-		// don't add section title for DefSection
-		if section != defSecName {
-			_, _ = buf.WriteString("[" + section + "]\n")
-		}
+	buf := &bytes.Buffer{}
+	buf.Grow(ln * 4)
+	buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
 
-		counter = 0
-		items := data[section]
-		orderedStringKeys := make([]string, len(items))
-
-		for key := range items {
-			orderedStringKeys[counter] = key
-			counter++
-		}
-
-		sort.Strings(orderedStringKeys)
-		for _, key := range orderedStringKeys {
-			_, _ = buf.WriteString(key + " = " + items[key] + "\n")
-		}
-
+	// first, write default section values
+	if defSec, ok := data[defSecName]; ok {
+		buf.WriteString("# values for default section\n")
+		writeStringMap(buf, defSec)
 		buf.WriteByte('\n')
+	}
+
+	sort.Strings(sortedGroups)
+	max := len(sortedGroups) - 1
+	for idx, section := range sortedGroups {
+		buf.WriteString("[" + section + "]\n")
+		writeStringMap(buf, data[section])
+
+		if idx < max {
+			buf.WriteByte('\n')
+		}
 	}
 
 	out = buf.Bytes()
 	return
+}
+
+func writeStringMap(buf *bytes.Buffer, strMap map[string]string) {
+	sortedKeys := make([]string, 0, len(strMap))
+	for key := range strMap {
+		sortedKeys = append(sortedKeys, key)
+	}
+
+	sort.Strings(sortedKeys)
+	for _, key := range sortedKeys {
+		buf.WriteString(key + " = " + strMap[key] + "\n")
+	}
 }
