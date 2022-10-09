@@ -122,16 +122,8 @@ func LoadFromMap(kv map[string]string) (err error) {
 
 // Get get os ENV value by name
 func Get(name string, defVal ...string) (val string) {
-	if UpperEnvKey {
-		name = strings.ToUpper(name)
-	}
-	if val = loadedData[name]; val != "" {
-		return
-	}
-
-	// NOTICE: if is windows OS, os.Getenv() Key is not case-sensitive
-	if val = os.Getenv(name); val != "" {
-		return
+	if val, ok := getVal(name); ok {
+		return val
 	}
 
 	if len(defVal) > 0 {
@@ -142,7 +134,7 @@ func Get(name string, defVal ...string) (val string) {
 
 // Bool get a bool value by key
 func Bool(name string, defVal ...bool) (val bool) {
-	if str := Get(name); str != "" {
+	if str, ok := getVal(name); ok {
 		val, err := strconv.ParseBool(str)
 		if err == nil {
 			return val
@@ -157,7 +149,7 @@ func Bool(name string, defVal ...bool) (val bool) {
 
 // Int get a int value by key
 func Int(name string, defVal ...int) (val int) {
-	if str := Get(name); str != "" {
+	if str, ok := getVal(name); ok {
 		val, err := strconv.ParseInt(str, 10, 0)
 		if err == nil {
 			return int(val)
@@ -168,6 +160,20 @@ func Int(name string, defVal ...int) (val int) {
 		val = defVal[0]
 	}
 	return
+}
+
+func getVal(name string) (val string, ok bool) {
+	if UpperEnvKey {
+		name = strings.ToUpper(name)
+	}
+
+	// cached
+	if val = loadedData[name]; val != "" {
+		return
+	}
+
+	// NOTICE: if is windows OS, os.Getenv() Key is not case-sensitive
+	return os.LookupEnv(name)
 }
 
 // load and parse .env file data to os ENV
@@ -184,7 +190,7 @@ func loadFile(file string) (err error) {
 	defer fd.Close()
 
 	// parse file contents
-	p := parser.NewSimpled(parser.NoDefSection)
+	p := parser.NewLite()
 	if _, err = p.ParseFrom(bufio.NewScanner(fd)); err != nil {
 		return
 	}
