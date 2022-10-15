@@ -2,6 +2,12 @@
 
 Package `dotenv` that supports importing data from files (eg `.env`) to ENV
 
+## Install
+
+```bash
+go get github.com/gookit/ini/v2/dotenv
+```
+
 ## Usage
 
 ### Load Env
@@ -37,3 +43,7 @@ blVal := dotenv.Bool("OPEN_DEBUG")
 // with default value
 val := dotenv.Get("ENV_KEY", "default value")
 ```
+
+## License
+
+**MIT**

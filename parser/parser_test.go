@@ -164,6 +164,7 @@ func TestNewSimpled(t *testing.T) {
 	p.Reset()
 	err = p.ParseString(iniStr)
 	is.Nil(err)
+	is.NotEmpty(p.Comments())
 
 	data := p.SimpleData()
 	dump.P(data, p.Comments())

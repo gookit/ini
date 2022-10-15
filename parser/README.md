@@ -2,21 +2,23 @@
 
 This is a parser for parse INI format content to golang data 
 
-> parser is ref the project: https://github.com/dombenson/go-ini, Thank you very much
-
 ## Feature
 
+- Support parse section, array value.
 - Support comments start with  `;` `#`
+- Support multi line comments `/* .. */`
+- Support multi line value with `"""` or `'''`
 
-## TODO
+## Install
 
-- [ ] multi line text `'''text'''`
-- [ ] inline comments
+```bash
+go get github.com/gookit/ini/v2/parser
+```
 
-## Ref 
+## Refers
 
-- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
 - [dombenson/go-ini](https://github.com/dombenson/go-ini) ini parser and config manage
+- [go-ini/ini](https://github.com/go-ini/ini) ini parser and config manage
 
 ## License
 
