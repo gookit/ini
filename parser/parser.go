@@ -39,48 +39,38 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gookit/goutil/strutil/textscan"
 	"github.com/mitchellh/mapstructure"
 )
 
-// errSyntax is returned when there is a syntax error in an INI file.
-type errSyntax struct {
-	Line int
-	// Source The contents of the erroneous line, without leading or trailing whitespace
-	Source string
+// match: [section]
+var sectionRegex = regexp.MustCompile(`^\[(.*)]$`)
+
+// TokSection for mark a section
+const TokSection = textscan.TokComments + 1 + iota
+
+// SectionMatcher match section line: [section]
+type SectionMatcher struct{}
+
+// Match section line: [section]
+func (m *SectionMatcher) Match(text string, prev textscan.Token) (textscan.Token, error) {
+	line := strings.TrimSpace(text)
+
+	if matched := sectionRegex.FindStringSubmatch(line); matched != nil {
+		section := strings.TrimSpace(matched[1])
+		tok := textscan.NewStringToken(TokSection, section)
+		return tok, nil
+	}
+
+	return nil, nil
 }
-
-// Error message return
-func (e errSyntax) Error() string {
-	return fmt.Sprintf("invalid INI syntax on line %d: %s", e.Line, e.Source)
-}
-
-var (
-	// match: [section]
-	sectionRegex = regexp.MustCompile(`^\[(.*)]$`)
-	// match: foo[] = val
-	assignArrRegex = regexp.MustCompile(`^([^=\[\]]+)\[][^=]*=(.*)$`)
-	// match: key = val
-	assignRegex = regexp.MustCompile(`^([^=]+)=(.*)$`)
-	// quote ' "
-	quotesRegex = regexp.MustCompile(`^(['"])(.*)(['"])$`)
-)
-
-// special chars consts
-const (
-	MultiLineValMarkS = "'''"
-	MultiLineValMarkD = `"""`
-)
-
-// token consts
-const (
-	TokMLValMarkS = 'm' // multi line value by single quotes: '''
-	TokMLValMarkD = 'M' // multi line value by double quotes: """
-)
 
 // Parser definition
 type Parser struct {
 	*Options
 	// parsed bool
+	// comments map, key is name
+	comments map[string]string
 
 	// for full parse(allow array, map section)
 	fullData map[string]any
@@ -185,6 +175,7 @@ func (p *Parser) init() {
 	// if p.IgnoreCase {
 	// 	p.DefSection = strings.ToLower(p.DefSection)
 	// }
+	p.comments = make(map[string]string)
 
 	if p.ParseMode == ModeFull {
 		p.fullData = make(map[string]any)
@@ -202,56 +193,72 @@ func (p *Parser) init() {
 }
 
 // ParseFrom a data scanner
-func (p *Parser) ParseFrom(in *bufio.Scanner) (bytes int64, err error) {
+func (p *Parser) ParseFrom(in *bufio.Scanner) (count int64, err error) {
 	p.init()
+	count = -1
 
-	bytes = -1
-	lineNum := 0
+	// create scanner
+	ts := textscan.NewScanner(in)
+	ts.AddKind(TokSection, "Section")
+	ts.AddMatchers(
+		&textscan.CommentsMatcher{
+			InlineChars: []byte{'#', ';'},
+		},
+		&SectionMatcher{},
+		&textscan.KeyValueMatcher{
+			MergeComments: true,
+			InlineComment: p.InlineComment,
+		},
+	)
+
 	section := p.DefSection
 
-	var readOk bool
-	for readOk = in.Scan(); readOk; readOk = in.Scan() {
-		line := in.Text()
+	// scan and parsing
+	for ts.Scan() {
+		tok := ts.Token()
 
-		bytes++ // newline
-		bytes += int64(len(line))
-
-		lineNum++
-		line = strings.TrimSpace(line)
-		if len(line) == 0 { // Skip blank lines
+		// comments has been merged to value token
+		if !tok.IsValid() || tok.Kind() == textscan.TokComments {
 			continue
 		}
 
-		if line[0] == ';' || line[0] == '#' { // Skip comments
+		if tok.Kind() == TokSection {
+			section = tok.Value()
+
+			// collect comments
+			if textscan.IsKindToken(textscan.TokComments, ts.PrevToken()) {
+				p.comments["_sec_"+section] = ts.PrevToken().Value()
+			}
 			continue
 		}
 
-		// array/slice data
-		if matched := assignArrRegex.FindStringSubmatch(line); matched != nil {
-			// skip array parse on lite mode
-			if p.ParseMode == ModeLite {
-				continue
+		// collect value
+		if tok.Kind() == textscan.TokValue {
+			vt := tok.(*textscan.ValueToken)
+
+			var isSli bool
+			key := vt.Key()
+
+			// is array index
+			if strings.HasSuffix(key, "[]") {
+				// skip parse array on lite mode
+				if p.ParseMode == ModeLite {
+					continue
+				}
+
+				key = key[:len(key)-2]
+				isSli = true
 			}
 
-			key, val := strings.TrimSpace(matched[1]), trimWithQuotes(matched[2])
-
-			p.collectValue(section, key, val, true)
-		} else if matched := assignRegex.FindStringSubmatch(line); matched != nil {
-			key, val := strings.TrimSpace(matched[1]), trimWithQuotes(matched[2])
-
-			p.collectValue(section, key, val, false)
-		} else if matched := sectionRegex.FindStringSubmatch(line); matched != nil {
-			section = strings.TrimSpace(matched[1])
-		} else {
-			err = errSyntax{lineNum, line}
-			return
+			p.collectValue(section, key, vt.Value(), isSli)
+			if vt.HasComment() {
+				p.comments[section+"_"+key] = vt.Comment()
+			}
 		}
 	}
 
-	err = in.Err()
-	if bytes < 0 {
-		bytes = 0
-	}
+	count = 0
+	err = ts.Err()
 	return
 }
 
@@ -261,15 +268,11 @@ func (p *Parser) collectValue(section, key, val string, isSlice bool) {
 		section = strings.ToLower(section)
 	}
 
-	if p.InlineComment {
-		val, _ = splitInlineComment(val)
-	}
-
 	if p.ReplaceNl {
 		val = strings.ReplaceAll(val, `\n`, "\n")
 	}
 
-	p.Collector(section, key, val, false)
+	p.Collector(section, key, val, isSlice)
 }
 
 func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
@@ -305,8 +308,7 @@ func (p *Parser) collectFullValue(section, key, val string, isSlice bool) {
 
 	switch sd := secData.(type) {
 	case map[string]any: // existed section
-		curVal, ok := sd[key]
-		if ok {
+		if curVal, ok := sd[key]; ok {
 			switch cv := curVal.(type) {
 			case string:
 				if isSlice {
@@ -351,22 +353,11 @@ func (p *Parser) collectLiteValue(sec, key, val string, _ bool) {
 	}
 }
 
-func splitInlineComment(val string) (string, string) {
-	if pos := strings.IndexRune(val, '#'); pos > -1 {
-		return strings.TrimRight(val[0:pos], " "), val[pos:]
-	}
-
-	if pos := strings.Index(val, "//"); pos > -1 {
-		return strings.TrimRight(val[0:pos], " "), val[pos:]
-	}
-	return val, ""
-}
-
 /*************************************************************
  * export data
  *************************************************************/
 
-// Decode mapping the parsed data to struct ptr
+// Decode the parsed data to struct ptr
 func (p *Parser) Decode(ptr any) error {
 	return p.MapStruct(ptr)
 }
@@ -436,6 +427,11 @@ func mapStruct(tagName string, data any, ptr any) error {
  * helper methods
  *************************************************************/
 
+// Comments get
+func (p *Parser) Comments() map[string]string {
+	return p.comments
+}
+
 // ParsedData get parsed data
 func (p *Parser) ParsedData() interface{} {
 	if p.ParseMode == ModeFull {
@@ -472,14 +468,4 @@ func (p *Parser) Reset() {
 	} else {
 		p.liteData = make(map[string]map[string]string)
 	}
-}
-
-func trimWithQuotes(inputVal string) (filtered string) {
-	filtered = strings.TrimSpace(inputVal)
-	groups := quotesRegex.FindStringSubmatch(filtered)
-
-	if len(groups) > 2 && groups[1] == groups[3] {
-		filtered = groups[2]
-	}
-	return
 }

@@ -11,15 +11,25 @@ INI格式内容解析; 使用INI格式作为配置，配置数据的加载，管
 
 > **[EN README](README.md)**
 
+## 功能简介
+
 - 使用简单(获取: `Int` `Int64` `Bool` `String` `StringMap` ..., 设置: `Set` )
 - 支持多文件，数据加载
 - 支持数据覆盖合并
-- 支持将数据重新绑定到结构体
-- 支持解析 ENV 变量名
+- 支持将数据绑定到结构体
+- 支持解析 `ENV` 变量名
 - 支持使用 `;` `#` 注释一行
-- 支持变量参考，默认兼容Python的configParser格式 `%(VAR)s`
+- 支持变量参考引用
+  - 默认兼容 Python 的 configParser 格式 `%(VAR)s`
 - 完善的单元测试(coverage > 90%)
-- 子包 `dotenv` - 提供了加载解析 `.env` 文件数据为ENV环境变量
+
+### [Parser](./parser)
+
+子包 `parser` - 实现了解析 `INI` 格式内容为 Go 数据
+
+### [Dotenv](./dotenv)
+
+子包 `dotenv` - 提供了加载解析 `.env` 文件数据为ENV环境变量
 
 ## 更多格式
 

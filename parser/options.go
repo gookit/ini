@@ -2,8 +2,8 @@ package parser
 
 // mode of parse data
 //
-//	ModeFull   - will parse inline array
-//	ModeLite/ModeSimple - don't parse array value
+//	ModeFull   - will parse array value and inline array
+//	ModeLite/ModeSimple - don't parse array value line
 const (
 	ModeFull   parseMode = 1
 	ModeLite   parseMode = 2

@@ -169,6 +169,7 @@ func getVal(name string) (val string, ok bool) {
 
 	// cached
 	if val = loadedData[name]; val != "" {
+		ok = true
 		return
 	}
 

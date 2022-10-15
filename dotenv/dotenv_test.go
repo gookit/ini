@@ -39,6 +39,7 @@ func TestLoadFiles(t *testing.T) {
 	err := LoadFiles("./testdata/.env")
 
 	assert.NoErr(t, err)
+	assert.NotEmpty(t, LoadedData())
 	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
 	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 }

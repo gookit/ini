@@ -15,13 +15,20 @@ INI contents parser by golang, INI config data management library.
 
 - Easy to use(get: `Int` `Int64` `Bool` `String` `StringMap` ..., set: `Set`)
 - Support multi file, data load
-- Support for rebinding data to structure
+- Support for decode data to struct
 - Support data override merge
 - Support parse ENV variable
 - Support comments start with  `;` `#`
 - Complete unit test(coverage > 90%)
 - Support variable reference, default compatible with Python's configParser format `%(VAR)s`
-- Sub-package `dotenv` that supports importing ENV data from files (eg `.env`)
+
+### [Parser](./parser)
+
+Package `parser` is a Parser for parse INI format content to golang data
+
+### [Dotenv](./dotenv)
+
+Package `dotenv` that supports importing ENV data from files (eg `.env`)
 
 ## More formats
 
@@ -219,17 +226,17 @@ type Options struct {
 }
 ```
 
-- setting options for default instance
+Setting options for default instance:
 
 ```go
 ini.WithOptions(ini.ParseEnv,ini.ParseVar)
 ```
 
-- setting options with new instance
+Setting options with new instance:
 
 ```go
 cfg := ini.New()
-cfg.WithOptions(ini.ParseEnv,ini.ParseVar, func (opts *Options) {
+cfg.WithOptions(ini.ParseEnv, ini.ParseVar, func (opts *Options) {
 	opts.SectionSep = ":"
 	opts.DefSection = "default"
 })

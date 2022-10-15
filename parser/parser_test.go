@@ -1,15 +1,18 @@
 package parser
 
 import (
+	"bufio"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/gookit/goutil/dump"
+	"github.com/gookit/goutil/strutil/textscan"
 	"github.com/gookit/goutil/testutil/assert"
 )
 
 var iniStr = `
-# comments
+# comments 1
 name = inhere
 age = 28
 debug = true
@@ -18,17 +21,18 @@ hasQuota2 = "this is val1"
 shell = ${SHELL}
 noEnv = ${NotExist|defValue}
 
-; array in def section
+; array in default section
 tags[] = a
 tags[] = b
 tags[] = c
 
-; comments
+; comments 2
 [sec1]
 key = val0
 some = value
 stuff = things
-; array in section
+
+; array in section sec1
 types[] = x
 types[] = y
 `
@@ -105,7 +109,7 @@ two_words = abc def
 	is.Eq("[a b]", fmt.Sprintf("%v", data["arr"]))
 	is.Eq("map[key:val]", fmt.Sprintf("%v", data["sec"]))
 
-	st := struct {
+	type myConf struct {
 		Age  int
 		Name string
 		Sec1 struct {
@@ -113,10 +117,27 @@ two_words = abc def
 			Number   int
 			TwoWords string `ini:"two_words"`
 		}
-	}{}
+	}
 
-	is.Nil(Decode(bts, &st))
+	st := &myConf{}
+	is.NoErr(Decode(bts, st))
+	is.Eq(23, st.Age)
+	is.Eq("inhere", st.Name)
+	is.Eq(2020, st.Sec1.Number)
+	is.Eq("abc def", st.Sec1.TwoWords)
 	dump.P(st)
+
+	// Unmarshal
+	p := NewLite(func(opt *Options) {
+		opt.NoDefSection = true
+	})
+
+	st = &myConf{}
+	is.NoErr(p.Unmarshal(bts, st))
+	is.Eq(23, st.Age)
+	is.Eq("inhere", st.Name)
+	is.Eq(2020, st.Sec1.Number)
+	is.Eq("abc def", st.Sec1.TwoWords)
 }
 
 func TestNewSimpled(t *testing.T) {
@@ -131,8 +152,9 @@ func TestNewSimpled(t *testing.T) {
 
 	err := p.ParseString("invalid string")
 	is.Err(err)
-	is.IsType(errSyntax{}, err)
-	is.Contains(err.Error(), "invalid INI syntax on line")
+	is.IsType(textscan.ErrScan{}, err)
+	// is.Contains(err.Error(), "invalid syntax, no matcher available")
+	is.Contains(err.Error(), "line 1: invalid string")
 
 	err = p.ParseString("")
 	is.NoErr(err)
@@ -143,6 +165,7 @@ func TestNewSimpled(t *testing.T) {
 	is.Nil(err)
 
 	data := p.SimpleData()
+	dump.P(data, p.Comments())
 	str := fmt.Sprintf("%v", data)
 	is.Contains(str, "hasQuota2:")
 	is.NotContains(str, "hasquota1:")
@@ -191,7 +214,9 @@ key = val0
 	is.Nil(err)
 
 	v := p.ParsedData()
+	dump.P(v, p.Comments())
 	is.NotEmpty(v)
+	is.ContainsKey(v, "sec1")
 
 	// options: ignore case
 	p = NewFulled(IgnoreCase)
@@ -218,6 +243,13 @@ func TestParser_ParseBytes(t *testing.T) {
 	is.Len(p.LiteData(), 0)
 }
 
+func TestParser_ParseFrom(t *testing.T) {
+	p := New()
+	n, err := p.ParseFrom(bufio.NewScanner(strings.NewReader("")))
+	assert.Eq(t, int64(0), n)
+	assert.NoErr(t, err)
+}
+
 func TestParser_ParseString(t *testing.T) {
 	p := New(WithParseMode(ModeFull))
 	err := p.ParseString(`
@@ -230,4 +262,9 @@ arr[] = val4
 	assert.NoErr(t, err)
 	assert.NotEmpty(t, p.fullData)
 	dump.P(p.ParsedData())
+
+	p.Reset()
+	assert.NoErr(t, p.ParseString(`
+# no values
+`))
 }
