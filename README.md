@@ -18,7 +18,8 @@ INI contents parser by golang, INI config data management library.
 - Support for decode data to struct
 - Support data override merge
 - Support parse ENV variable
-- Support comments start with  `;` `#`
+- Support comments start with  `;` `#`, multi line comments `/* .. */`
+- Support multi line value with `"""` or `'''`
 - Complete unit test(coverage > 90%)
 - Support variable reference, default compatible with Python's configParser format `%(VAR)s`
 

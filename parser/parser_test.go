@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/gookit/goutil/dump"
+	"github.com/gookit/goutil/maputil"
 	"github.com/gookit/goutil/strutil/textscan"
 	"github.com/gookit/goutil/testutil/assert"
 )
@@ -260,11 +261,35 @@ arr[] = val4
 `)
 
 	assert.NoErr(t, err)
-	assert.NotEmpty(t, p.fullData)
+	assert.NotEmpty(t, p.FullData())
 	dump.P(p.ParsedData())
 
 	p.Reset()
 	assert.NoErr(t, p.ParseString(`
 # no values
 `))
+}
+
+func TestParser_multiLineValue(t *testing.T) {
+	p := New(WithParseMode(ModeFull))
+	err := p.ParseString(`
+; comments 1
+key1 = """multi line
+value for key1
+"""
+
+arr[] = val3
+; comments 2
+arr[] = '''multi line
+value at array
+'''
+`)
+
+	assert.NoErr(t, err)
+	data := p.FullData()
+	assert.NotEmpty(t, data)
+	defMp := data[DefSection].(map[string]interface{})
+	dump.P(defMp)
+	assert.Eq(t, "multi line\nvalue for key1", defMp["key1"])
+	assert.Eq(t, "multi line\nvalue at array", maputil.DeepGet(defMp, "arr.1"))
 }
