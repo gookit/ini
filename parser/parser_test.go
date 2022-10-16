@@ -155,7 +155,7 @@ func TestNewSimpled(t *testing.T) {
 	is.Err(err)
 	is.IsType(textscan.ErrScan{}, err)
 	// is.Contains(err.Error(), "invalid syntax, no matcher available")
-	is.Contains(err.Error(), "line 1: invalid string")
+	is.Contains(err.Error(), `line 1: "invalid string"`)
 
 	err = p.ParseString("")
 	is.NoErr(err)
@@ -291,6 +291,6 @@ value at array
 	assert.NotEmpty(t, data)
 	defMp := data[DefSection].(map[string]interface{})
 	dump.P(defMp)
-	assert.Eq(t, "multi line\nvalue for key1", defMp["key1"])
-	assert.Eq(t, "multi line\nvalue at array", maputil.DeepGet(defMp, "arr.1"))
+	assert.Eq(t, "multi line\nvalue for key1\n", defMp["key1"])
+	assert.Eq(t, "multi line\nvalue at array\n", maputil.DeepGet(defMp, "arr.1"))
 }
