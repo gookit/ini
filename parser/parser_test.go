@@ -88,7 +88,7 @@ number = 2020
 two_words = abc def
 `)
 
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	err := Decode([]byte(""), data)
 	is.Err(err)
 
@@ -289,7 +289,7 @@ value at array
 	assert.NoErr(t, err)
 	data := p.FullData()
 	assert.NotEmpty(t, data)
-	defMp := data[DefSection].(map[string]interface{})
+	defMp := data[DefSection].(map[string]any)
 	dump.P(defMp)
 	assert.Eq(t, "multi line\nvalue for key1\n", defMp["key1"])
 	assert.Eq(t, "multi line\nvalue at array\n", maputil.DeepGet(defMp, "arr.1"))

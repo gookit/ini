@@ -53,7 +53,7 @@ const TokSection = textscan.TokComments + 1 + iota
 type SectionMatcher struct{}
 
 // Match section line: [section]
-func (m *SectionMatcher) Match(text string, prev textscan.Token) (textscan.Token, error) {
+func (m *SectionMatcher) Match(text string, _ textscan.Token) (textscan.Token, error) {
 	line := strings.TrimSpace(text)
 
 	if matched := sectionRegex.FindStringSubmatch(line); matched != nil {
@@ -433,7 +433,7 @@ func (p *Parser) Comments() map[string]string {
 }
 
 // ParsedData get parsed data
-func (p *Parser) ParsedData() interface{} {
+func (p *Parser) ParsedData() any {
 	if p.ParseMode == ModeFull {
 		return p.fullData
 	}
@@ -441,7 +441,7 @@ func (p *Parser) ParsedData() interface{} {
 }
 
 // FullData get parsed data by full parse
-func (p *Parser) FullData() map[string]interface{} {
+func (p *Parser) FullData() map[string]any {
 	return p.fullData
 }
 

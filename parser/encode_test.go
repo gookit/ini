@@ -15,7 +15,7 @@ func TestEncode(t *testing.T) {
 	is.Err(err)
 
 	// empty
-	out, err = Encode(map[string]interface{}{})
+	out, err = Encode(map[string]any{})
 	is.Nil(out)
 	is.Nil(err)
 
@@ -50,14 +50,14 @@ func TestEncode(t *testing.T) {
 	is.Contains(str, "name = inhere")
 
 	// encode full data
-	fData := map[string]interface{}{
+	fData := map[string]any{
 		"name":    "inhere",
 		"age":     12,
 		"debug":   false,
 		"defArr":  []string{"a", "b"},
 		"defArr1": []int{1, 2},
 		// section
-		"sec": map[string]interface{}{
+		"sec": map[string]any{
 			"key0":    "val",
 			"key1":    45,
 			"arr0":    []int{3, 4},

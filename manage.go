@@ -303,7 +303,7 @@ func mapStruct(tagName string, data any, ptr any) error {
 // Set a value to the section by key.
 //
 // if section is empty, will set to default section
-func Set(key string, val interface{}, section ...string) error {
+func Set(key string, val any, section ...string) error {
 	return dc.Set(key, val, section...)
 }
 
