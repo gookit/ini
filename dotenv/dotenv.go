@@ -191,7 +191,9 @@ func loadFile(file string) (err error) {
 	defer fd.Close()
 
 	// parse file contents
-	p := parser.NewLite()
+	p := parser.NewLite(func(opt *parser.Options) {
+		opt.InlineComment = true
+	})
 	if _, err = p.ParseFrom(bufio.NewScanner(fd)); err != nil {
 		return
 	}
