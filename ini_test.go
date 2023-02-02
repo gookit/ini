@@ -302,7 +302,7 @@ hasDefault = ${HasDef|defValue}
 	st.NotContains(str, "${")
 
 	str = conf.Get("notExist")
-	st.Eq("${NotExist}", str)
+	st.Eq("", str)
 
 	str = conf.Get("invalid")
 	st.Contains(str, "${")
