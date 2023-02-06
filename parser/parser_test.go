@@ -294,3 +294,24 @@ value at array
 	assert.Eq(t, "multi line\nvalue for key1\n", defMp["key1"])
 	assert.Eq(t, "multi line\nvalue at array\n", maputil.DeepGet(defMp, "arr.1"))
 }
+
+func TestParser_valueUrl(t *testing.T) {
+	p := NewLite()
+	err := p.ParseString(`
+url_ip=http://127.0.0.1
+url_ip_port=http://127.0.0.1:9090
+url_value=https://github.com
+url_value1=https://github.com/inhere
+`)
+	assert.NoErr(t, err)
+	data := p.LiteData()
+	assert.NotEmpty(t, data)
+	defMap := data[DefSection]
+	assert.NotEmpty(t, defMap)
+	dump.P(defMap)
+
+	sMap := maputil.SMap(defMap)
+	assert.Eq(t, "http://127.0.0.1", sMap.Str("url_ip"))
+	assert.Eq(t, "http://127.0.0.1:9090", sMap.Str("url_ip_port"))
+	assert.Eq(t, "https://github.com/inhere", sMap.Str("url_value1"))
+}

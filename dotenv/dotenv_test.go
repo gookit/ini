@@ -15,11 +15,13 @@ func TestLoad(t *testing.T) {
 	assert.Err(t, err)
 
 	assert.Eq(t, "", os.Getenv("DONT_ENV_TEST"))
+	assert.Eq(t, "", os.Getenv("HTTP_URL_TEST"))
 
 	err = Load("./testdata")
 	assert.NoErr(t, err)
 	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
 	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
+	assert.Eq(t, "http://127.0.0.1:1081", Get("HTTP_URL_TEST"))
 	_ = os.Unsetenv("DONT_ENV_TEST") // clear
 
 	err = Load("./testdata", "error.ini")
