@@ -7,7 +7,7 @@
 [![Unit-Tests](https://github.com/gookit/ini/actions/workflows/go.yml/badge.svg)](https://github.com/gookit/ini)
 [![Go Reference](https://pkg.go.dev/badge/github.com/gookit/ini/v2.svg)](https://pkg.go.dev/github.com/gookit/ini/v2)
 
-INI contents parser by golang, INI config data management library.
+`INI` contents parser by Golang, `INI` config data management.
 
 > **[中文说明](README.zh-CN.md)**
 
