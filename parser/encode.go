@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"sort"
-
-	"github.com/gookit/goutil/timex"
 )
 
 // Encode golang data(map, struct) to INI string.
@@ -44,7 +42,7 @@ func EncodeFull(data map[string]any, defSection ...string) (out []byte, err erro
 
 	buf := &bytes.Buffer{}
 	buf.Grow(ln * 4)
-	buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
+	//buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
 	secBuf := &bytes.Buffer{}
 
 	sort.Strings(sortedGroups)
@@ -126,11 +124,11 @@ func EncodeLite(data map[string]map[string]string, defSection ...string) (out []
 
 	buf := &bytes.Buffer{}
 	buf.Grow(ln * 4)
-	buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
+	//buf.WriteString("# exported at " + timex.Now().Datetime() + "\n\n")
 
 	// first, write default section values
 	if defSec, ok := data[defSecName]; ok {
-		buf.WriteString("# values for default section\n")
+		//buf.WriteString("# values for default section\n")
 		writeStringMap(buf, defSec)
 		buf.WriteByte('\n')
 	}
