@@ -1,6 +1,6 @@
 module github.com/gookit/ini/v2
 
-go 1.18
+go 1.19
 
 require (
 	github.com/gookit/goutil v0.6.15
