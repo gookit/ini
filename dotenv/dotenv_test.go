@@ -33,6 +33,18 @@ func TestLoad(t *testing.T) {
 	assert.Eq(t, "def-val", Get("NOT-EXIST", "def-val"))
 }
 
+func TestLoadMatched(t *testing.T) {
+	defer Reset()
+
+	assert.Nil(t, LoadMatched("./dir-not-exists", "*.env"))
+	assert.Empty(t, Get("ENV_KEY_IN_A"))
+	assert.Empty(t, Get("ENV_KEY_IN_B"))
+
+	assert.Nil(t, LoadMatched("./testdata", "*.env"))
+	assert.Eq(t, "VALUE_IN_A", Get("ENV_KEY_IN_A"))
+	assert.Eq(t, "VALUE_IN_B", Get("ENV_KEY_IN_B"))
+}
+
 func TestLoadFiles(t *testing.T) {
 	defer Reset()
 	assert.Err(t, LoadFiles("./testdata/not-exist"))
@@ -42,6 +54,7 @@ func TestLoadFiles(t *testing.T) {
 
 	assert.NoErr(t, err)
 	assert.NotEmpty(t, LoadedData())
+	assert.NotEmpty(t, LoadedFiles())
 	assert.Eq(t, "blog", os.Getenv("DONT_ENV_TEST"))
 	assert.Eq(t, "blog", Get("DONT_ENV_TEST"))
 }

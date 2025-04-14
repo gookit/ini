@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gookit/goutil/fsutil"
 	"github.com/gookit/ini/v2/parser"
 )
 
@@ -24,14 +25,19 @@ var (
 	// save original Env data
 	// originalEnv []string
 
-	// cache all loaded ENV data
-	loadedData = map[string]string{}
+	// cache all lib loaded ENV data
+	loadedData  = map[string]string{}
+	loadedFiles []string // cache all loaded files
 )
 
-// LoadedData get all loaded data by dontenv
-func LoadedData() map[string]string {
-	return loadedData
-}
+// DontUpperEnvKey don't change key to upper on set ENV
+func DontUpperEnvKey() { UpperEnvKey = false }
+
+// LoadedData get all loaded data by dotenv
+func LoadedData() map[string]string { return loadedData }
+
+// LoadedFiles get all loaded files
+func LoadedFiles() []string { return loadedFiles }
 
 // Reset clear the previously set ENV value
 func Reset() { ClearLoaded() }
@@ -46,12 +52,11 @@ func ClearLoaded() {
 	loadedData = map[string]string{}
 }
 
-// DontUpperEnvKey don't change key to upper on set ENV
-func DontUpperEnvKey() {
-	UpperEnvKey = false
-}
+//
+// -------------------- load env file/data --------------------
+//
 
-// Load parse .env file data to os ENV.
+// Load parse dotenv file data to os ENV. default load ".env" file
 //
 // Usage:
 //
@@ -68,6 +73,29 @@ func Load(dir string, filenames ...string) (err error) {
 		}
 	}
 	return
+}
+
+// LoadMatched load env files by match filename pattern. Default pattern is *.env
+//
+// Usage:
+//
+//	dotenv.LoadMatched("./envfiles")
+//	dotenv.LoadMatched("./", "*.env")
+func LoadMatched(dir string, pattern ...string) error {
+	if !fsutil.DirExist(dir) {
+		return nil
+	}
+
+	patternR := "*.env"
+	if len(pattern) > 0 && pattern[0] != "" {
+		patternR = pattern[0]
+	}
+
+	matches, err := filepath.Glob(filepath.Join(dir, patternR))
+	if err != nil {
+		return err
+	}
+	return LoadFiles(matches...)
 }
 
 // LoadExists only load on file exists
@@ -120,7 +148,11 @@ func LoadFromMap(kv map[string]string) (err error) {
 	return
 }
 
-// Get get os ENV value by name
+//
+// -------------------- get env value --------------------
+//
+
+// Get os ENV value by name
 func Get(name string, defVal ...string) (val string) {
 	if val, ok := getVal(name); ok {
 		return val
@@ -147,7 +179,7 @@ func Bool(name string, defVal ...bool) (val bool) {
 	return
 }
 
-// Int get a int value by key
+// Int get an int value by key
 func Int(name string, defVal ...int) (val int) {
 	if str, ok := getVal(name); ok {
 		val, err := strconv.ParseInt(str, 10, 0)
@@ -202,5 +234,8 @@ func loadFile(file string) (err error) {
 	if mp := p.LiteSection(p.DefSection); len(mp) > 0 {
 		err = LoadFromMap(mp)
 	}
+
+	// add to loadedFiles
+	loadedFiles = append(loadedFiles, file)
 	return
 }

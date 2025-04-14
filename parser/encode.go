@@ -48,7 +48,7 @@ func EncodeFull(data map[string]any, defSection ...string) (out []byte, err erro
 	secBuf := &bytes.Buffer{}
 
 	sort.Strings(sortedGroups)
-	max := len(sortedGroups) - 1
+	maxLn := len(sortedGroups) - 1
 	for idx, section := range sortedGroups {
 		item := data[section]
 		switch tpData := item.(type) {
@@ -66,7 +66,7 @@ func EncodeFull(data map[string]any, defSection ...string) (out []byte, err erro
 				writeAnyMap(buf, tpData)
 			}
 
-			if idx < max {
+			if idx < maxLn {
 				secBuf.WriteByte('\n')
 			}
 		default: // k-v of the default section

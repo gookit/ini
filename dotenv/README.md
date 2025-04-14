@@ -47,16 +47,20 @@ val := dotenv.Get("ENV_KEY", "default value")
 ## Functions API
 
 ```go
-func Bool(name string, defVal ...bool) (val bool)
-func ClearLoaded()
 func DontUpperEnvKey()
+// get env value
+func Bool(name string, defVal ...bool) (val bool)
 func Get(name string, defVal ...string) (val string)
 func Int(name string, defVal ...int) (val int)
+// load env files/data
 func Load(dir string, filenames ...string) (err error)
 func LoadExistFiles(filePaths ...string) error
 func LoadExists(dir string, filenames ...string) error
 func LoadFiles(filePaths ...string) (err error)
 func LoadFromMap(kv map[string]string) (err error)
+// extra methods
+func ClearLoaded()
+func LoadedFiles() []string
 func LoadedData() map[string]string
 func Reset()
 ```
