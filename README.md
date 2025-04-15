@@ -247,6 +247,8 @@ cfg.WithOptions(ini.ParseEnv, ini.ParseVar, func (opts *Options) {
 
 Package `dotenv` that supports importing data from files (eg `.env`) to ENV
 
+> NOTE: filename support simple glob pattern. eg: ".env.*", "*.env"
+
 ### Usage
 
 ```go

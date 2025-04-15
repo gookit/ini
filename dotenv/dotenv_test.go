@@ -31,18 +31,32 @@ func TestLoad(t *testing.T) {
 	assert.Err(t, err)
 
 	assert.Eq(t, "def-val", Get("NOT-EXIST", "def-val"))
+
+	// load by glob match
+	assert.Empty(t, Get("ENV_KEY_IN_A"))
+	err = Load("./testdata", "*.env")
+	assert.NoErr(t, err)
+	assert.Eq(t, "VALUE_IN_A", Get("ENV_KEY_IN_A"))
+	// invalid pattern
+	assert.Err(t, Load("./testdata", "ab[[c*"))
 }
 
 func TestLoadMatched(t *testing.T) {
 	defer Reset()
 
+	// dir not exist
 	assert.Nil(t, LoadMatched("./dir-not-exists", "*.env"))
+	// not match any file
+	assert.Nil(t, LoadMatched("./testdata", "invalid_key.ini"))
 	assert.Empty(t, Get("ENV_KEY_IN_A"))
 	assert.Empty(t, Get("ENV_KEY_IN_B"))
 
-	assert.Nil(t, LoadMatched("./testdata", "*.env"))
+	assert.Nil(t, LoadMatched("./testdata"))
 	assert.Eq(t, "VALUE_IN_A", Get("ENV_KEY_IN_A"))
 	assert.Eq(t, "VALUE_IN_B", Get("ENV_KEY_IN_B"))
+
+	// invalid pattern
+	assert.Err(t, LoadMatched("./testdata", "ab[[c"))
 }
 
 func TestLoadFiles(t *testing.T) {

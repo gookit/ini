@@ -58,6 +58,8 @@ func ClearLoaded() {
 
 // Load parse dotenv file data to os ENV. default load ".env" file
 //
+// - NEW: filename support simple glob pattern. eg: ".env.*", "*.env"
+//
 // Usage:
 //
 //	dotenv.Load("./", ".env")
@@ -67,8 +69,16 @@ func Load(dir string, filenames ...string) (err error) {
 	}
 
 	for _, filename := range filenames {
-		file := filepath.Join(dir, filename)
-		if err = loadFile(file); err != nil {
+		// filename support simple glob pattern.
+		if strings.ContainsRune(filename, '*') {
+			if err = loadMatched(dir, filename); err != nil {
+				break
+			}
+			continue
+		}
+
+		filePath := filepath.Join(dir, filename)
+		if err = loadFile(filePath); err != nil {
 			break
 		}
 	}
@@ -79,26 +89,37 @@ func Load(dir string, filenames ...string) (err error) {
 //
 // Usage:
 //
-//	dotenv.LoadMatched("./envfiles")
+//	dotenv.LoadMatched("./local")
 //	dotenv.LoadMatched("./", "*.env")
-func LoadMatched(dir string, pattern ...string) error {
+func LoadMatched(dir string, patterns ...string) error {
 	if !fsutil.DirExist(dir) {
 		return nil
 	}
-
-	patternR := "*.env"
-	if len(pattern) > 0 && pattern[0] != "" {
-		patternR = pattern[0]
+	if len(patterns) == 0 {
+		patterns = []string{"*.env"}
 	}
 
-	matches, err := filepath.Glob(filepath.Join(dir, patternR))
+	for _, pattern := range patterns {
+		if err := loadMatched(dir, pattern); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func loadMatched(dir string, pattern string) error {
+	matches, err := filepath.Glob(filepath.Join(dir, pattern))
 	if err != nil {
 		return err
+	}
+
+	if len(matches) == 0 {
+		return nil
 	}
 	return LoadFiles(matches...)
 }
 
-// LoadExists only load on file exists
+// LoadExists only load on file exists. see Load
 func LoadExists(dir string, filenames ...string) error {
 	oldVal := OnlyLoadExists
 
@@ -109,7 +130,7 @@ func LoadExists(dir string, filenames ...string) error {
 	return err
 }
 
-// LoadFiles load ENV from given file
+// LoadFiles load ENV from given file path.
 func LoadFiles(filePaths ...string) (err error) {
 	for _, filePath := range filePaths {
 		if err = loadFile(filePath); err != nil {
@@ -223,9 +244,7 @@ func loadFile(file string) (err error) {
 	defer fd.Close()
 
 	// parse file contents
-	p := parser.NewLite(func(opt *parser.Options) {
-		opt.InlineComment = true
-	})
+	p := parser.NewLite(parser.InlineComment)
 	if _, err = p.ParseFrom(bufio.NewScanner(fd)); err != nil {
 		return
 	}
