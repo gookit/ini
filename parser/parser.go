@@ -65,10 +65,11 @@ func (m *SectionMatcher) Match(text string, _ textscan.Token) (textscan.Token, e
 	return nil, nil
 }
 
-// Parser definition
+// Parser definition for parse INI content.
 type Parser struct {
 	*Options
 	// parsed bool
+
 	// comments map, key is name
 	comments map[string]string
 

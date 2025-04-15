@@ -121,16 +121,19 @@ github = github.com/inhere
 func TestWithTagName(t *testing.T) {
 	text := `
 age = 345
-name = inhere
+name = inhere # inline comments
 desc = i'm a developer, use\n go,php,java
 [site]
 github = github.com/inhere
 `
 
-	p := parser.NewLite(parser.WithTagName("json"))
+	p := parser.NewLite(parser.WithTagName("json"), parser.InlineComment)
 	err := p.ParseString(text)
 	assert.NoErr(t, err)
 	assert.NotEmpty(t, p.LiteData())
+	// check comments
+	assert.NotEmpty(t, p.Comments())
+	assert.Eq(t, "# inline comments", p.Comments()["__default_name"])
 
 	// User struct
 	type User struct {

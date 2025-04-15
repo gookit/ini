@@ -21,7 +21,7 @@ func (c *Ini) parse(data string) (err error) {
 }
 
 // collect value form parser
-func (c *Ini) valueCollector(section, key, val string, isSlice bool) {
+func (c *Ini) valueCollector(section, key, val string, _ bool) {
 	if c.opts.IgnoreCase {
 		key = strings.ToLower(key)
 		section = strings.ToLower(section)
@@ -71,7 +71,7 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 		// first, find from current section
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val
-		} else if val, ok := c.getValue(name); ok {
+		} else if val, ok = c.getValue(name); ok {
 			realVal = val
 		}
 

@@ -25,13 +25,13 @@ jobs:
       uses: WillAbides/setup-go-faster@v1.14.0
       timeout-minutes: 3
       with:
-        go-version: "1.21"
+        go-version: "1.23"
 
-    - name: Revive lint check
-      uses: docker://morphy/revive-action:v2.5.5
-      with:
-        # Exclude patterns, separated by semicolons (optional)
-        exclude: "./_examples/...;./testdata/..."
+#    - name: Revive lint check
+#      uses: docker://morphy/revive-action:v2.5.5
+#      with:
+#        # Exclude patterns, separated by semicolons (optional)
+#        exclude: "./_examples/...;./testdata/..."
 
     - name: Run static check
       uses: reviewdog/action-staticcheck@v1

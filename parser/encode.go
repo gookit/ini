@@ -135,12 +135,12 @@ func EncodeLite(data map[string]map[string]string, defSection ...string) (out []
 	}
 
 	sort.Strings(sortedGroups)
-	max := len(sortedGroups) - 1
+	maxLn := len(sortedGroups) - 1
 	for idx, section := range sortedGroups {
 		buf.WriteString("[" + section + "]\n")
 		writeStringMap(buf, data[section])
 
-		if idx < max {
+		if idx < maxLn {
 			buf.WriteByte('\n')
 		}
 	}
