@@ -3,12 +3,13 @@ package ini
 import (
 	"strings"
 
+	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/ini/v2/parser"
 )
 
-// parse and load data
-func (c *Ini) parse(data string) (err error) {
-	if strings.TrimSpace(data) == "" {
+// parse and load ini string
+func (c *Ini) parse(str string) (err error) {
+	if strings.TrimSpace(str) == "" {
 		return
 	}
 
@@ -17,7 +18,7 @@ func (c *Ini) parse(data string) (err error) {
 	p.IgnoreCase = c.opts.IgnoreCase
 	p.DefSection = c.opts.DefSection
 
-	return p.ParseString(data)
+	return p.ParseString(str)
 }
 
 // collect value form parser
@@ -28,11 +29,10 @@ func (c *Ini) valueCollector(section, key, val string, _ bool) {
 	}
 
 	// if opts.ParseEnv is true. will parse like: "${SHELL}".
-	// CHANGE: parse ENV on get value
-	// - if parse on there, will loss vars on exported data.
-	// if c.opts.ParseEnv {
-	// 	val = c.parseEnvValue(val)
-	// }
+	if c.opts.ParseEnv && strings.ContainsRune(val, '$') {
+		c.rawBak[section+key] = val // backup old value, use for export
+		val = envutil.ParseValue(val)
+	}
 
 	if c.opts.ReplaceNl {
 		val = strings.ReplaceAll(val, `\n`, "\n")

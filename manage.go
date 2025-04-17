@@ -50,9 +50,9 @@ func (c *Ini) GetValue(key string) (val string, ok bool) {
 	}
 
 	// if opts.ParseEnv is true. will parse like: "${SHELL}"
-	if c.opts.ParseEnv {
-		val = envutil.ParseEnvValue(val)
-	}
+	// if c.opts.ParseEnv {
+	// 	val = envutil.ParseEnvValue(val)
+	// }
 	return
 }
 
@@ -95,7 +95,7 @@ func (c *Ini) String(key string, defVal ...string) string {
 	return c.Get(key, defVal...)
 }
 
-// Int get a int by key
+// Int get an int by key
 func Int(key string, defVal ...int) int { return dc.Int(key, defVal...) }
 
 // Int get a int value, if not found return default value
@@ -110,7 +110,7 @@ func (c *Ini) Int(key string, defVal ...int) (value int) {
 	return
 }
 
-// Uint get a uint value, if not found return default value
+// Uint get an uint value, if not found return default value
 func Uint(key string, defVal ...uint) uint { return dc.Uint(key, defVal...) }
 
 // Uint get a int value, if not found return default value
@@ -125,7 +125,7 @@ func (c *Ini) Uint(key string, defVal ...uint) (value uint) {
 	return
 }
 
-// Int64 get a int value, if not found return default value
+// Int64 get an int value, if not found return default value
 func Int64(key string, defVal ...int64) int64 { return dc.Int64(key, defVal...) }
 
 // Int64 get a int value, if not found return default value
@@ -213,7 +213,8 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 		return
 	}
 
-	if c.opts.ParseVar || c.opts.ParseEnv {
+	// if c.opts.ParseVar || c.opts.ParseEnv {
+	if c.opts.ParseVar {
 		for k, v := range mp {
 			// parser Var refer
 			if c.opts.ParseVar {
@@ -221,9 +222,9 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 			}
 
 			// parse ENV. like: "${SHELL}"
-			if c.opts.ParseEnv {
-				v = envutil.ParseEnvValue(v)
-			}
+			// if c.opts.ParseEnv {
+			// 	v = envutil.ParseEnvValue(v)
+			// }
 
 			mp[k] = v
 		}
@@ -233,6 +234,7 @@ func (c *Ini) StringMap(name string) (mp map[string]string) {
 }
 
 // MapStruct get config data and binding to the structure.
+// If the key is empty, will bind all data to the struct ptr.
 func MapStruct(key string, ptr any) error { return dc.MapStruct(key, ptr) }
 
 // Decode all data to struct pointer
