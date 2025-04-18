@@ -45,9 +45,20 @@ import (
 
 // match: [section]
 var sectionRegex = regexp.MustCompile(`^\[(.*)]$`)
+var commentChars = []byte{'#', ';'}
 
 // TokSection for mark a section
 const TokSection = textscan.TokComments + 1 + iota
+
+// IsCommentChar check is comment char
+func IsCommentChar(ch byte) bool {
+	for _, v := range commentChars {
+		if ch == v {
+			return true
+		}
+	}
+	return false
+}
 
 // SectionMatcher match section line: [section]
 type SectionMatcher struct{}
@@ -203,7 +214,7 @@ func (p *Parser) ParseFrom(in *bufio.Scanner) (count int64, err error) {
 	ts.AddKind(TokSection, "Section")
 	ts.AddMatchers(
 		&textscan.CommentsMatcher{
-			InlineChars: []byte{'#', ';'},
+			InlineChars: commentChars,
 		},
 		&SectionMatcher{},
 		&textscan.KeyValueMatcher{
@@ -359,9 +370,7 @@ func (p *Parser) collectLiteValue(sec, key, val string, _ bool) {
  *************************************************************/
 
 // Decode the parsed data to struct ptr
-func (p *Parser) Decode(ptr any) error {
-	return p.MapStruct(ptr)
-}
+func (p *Parser) Decode(ptr any) error { return p.MapStruct(ptr) }
 
 // MapStruct mapping the parsed data to struct ptr
 func (p *Parser) MapStruct(ptr any) (err error) {
@@ -381,10 +390,8 @@ func (p *Parser) MapStruct(ptr any) (err error) {
  * helper methods
  *************************************************************/
 
-// Comments get
-func (p *Parser) Comments() map[string]string {
-	return p.comments
-}
+// Comments get all comments
+func (p *Parser) Comments() map[string]string { return p.comments }
 
 // ParsedData get parsed data
 func (p *Parser) ParsedData() any {
@@ -417,6 +424,7 @@ func (p *Parser) LiteSection(name string) map[string]string {
 // Reset parser, clear parsed data
 func (p *Parser) Reset() {
 	// p.parsed = false
+	p.comments = make(map[string]string)
 	if p.ParseMode == ModeFull {
 		p.fullData = make(map[string]any)
 	} else {

@@ -69,6 +69,10 @@ func TestParse(t *testing.T) {
 	is.Err(err)
 	is.True(len(p.LiteData()) == 0)
 	is.True(len(p.SimpleData()) == 0)
+
+	is.True(IsCommentChar(';'))
+	is.True(IsCommentChar('#'))
+	is.False(IsCommentChar('a'))
 }
 
 func TestDecode(t *testing.T) {

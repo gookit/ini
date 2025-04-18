@@ -43,7 +43,7 @@ type Options struct {
 	ReplaceNl bool
 	// default section name. default is "__default"
 	DefSection string
-	// NoDefSection setting. only for full parse mode
+	// NoDefSection setting. NOTE: only for full parse mode
 	NoDefSection bool
 	// InlineComment support parse inline comments. default is false
 	InlineComment bool
@@ -67,21 +67,17 @@ func NewOptions(fns ...OptFunc) *Options {
 	return opt
 }
 
+// InlineComment for parse
+func InlineComment(opt *Options) { opt.InlineComment = true }
+
+// WithReplaceNl for parse
+func WithReplaceNl(opt *Options) { opt.ReplaceNl = true }
+
 // WithParseMode name for parse
 func WithParseMode(mode parseMode) OptFunc {
 	return func(opt *Options) {
 		opt.ParseMode = mode
 	}
-}
-
-// InlineComment for parse
-func InlineComment(opt *Options) {
-	opt.InlineComment = true
-}
-
-// WithReplaceNl for parse
-func WithReplaceNl(opt *Options) {
-	opt.ReplaceNl = true
 }
 
 // WithDefSection name for parse
