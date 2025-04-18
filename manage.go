@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/goutil/maputil"
 	"github.com/gookit/goutil/strutil"
 	"github.com/gookit/ini/v2/internal"
@@ -385,7 +384,13 @@ func (c *Ini) WriteTo(out io.Writer) (n int64, err error) {
 		mp[group] = secMp
 	}
 
-	bs, err := parser.EncodeLite(mp, c.opts.DefSection)
+	bs, err := parser.EncodeWith(mp, &parser.EncodeOptions{
+		Comments:   c.comments,
+		DefSection: c.opts.DefSection,
+		// raw value map
+		RawValueMap:   c.rawBak,
+		AddExportDate: true,
+	})
 	if err != nil {
 		return 0, err
 	}

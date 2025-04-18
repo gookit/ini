@@ -18,7 +18,10 @@ func (c *Ini) parse(str string) (err error) {
 	p.IgnoreCase = c.opts.IgnoreCase
 	p.DefSection = c.opts.DefSection
 
-	return p.ParseString(str)
+	err = p.ParseString(str)
+	c.comments = p.Comments()
+	p.Reset()
+	return err
 }
 
 // collect value form parser
@@ -28,10 +31,13 @@ func (c *Ini) valueCollector(section, key, val string, _ bool) {
 		section = strings.ToLower(section)
 	}
 
-	// if opts.ParseEnv is true. will parse like: "${SHELL}".
-	if c.opts.ParseEnv && strings.ContainsRune(val, '$') {
-		c.rawBak[section+key] = val // backup old value, use for export
-		val = envutil.ParseValue(val)
+	// backup value on contains var, use for export
+	if strings.ContainsRune(val, '$') {
+		c.rawBak[section+"_"+key] = val
+		// if ParseEnv is true. will parse like: "${SHELL}".
+		if c.opts.ParseEnv {
+			val = envutil.ParseValue(val)
+		}
 	}
 
 	if c.opts.ReplaceNl {

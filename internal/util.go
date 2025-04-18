@@ -39,7 +39,7 @@ func LiteToStruct(tagName, defSec string, data map[string]map[string]string, ptr
 			dataNew[secKey] = secVals
 		}
 	}
-	return MapStruct(tagName, data, ptr)
+	return MapStruct(tagName, dataNew, ptr)
 }
 
 // MapStruct mapping data to a struct ptr.

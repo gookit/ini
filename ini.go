@@ -11,7 +11,7 @@ package ini
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -41,8 +41,15 @@ type Ini struct {
 	opts *Options
 	lock sync.RWMutex
 	data map[string]Section
-	// regex for match user var
+	// regex for match user var. eg: %(VAR_NAME)s
 	varRegex *regexp.Regexp
+	// backup raw value line map, use for encode export.
+	//  - format: `section +"_"+ key` => rawValue
+	//
+	// will backup the value on contains var, ENV.
+	rawBak map[string]string
+	// comments map, key is `section +"_"+ key`.
+	comments map[string]string
 }
 
 /*************************************************************
@@ -54,6 +61,8 @@ func New() *Ini {
 	return &Ini{
 		data: make(map[string]Section),
 		opts: newDefaultOptions(),
+		// val backup init
+		rawBak: make(map[string]string, 6),
 	}
 }
 
@@ -71,6 +80,10 @@ func NewWithOptions(opts ...func(*Options)) *Ini {
 
 // Default config instance
 func Default() *Ini { return dc }
+
+// Reset all data for the default.
+// If you want reset instance, use `ini.ResetStd()`
+func Reset() { dc.Reset() }
 
 // ResetStd instance
 func ResetStd() { dc = New() }
@@ -234,7 +247,7 @@ func (c *Ini) loadFile(file string, loadExist bool) (err error) {
 	defer fd.Close()
 
 	// read file content
-	bts, err := ioutil.ReadAll(fd)
+	bts, err := io.ReadAll(fd)
 	if err == nil {
 		err = c.parse(string(bts))
 		if err != nil {
@@ -285,12 +298,10 @@ func (c *Ini) Delete(key string) (ok bool) {
 	return
 }
 
-// Reset all data for the default
-func Reset() { dc.Reset() }
-
-// Reset all data
+// Reset all loaded data
 func (c *Ini) Reset() {
 	c.data = make(map[string]Section)
+	c.rawBak = make(map[string]string, 6)
 }
 
 // IsEmpty config data is empty
