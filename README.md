@@ -16,6 +16,8 @@
 - Easy to use(get: `Int` `Int64` `Bool` `String` `StringMap` ..., set: `Set`)
 - Support multi file, data load
 - Support for decode data to struct
+- Support for encode data to INI content
+  - Comments, environment variables, etc. are reverted
 - Support data override merge
 - Support parse ENV variable
 - Support comments start with  `;` `#`, multi line comments `/* .. */`
@@ -30,6 +32,8 @@ Package `parser` is a Parser for parse INI format content to golang data
 ### [Dotenv](./dotenv)
 
 Package `dotenv` that supports importing ENV data from files (eg `.env`)
+
+- filename support simple glob pattern. eg: `.env.*`, `*.env`
 
 ## More formats
 

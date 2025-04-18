@@ -297,4 +297,7 @@ tag = golang
 	ue := &UserErr{}
 	err = conf.Decode(ue)
 	is.Err(err)
+
+	// invalid param
+	is.Err(conf.MapTo(nil))
 }

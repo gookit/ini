@@ -51,34 +51,24 @@ func newDefaultOptions() *Options {
 // Usage:
 //
 //	ini.NewWithOptions(ini.Readonly)
-func Readonly(opts *Options) {
-	opts.Readonly = true
-}
+func Readonly(opts *Options) { opts.Readonly = true }
 
 // ParseVar on get value
 //
 // Usage:
 //
 //	ini.NewWithOptions(ini.ParseVar)
-func ParseVar(opts *Options) {
-	opts.ParseVar = true
-}
+func ParseVar(opts *Options) { opts.ParseVar = true }
 
 // ParseEnv will parse ENV key on get value
 //
 // Usage:
 //
 //	ini.NewWithOptions(ini.ParseEnv)
-func ParseEnv(opts *Options) {
-	opts.ParseEnv = true
-}
+func ParseEnv(opts *Options) { opts.ParseEnv = true }
 
 // IgnoreCase for get/set value by key
-func IgnoreCase(opts *Options) {
-	opts.IgnoreCase = true
-}
+func IgnoreCase(opts *Options) { opts.IgnoreCase = true }
 
 // ReplaceNl for parse
-func ReplaceNl(opts *Options) {
-	opts.ReplaceNl = true
-}
+func ReplaceNl(opts *Options) { opts.ReplaceNl = true }

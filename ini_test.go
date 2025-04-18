@@ -76,19 +76,21 @@ some = change val
 	// - val: new name
 }
 
-var iniStr = `# comments
+var iniStr = `# comments in first line
 name = inhere
 age = 28
 debug = true
+ # comments for themes
 themes = a,b,c
 hasQuota1 = 'this is val'
-hasQuota2 = "this is val1"
+hasQuota2 = "this is val1" # comments for hq2
 shell = ${SHELL}
 noEnv = ${NotExist|defValue}
 
-; comments
+; comments for sec1
 [sec1]
 age = 23
+; comments for key
 key = val0
 some = value
 stuff = things
