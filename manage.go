@@ -10,8 +10,8 @@ import (
 	"github.com/gookit/goutil/envutil"
 	"github.com/gookit/goutil/maputil"
 	"github.com/gookit/goutil/strutil"
+	"github.com/gookit/ini/v2/internal"
 	"github.com/gookit/ini/v2/parser"
-	"github.com/mitchellh/mapstructure"
 )
 
 /*************************************************************
@@ -253,49 +253,21 @@ func (c *Ini) MapTo(ptr any) error { return c.MapStruct("", ptr) }
 //	user := &Db{}
 //	ini.MapStruct("user", &user)
 func (c *Ini) MapStruct(key string, ptr any) error {
-	// binding all data
-	if key == "" {
-		defSec := c.opts.DefSection
-		if defMap, ok := c.data[defSec]; ok {
-			data := make(map[string]any, len(defMap)+len(c.data)-1)
-			for key, val := range defMap {
-				data[key] = val
-			}
-
-			for secKey, secVals := range c.data {
-				if secKey != defSec {
-					data[secKey] = secVals
-				}
-			}
-			return mapStruct(c.opts.TagName, data, ptr)
-		}
-
-		// no default section
-		return mapStruct(c.opts.TagName, c.data, ptr)
-	}
-
 	// parts data of the config
-	data := c.StringMap(key)
-	if len(data) == 0 {
-		return errNotFound
-	}
-	return mapStruct(c.opts.TagName, data, ptr)
-}
-
-func mapStruct(tagName string, data any, ptr any) error {
-	mapConf := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   ptr,
-		TagName:  tagName,
-		// will auto convert string to int/uint
-		WeaklyTypedInput: true,
+	if key != "" {
+		data := c.StringMap(key)
+		if len(data) == 0 {
+			return errNotFound
+		}
+		return internal.MapStruct(c.opts.TagName, data, ptr)
 	}
 
-	decoder, err := mapstructure.NewDecoder(mapConf)
-	if err != nil {
-		return err
+	// ----- binding all data -----
+	data := make(map[string]map[string]string, len(c.data))
+	for name, value := range c.data {
+		data[name] = value
 	}
-	return decoder.Decode(data)
+	return internal.LiteToStruct(c.opts.TagName, c.opts.DefSection, data, ptr)
 }
 
 /*************************************************************

@@ -40,7 +40,7 @@ import (
 	"strings"
 
 	"github.com/gookit/goutil/strutil/textscan"
-	"github.com/mitchellh/mapstructure"
+	"github.com/gookit/ini/v2/internal"
 )
 
 // match: [section]
@@ -365,63 +365,16 @@ func (p *Parser) Decode(ptr any) error {
 
 // MapStruct mapping the parsed data to struct ptr
 func (p *Parser) MapStruct(ptr any) (err error) {
+	// mapping for full mode data
 	if p.ParseMode == ModeFull {
 		if p.NoDefSection {
-			return mapStruct(p.TagName, p.fullData, ptr)
+			return internal.MapStruct(p.TagName, p.fullData, ptr)
 		}
-
-		// collect all default section data to top
-		anyMap := make(map[string]any, len(p.fullData)+4)
-		if defData, ok := p.fullData[p.DefSection]; ok {
-			for key, val := range defData.(map[string]any) {
-				anyMap[key] = val
-			}
-		}
-
-		for group, mp := range p.fullData {
-			if group == p.DefSection {
-				continue
-			}
-			anyMap[group] = mp
-		}
-		return mapStruct(p.TagName, anyMap, ptr)
+		return internal.FullToStruct(p.TagName, p.DefSection, p.fullData, ptr)
 	}
 
-	defData := p.liteData[p.DefSection]
-	defLen := len(defData)
-	anyMap := make(map[string]any, len(p.liteData)+defLen)
-
-	// collect all default section data to top
-	if defLen > 0 {
-		for key, val := range defData {
-			anyMap[key] = val
-		}
-	}
-
-	for group, smp := range p.liteData {
-		if group == p.DefSection {
-			continue
-		}
-		anyMap[group] = smp
-	}
-
-	return mapStruct(p.TagName, anyMap, ptr)
-}
-
-func mapStruct(tagName string, data any, ptr any) error {
-	mapConf := &mapstructure.DecoderConfig{
-		Metadata: nil,
-		Result:   ptr,
-		TagName:  tagName,
-		// will auto convert string to int/uint
-		WeaklyTypedInput: true,
-	}
-
-	decoder, err := mapstructure.NewDecoder(mapConf)
-	if err != nil {
-		return err
-	}
-	return decoder.Decode(data)
+	// mapping for lite mode data
+	return internal.LiteToStruct(p.TagName, p.DefSection, p.liteData, ptr)
 }
 
 /*************************************************************
