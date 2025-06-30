@@ -1,6 +1,6 @@
 package internal
 
-import "github.com/mitchellh/mapstructure"
+import "github.com/go-viper/mapstructure/v2"
 
 // FullToStruct mapping full mode data to a struct ptr.
 func FullToStruct(tagName, defSec string, data map[string]any, ptr any) error {
