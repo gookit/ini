@@ -175,8 +175,8 @@ func LoadFromMap(kv map[string]string) (err error) {
 
 // Get os ENV value by name
 func Get(name string, defVal ...string) (val string) {
-	if val, ok := getVal(name); ok {
-		return val
+	if val1, ok := getVal(name); ok {
+		return val1
 	}
 
 	if len(defVal) > 0 {
@@ -188,9 +188,9 @@ func Get(name string, defVal ...string) (val string) {
 // Bool get a bool value by key
 func Bool(name string, defVal ...bool) (val bool) {
 	if str, ok := getVal(name); ok {
-		val, err := strconv.ParseBool(str)
+		val1, err := strconv.ParseBool(str)
 		if err == nil {
-			return val
+			return val1
 		}
 	}
 
