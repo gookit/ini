@@ -3,7 +3,7 @@ module github.com/gookit/ini/v2
 go 1.19
 
 require (
-	github.com/go-viper/mapstructure/v2 v2.4.0
+	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/gookit/goutil v0.7.3
 )
 
