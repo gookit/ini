@@ -5,10 +5,50 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/gookit/goutil/structs"
 	"github.com/gookit/goutil/timex"
 )
+
+// needQuote reports whether emitting value verbatim would not survive a parse
+// round-trip. The parser trims surrounding whitespace, strips one matching quote
+// pair, and reads a trailing backslash or a triple-quote prefix as a multi-line
+// marker.
+func needQuote(v string) bool {
+	if v == "" {
+		return false
+	}
+	if strings.TrimSpace(v) != v {
+		return true
+	}
+	if v[len(v)-1] == '\\' {
+		return true
+	}
+	if len(v) > 2 {
+		if strings.HasPrefix(v, `"""`) || strings.HasPrefix(v, "'''") {
+			return true
+		}
+		if c := v[0]; (c == '"' || c == '\'') && v[len(v)-1] == c {
+			return true
+		}
+	}
+	return false
+}
+
+// quoteValue wraps a value that would otherwise be corrupted on reload. It picks
+// a quote style whose opening pair the parser won't read as a multi-line marker;
+// the parser strips exactly this pair, so the round-trip is exact. Values that
+// already survive verbatim are returned unchanged.
+func quoteValue(v string) string {
+	if !needQuote(v) {
+		return v
+	}
+	if strings.HasPrefix(v, `""`) {
+		return "'" + v + "'"
+	}
+	return `"` + v + `"`
+}
 
 type EncodeOptions struct {
 	// DefSection name
@@ -107,7 +147,7 @@ func encodeFull(data map[string]any, opts *EncodeOptions) (out []byte, err error
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				buf.WriteString(fmt.Sprintf("%s[] = %v\n", section, v))
+				buf.WriteString(section + "[] = " + quoteValue(v) + "\n")
 			}
 		// case map[string]string: // is section
 		case map[string]any: // is section
@@ -122,7 +162,7 @@ func encodeFull(data map[string]any, opts *EncodeOptions) (out []byte, err error
 				secBuf.WriteByte('\n')
 			}
 		default: // k-v of the default section
-			buf.WriteString(fmt.Sprintf("%s = %v\n", section, tpData))
+			buf.WriteString(section + " = " + quoteValue(fmt.Sprint(tpData)) + "\n")
 		}
 	}
 
@@ -139,14 +179,10 @@ func writeAnyMap(buf *bytes.Buffer, data map[string]any) {
 		case []int:
 		case []string: // array of the default section
 			for _, v := range tpData {
-				buf.WriteString(key + "[] = ")
-				buf.WriteString(fmt.Sprint(v))
-				buf.WriteByte('\n')
+				buf.WriteString(key + "[] = " + quoteValue(v) + "\n")
 			}
 		default: // k-v of the section
-			buf.WriteString(key + " = ")
-			buf.WriteString(fmt.Sprint(tpData))
-			buf.WriteByte('\n')
+			buf.WriteString(key + " = " + quoteValue(fmt.Sprint(tpData)) + "\n")
 		}
 	}
 }
@@ -216,6 +252,6 @@ func writeStrMap(buf *bytes.Buffer, strMap map[string]string, section string, op
 		if val1, ok := opts.RawValueMap[keyPath]; ok {
 			value = val1
 		}
-		buf.WriteString(key + " = " + value + "\n")
+		buf.WriteString(key + " = " + quoteValue(value) + "\n")
 	}
 }
