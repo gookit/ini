@@ -35,6 +35,11 @@ var (
 // Section in INI config
 type Section map[string]string
 
+type rawValueKey struct {
+	section string
+	key     string
+}
+
 // Ini config data manager
 type Ini struct {
 	err  error
@@ -44,10 +49,8 @@ type Ini struct {
 	// regex for match user var. eg: %(VAR_NAME)s
 	varRegex *regexp.Regexp
 	// backup raw value line map, use for encode export.
-	//  - format: `section +"_"+ key` => rawValue
-	//
 	// will backup the value on contains var, ENV.
-	rawBak map[string]string
+	rawBak map[rawValueKey]string
 	// comments map, key is `section +"_"+ key`.
 	comments map[string]string
 }
@@ -62,7 +65,7 @@ func New() *Ini {
 		data: make(map[string]Section),
 		opts: newDefaultOptions(),
 		// val backup init
-		rawBak: make(map[string]string, 6),
+		rawBak: make(map[rawValueKey]string, 6),
 	}
 }
 
@@ -293,6 +296,7 @@ func (c *Ini) Delete(key string) (ok bool) {
 	// key in a section
 	if _, ok = mp[key]; ok {
 		delete(mp, key)
+		delete(c.rawBak, rawValueKey{sec, key})
 		c.data[sec] = mp
 	}
 	return
@@ -301,7 +305,7 @@ func (c *Ini) Delete(key string) (ok bool) {
 // Reset all loaded data
 func (c *Ini) Reset() {
 	c.data = make(map[string]Section)
-	c.rawBak = make(map[string]string, 6)
+	c.rawBak = make(map[rawValueKey]string, 6)
 }
 
 // IsEmpty config data is empty
