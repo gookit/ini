@@ -315,6 +315,7 @@ func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	}
 
 	c.data[group] = sec
+	delete(c.rawBak, rawValueKey{group, key})
 	return
 }
 
@@ -325,6 +326,12 @@ func (c *Ini) SetSection(name string, values map[string]string) (err error) {
 	}
 
 	name = c.formatKey(name)
+	for key := range values {
+		if c.opts.IgnoreCase {
+			key = strings.ToLower(key)
+		}
+		delete(c.rawBak, rawValueKey{name, key})
+	}
 	if old, ok := c.data[name]; ok {
 		c.data[name] = maputil.MergeStringMap(values, old, c.opts.IgnoreCase)
 		return
@@ -345,10 +352,15 @@ func (c *Ini) NewSection(name string, values map[string]string) (err error) {
 
 	if c.opts.IgnoreCase {
 		name = strings.ToLower(name)
-		c.data[name] = mapKeyToLower(values)
-	} else {
-		c.data[name] = values
+		values = mapKeyToLower(values)
 	}
+	for key := range c.data[name] {
+		delete(c.rawBak, rawValueKey{name, key})
+	}
+	for key := range values {
+		delete(c.rawBak, rawValueKey{name, key})
+	}
+	c.data[name] = values
 	return
 }
 
@@ -381,14 +393,19 @@ func (c *Ini) WriteToFile(file string) (int64, error) {
 func (c *Ini) WriteTo(out io.Writer) (n int64, err error) {
 	mp := make(map[string]map[string]string, len(c.data))
 	for group, secMp := range c.data {
-		mp[group] = secMp
+		values := make(map[string]string, len(secMp))
+		for key, value := range secMp {
+			if raw, ok := c.rawBak[rawValueKey{group, key}]; ok {
+				value = raw
+			}
+			values[key] = value
+		}
+		mp[group] = values
 	}
 
 	bs, err := parser.EncodeWith(mp, &parser.EncodeOptions{
-		Comments:   c.comments,
-		DefSection: c.opts.DefSection,
-		// raw value map
-		RawValueMap:   c.rawBak,
+		Comments:      c.comments,
+		DefSection:    c.opts.DefSection,
 		AddExportDate: true,
 	})
 	if err != nil {
@@ -419,6 +436,9 @@ func (c *Ini) DelSection(name string) (ok bool) {
 
 	name = c.formatKey(name)
 	if _, ok = c.data[name]; ok {
+		for key := range c.data[name] {
+			delete(c.rawBak, rawValueKey{name, key})
+		}
 		delete(c.data, name)
 	}
 	return

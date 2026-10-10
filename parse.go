@@ -33,11 +33,13 @@ func (c *Ini) valueCollector(section, key, val string, _ bool) {
 
 	// backup value on contains var, use for export
 	if strings.ContainsRune(val, '$') {
-		c.rawBak[section+"_"+key] = val
+		c.rawBak[rawValueKey{section, key}] = val
 		// if ParseEnv is true. will parse like: "${SHELL}".
 		if c.opts.ParseEnv {
 			val = envutil.ParseValue(val)
 		}
+	} else {
+		delete(c.rawBak, rawValueKey{section, key})
 	}
 
 	if c.opts.ReplaceNl {
