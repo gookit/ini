@@ -56,7 +56,15 @@ func (c *Ini) valueCollector(section, key, val string, _ bool) {
 }
 
 // parse var reference
+// maxVarRefDepth limits how deep nested variable references are resolved,
+// which also stops circular references from recursing forever.
+const maxVarRefDepth = 10
+
 func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
+	return c.parseVarRefDepth(key, valStr, sec, 0)
+}
+
+func (c *Ini) parseVarRefDepth(key, valStr string, sec Section, depth int) string {
 	if c.opts.VarOpen != "" && strings.Index(valStr, c.opts.VarOpen) == -1 {
 		return valStr
 	}
@@ -79,8 +87,15 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 		// first, find from current section
 		if val, ok := sec[name]; ok && key != name {
 			realVal = val
+			if depth < maxVarRefDepth {
+				realVal = c.parseVarRefDepth(name, val, sec, depth+1)
+			}
 		} else if val, ok = c.getValue(name); ok {
 			realVal = val
+			if depth < maxVarRefDepth {
+				secName, refKey := c.splitSectionAndKey(c.formatKey(name))
+				realVal = c.parseVarRefDepth(refKey, val, c.data[secName], depth+1)
+			}
 		}
 
 		oldNew = append(oldNew, fVar, realVal)
