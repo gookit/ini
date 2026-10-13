@@ -460,3 +460,25 @@ func TestIni_WriteTo(t *testing.T) {
 	str = conf.PrettyJSON()
 	is.Eq("", str)
 }
+
+func TestParseVar_nestedReference(t *testing.T) {
+	is := assert.New(t)
+	conf := ini.NewWithOptions(ini.ParseVar)
+	err := conf.LoadStrings(`
+name = inhere
+base = %(name)s-x
+full = %(base)s!
+loopA = %(loopB)s
+loopB = %(loopA)s
+[sec]
+dir = /data/%(full)s
+log = %(dir)s/app.log
+`)
+	is.Nil(err)
+
+	is.Eq("inhere-x!", conf.Get("full"))
+	is.Eq("/data/inhere-x!/app.log", conf.Get("sec.log"))
+	is.Eq("/data/inhere-x!/app.log", conf.StringMap("sec")["log"])
+	// circular references must not hang
+	is.Contains(conf.Get("loopA"), "%(")
+}
