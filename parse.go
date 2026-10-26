@@ -55,22 +55,24 @@ func (c *Ini) valueCollector(section, key, val string, _ bool) {
 	}
 }
 
-// parse var reference
-// maxVarRefDepth limits how deep nested variable references are resolved,
-// which also stops circular references from recursing forever.
+// maxVarRefDepth limits how deep the nested variable references are resolved, it also
+// stops a circular reference(eg: "a = %(b)s" / "b = %(a)s") from recursing forever.
+// The 10 levels limit is the same as the Python configparser.
 const maxVarRefDepth = 10
 
+// parseVarReference parse the var reference in the value. eg: "%(name)s", "%(section.key)s"
 func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 	return c.parseVarRefDepth(key, valStr, sec, 0)
 }
 
+// parseVarRefDepth parse the var reference in the value, with the current recursion depth.
 func (c *Ini) parseVarRefDepth(key, valStr string, sec Section, depth int) string {
 	if c.opts.VarOpen != "" && strings.Index(valStr, c.opts.VarOpen) == -1 {
 		return valStr
 	}
 
 	// http://%(host)s:%(port)s/Portal
-	// %(section:key)s key in the section
+	// %(section.key)s key in the section
 	vars := c.varRegex.FindAllString(valStr, -1)
 	if len(vars) == 0 {
 		return valStr

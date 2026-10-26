@@ -3,6 +3,8 @@ package ini_test
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/gookit/goutil/testutil/assert"
@@ -449,7 +451,8 @@ func TestIni_WriteTo(t *testing.T) {
 	_, err = conf.WriteToFile("not/exist/export.ini")
 	is.Err(err)
 
-	n, err := conf.WriteToFile("testdata/export.ini")
+	// tip: write to a temp file, or the testdata file is changed on every test run
+	n, err := conf.WriteToFile(filepath.Join(t.TempDir(), "export.ini"))
 	is.True(n > 0)
 	is.Nil(err)
 
@@ -459,6 +462,35 @@ func TestIni_WriteTo(t *testing.T) {
 	conf = ini.New()
 	str = conf.PrettyJSON()
 	is.Eq("", str)
+}
+
+func TestParseVar_depthLimit(t *testing.T) {
+	is := assert.New(t)
+
+	// a long reference chain must stop, and keep the unresolved placeholder
+	var sb strings.Builder
+	for i := 0; i < 30; i++ {
+		if i == 29 {
+			fmt.Fprintf(&sb, "k%d = end\n", i)
+		} else {
+			fmt.Fprintf(&sb, "k%d = %%(k%d)s%d\n", i, i+1, i)
+		}
+	}
+
+	conf := ini.NewWithOptions(ini.ParseVar)
+	is.Nil(conf.LoadStrings(sb.String()))
+
+	val := conf.Get("k0")
+	// the recursion was stopped at the depth limit, the last reference is kept as is.
+	// NOTE: the refs before the limit are still resolved, so the value is not empty.
+	is.Contains(val, "%(")
+	is.NotEmpty(val)
+
+	// a short chain is resolved fully
+	conf2 := ini.NewWithOptions(ini.ParseVar)
+	is.Nil(conf2.LoadStrings("a = A\nb = %(a)s-B\nc = %(b)s-C\n"))
+	is.Eq("A-B-C", conf2.Get("c"))
+	is.NotContains(conf2.Get("c"), "%(")
 }
 
 func TestParseVar_nestedReference(t *testing.T) {
