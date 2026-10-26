@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gookit/goutil/testutil/assert"
+	"github.com/gookit/goutil/x/assert"
 	"github.com/gookit/ini/v2/internal"
 )
 
@@ -150,6 +150,7 @@ func TestEncodeWith(t *testing.T) {
 			"sec_key": "${ENV_VAR1}",
 		},
 	})
+	is.Nil(err)
 	str := string(out)
 	fmt.Println(str)
 	is.StrContains(str, "key = ${ENV_VAR1}")
