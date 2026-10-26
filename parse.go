@@ -67,7 +67,7 @@ func (c *Ini) parseVarReference(key, valStr string, sec Section) string {
 
 // parseVarRefDepth parse the var reference in the value, with the current recursion depth.
 func (c *Ini) parseVarRefDepth(key, valStr string, sec Section, depth int) string {
-	if c.opts.VarOpen != "" && strings.Index(valStr, c.opts.VarOpen) == -1 {
+	if c.opts.VarOpen != "" && !strings.Contains(valStr, c.opts.VarOpen) {
 		return valStr
 	}
 
