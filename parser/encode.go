@@ -145,6 +145,9 @@ func encodeFull(data map[string]any, opts *EncodeOptions) (out []byte, err error
 		item := data[section]
 		switch tpData := item.(type) {
 		case []int:
+			for _, v := range tpData {
+				fmt.Fprintf(buf, "%s[] = %d\n", section, v)
+			}
 		case []string: // array of the default section
 			for _, v := range tpData {
 				buf.WriteString(section + "[] = " + quoteValue(v) + "\n")
@@ -177,6 +180,9 @@ func writeAnyMap(buf *bytes.Buffer, data map[string]any) {
 	for key, item := range data {
 		switch tpData := item.(type) {
 		case []int:
+			for _, v := range tpData {
+				fmt.Fprintf(buf, "%s[] = %d\n", key, v)
+			}
 		case []string: // array of the default section
 			for _, v := range tpData {
 				buf.WriteString(key + "[] = " + quoteValue(v) + "\n")
