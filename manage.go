@@ -114,14 +114,19 @@ func Uint(key string, defVal ...uint) uint { return dc.Uint(key, defVal...) }
 
 // Uint get a int value, if not found return default value
 func (c *Ini) Uint(key string, defVal ...uint) (value uint) {
-	i64, exist := c.tryInt64(key)
-
-	if exist {
-		value = uint(i64)
-	} else if len(defVal) > 0 {
-		value = defVal[0]
+	rawVal, exist := c.GetValue(key)
+	if !exist {
+		if len(defVal) > 0 {
+			return defVal[0]
+		}
+		return
 	}
-	return
+	parsed, err := strconv.ParseUint(strings.TrimPrefix(rawVal, "+"), 10, strconv.IntSize)
+	if err != nil {
+		c.err = err
+		return
+	}
+	return uint(parsed)
 }
 
 // Int64 get an int value, if not found return default value
