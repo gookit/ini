@@ -17,6 +17,12 @@ func TestUintFullRange(t *testing.T) {
 	}{
 		{"zero", "0", 0, false},
 		{"ordinary value", "28", 28, false},
+		{"plus zero", "+0", 0, false},
+		{"plus ordinary value", "+28", 28, false},
+		{"plus maximum uint", "+" + strconv.FormatUint(uint64(max), 10), max, false},
+		{"plus only", "+", 0, true},
+		{"double plus", "++28", 0, true},
+		{"mixed signs", "+-1", 0, true},
 		{"maximum uint", strconv.FormatUint(uint64(max), 10), max, false},
 		{"negative value", "-1", 0, true},
 		{"overflow", strconv.FormatUint(uint64(max), 10) + "0", 0, true},

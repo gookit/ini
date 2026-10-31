@@ -121,7 +121,7 @@ func (c *Ini) Uint(key string, defVal ...uint) (value uint) {
 		}
 		return
 	}
-	parsed, err := strconv.ParseUint(rawVal, 10, strconv.IntSize)
+	parsed, err := strconv.ParseUint(strings.TrimPrefix(rawVal, "+"), 10, strconv.IntSize)
 	if err != nil {
 		c.err = err
 		return
