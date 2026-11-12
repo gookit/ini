@@ -41,6 +41,13 @@ func needQuote(v string) bool {
 // the parser strips exactly this pair, so the round-trip is exact. Values that
 // already survive verbatim are returned unchanged.
 func quoteValue(v string) string {
+	// a value with line breaks can only be read back as a multi-line block.
+	if strings.Contains(v, "\n") {
+		if strings.Contains(v, `"""`) {
+			return "'''" + v + "'''"
+		}
+		return `"""` + v + `"""`
+	}
 	if !needQuote(v) {
 		return v
 	}
