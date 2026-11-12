@@ -287,7 +287,8 @@ func Set(key string, val any, section ...string) error {
 
 // Set a value to the section by key.
 //
-// if section is empty, will set to default section
+// if section is empty, the key can be a path like "section.key", the same
+// form Get and Delete accept. Otherwise, will set to default section.
 func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	if c.opts.Readonly {
 		return errReadonly
@@ -306,6 +307,8 @@ func (c *Ini) Set(key string, val any, section ...string) (err error) {
 	group := c.opts.DefSection
 	if len(section) > 0 && section[0] != "" {
 		group = section[0]
+	} else {
+		group, key = c.splitSectionAndKey(key)
 	}
 
 	// allow section name is empty string ""
