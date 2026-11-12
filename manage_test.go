@@ -206,6 +206,14 @@ func TestIni_Set(t *testing.T) {
 	str := conf.String("name")
 	is.Eq("new name", str)
 
+	// a "section.key" path, as accepted by Get and Delete
+	err = conf.Set("newSec.path", "v1")
+	is.Nil(err)
+	is.Eq("v1", conf.String("newSec.path"))
+	is.Eq("v1", conf.StringMap("newSec")["path"])
+	is.True(conf.Delete("newSec.path"))
+	is.False(conf.HasKey("newSec.path"))
+
 	err = conf.Set("can2arr", "va0,val1,val2")
 	is.Nil(err)
 
