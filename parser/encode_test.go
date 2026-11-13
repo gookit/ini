@@ -181,6 +181,7 @@ func TestMapStruct_err(t *testing.T) {
 var roundTripValues = []string{
 	`"quoted"`, "'quoted'", "  leading", "trailing  ", "  s3cr3t ",
 	"   ", `C:\path\`, `end\`, `"""`, "'''", `""x""`, `"'mixed'"`,
+	"line1\nline2", "a\n  indented\nc", "x\n", "\nx", "a\n\nb", "has \"\"\" in\nit",
 }
 
 // values that already survive a round-trip verbatim; the encoder must leave the
@@ -200,6 +201,8 @@ func TestQuoteValue(t *testing.T) {
 	is.Eq(`"  leading"`, quoteValue("  leading"))
 	is.Eq(`"C:\path\"`, quoteValue(`C:\path\`))
 	is.Eq(`'"""'`, quoteValue(`"""`)) // single-quote fallback: `"`-wrap would start a `"""` block
+	is.Eq("\"\"\"line1\nline2\"\"\"", quoteValue("line1\nline2"))
+	is.Eq("'''a\"\"\"\nb'''", quoteValue("a\"\"\"\nb"))
 }
 
 func TestEncodeLiteRoundTrip(t *testing.T) {
@@ -221,7 +224,7 @@ func TestEncodeFullRoundTrip(t *testing.T) {
 		"__default": map[string]any{
 			"dq":  `"quoted"`,
 			"bs":  `C:\path\`,
-			"arr": []string{`"a"`, "  b", `c\`},
+			"arr": []string{`"a"`, "  b", `c\`, "d\ne"},
 		},
 		"sec":    map[string]any{"pw": "  s3cr3t "},
 		"defkv":  "  spaced  ",
@@ -236,7 +239,7 @@ func TestEncodeFullRoundTrip(t *testing.T) {
 	fd := p.FullData()
 	is.Eq(`"quoted"`, fd["dq"])
 	is.Eq(`C:\path\`, fd["bs"])
-	is.Eq([]string{`"a"`, "  b", `c\`}, fd["arr"])
+	is.Eq([]string{`"a"`, "  b", `c\`, "d\ne"}, fd["arr"])
 	is.Eq("  spaced  ", fd["defkv"])
 	is.Eq([]string{`"z"`, "trail "}, fd["defarr"])
 	is.Eq("  s3cr3t ", fd["sec"].(map[string]any)["pw"])

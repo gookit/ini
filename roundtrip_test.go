@@ -44,6 +44,25 @@ func TestWriteToLoadStringsRoundTrip(t *testing.T) {
 	}
 }
 
+// A value with a line break was written verbatim, so its second line made the
+// whole file fail to load.
+func TestWriteToLoadStringsMultiLine(t *testing.T) {
+	is := assert.New(t)
+
+	c := ini.New()
+	is.NoErr(c.Set("sec.text", "line1\nline2"))
+	is.NoErr(c.Set("sec.after", "ok"))
+
+	var buf bytes.Buffer
+	_, err := c.WriteTo(&buf)
+	is.NoErr(err)
+
+	c2 := ini.New()
+	is.NoErr(c2.LoadStrings(buf.String()))
+	is.Eq("line1\nline2", c2.Get("sec.text"))
+	is.Eq("ok", c2.Get("sec.after"))
+}
+
 func TestWriteToAfterOverridingEnvironmentValue(t *testing.T) {
 	t.Setenv("INI_RAW_ORIGINAL", "original")
 	t.Setenv("INI_RAW_KEEP", "neighbor")
