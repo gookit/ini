@@ -155,7 +155,13 @@ fmt.Print(value) // val0
 ```go
 // 变量解析默认关闭，需在加载数据前启用 ParseVar
 cfg := ini.NewWithOptions(ini.ParseVar)
-err := cfg.LoadFiles("testdata/test.ini")
+// 即上方示例数据：默认分区的 `nkey`，以及 [sec1] 中的 `varRef = %(nkey)s`
+_ = cfg.LoadStrings(`
+nkey = val in default section
+
+[sec1]
+varRef = %(nkey)s
+`)
 value := cfg.String("sec1.varRef")
 fmt.Printf("%q", value)  // "val in default section"
 ```
@@ -201,10 +207,14 @@ port = 8080
 启用变量解析后，将会解析这里的 `%(host)s` 并替换为相应的变量值 `localhost`：
 
 ```go
-cfg := ini.New()
-// 启用变量解析
-cfg.WithOptions(ini.ParseVar)
-err := cfg.LoadFiles("portal.ini")
+// 变量解析默认关闭，需在加载数据前启用 ParseVar
+cfg := ini.NewWithOptions(ini.ParseVar)
+_ = cfg.LoadStrings(`
+[portal]
+url = http://%(host)s:%(port)s/Portal
+host = localhost
+port = 8080
+`)
 
 fmt.Print(cfg.String("portal.url"))
 // OUT: 
