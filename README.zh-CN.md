@@ -153,7 +153,10 @@ fmt.Print(value) // val0
 - 支持变量参考
 
 ```go
-value := ini.String("sec1.varRef")
+// 变量解析默认关闭，需在加载数据前启用 ParseVar
+cfg := ini.NewWithOptions(ini.ParseVar)
+err := cfg.LoadFiles("testdata/test.ini")
+value := cfg.String("sec1.varRef")
 fmt.Printf("%q", value)  // "val in default section"
 ```
 
@@ -201,6 +204,7 @@ port = 8080
 cfg := ini.New()
 // 启用变量解析
 cfg.WithOptions(ini.ParseVar)
+err := cfg.LoadFiles("portal.ini")
 
 fmt.Print(cfg.String("portal.url"))
 // OUT: 

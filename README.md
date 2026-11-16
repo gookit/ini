@@ -152,7 +152,10 @@ fmt.Print(value) // val0
 - Use var refer
 
 ```go
-value := ini.String("sec1.varRef")
+// ParseVar is off by default, enable it before loading the data
+cfg := ini.NewWithOptions(ini.ParseVar)
+err := cfg.LoadFiles("testdata/test.ini")
+value := cfg.String("sec1.varRef")
 fmt.Printf("%q", value) // "val in default section"
 ```
 
@@ -200,8 +203,9 @@ If variable resolution is enabled，will parse `%(host)s` and replace it：
 cfg := ini.New()
 // enable ParseVar
 cfg.WithOptions(ini.ParseVar)
+err := cfg.LoadFiles("portal.ini")
 
-fmt.Print(cfg.MustString("portal.url"))
+fmt.Print(cfg.String("portal.url"))
 // OUT: 
 // http://localhost:8080/api 
 ```
