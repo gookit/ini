@@ -163,6 +163,7 @@ func (p *Parser) Unmarshal(v []byte, ptr any) error {
 // ParseString parse from string data
 func (p *Parser) ParseString(str string) error {
 	if str = strings.TrimSpace(str); str == "" {
+		p.Reset()
 		return nil
 	}
 	return p.ParseReader(strings.NewReader(str))
@@ -171,6 +172,7 @@ func (p *Parser) ParseString(str string) error {
 // ParseBytes parse from bytes data
 func (p *Parser) ParseBytes(bts []byte) (err error) {
 	if len(bts) == 0 {
+		p.Reset()
 		return nil
 	}
 	return p.ParseReader(bytes.NewBuffer(bts))
