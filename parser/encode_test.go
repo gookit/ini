@@ -171,6 +171,36 @@ func TestEncodeWith(t *testing.T) {
 	is.Err(err)
 }
 
+func TestEncodeWithSectionComments(t *testing.T) {
+	data := map[string]map[string]string{"service": {"port": "8080"}}
+	tests := []struct {
+		name     string
+		comments map[string]string
+		prefix   string
+	}{
+		{"parser key", map[string]string{"_sec_service": "; parsed comment"}, "; parsed comment\n"},
+		{"legacy key", map[string]string{"service": "; legacy comment"}, "; legacy comment\n"},
+		{
+			"parser key takes precedence",
+			map[string]string{"_sec_service": "; parsed comment", "service": "; legacy comment"},
+			"; parsed comment\n",
+		},
+		{
+			"empty parser comment takes precedence",
+			map[string]string{"_sec_service": "", "service": "; legacy comment"},
+			"\n",
+		},
+		{"no comment", nil, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := EncodeWith(data, &EncodeOptions{Comments: tt.comments})
+			assert.NoErr(t, err)
+			assert.Eq(t, tt.prefix+"[service]\nport = 8080\n", string(out))
+		})
+	}
+}
+
 func TestMapStruct_err(t *testing.T) {
 	assert.Err(t, internal.MapStruct("json", "invalid", nil))
 }

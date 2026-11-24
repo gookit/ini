@@ -63,6 +63,27 @@ func TestWriteToLoadStringsMultiLine(t *testing.T) {
 	is.Eq("ok", c2.Get("sec.after"))
 }
 
+func TestWriteToSectionComments(t *testing.T) {
+	const input = "; service settings\n[service]\n# listening port\nport = 8080\n"
+	c := ini.New()
+	assert.NoErr(t, c.LoadStrings(input))
+	assert.StrContains(t, exportINI(t, c), input)
+}
+
+func TestWriteToLoadStringsSectionComments(t *testing.T) {
+	const input = "name = app\n\n; service settings\n[service]\n# listening port\nport = 8080\n"
+	c := ini.New()
+	assert.NoErr(t, c.LoadStrings(input))
+
+	output := exportINI(t, c)
+	assert.StrContains(t, output, input)
+
+	reloaded := ini.New()
+	assert.NoErr(t, reloaded.LoadStrings(output))
+	assert.Eq(t, "8080", reloaded.Get("service.port"))
+	assert.StrContains(t, exportINI(t, reloaded), input)
+}
+
 func TestWriteToAfterOverridingEnvironmentValue(t *testing.T) {
 	t.Setenv("INI_RAW_ORIGINAL", "original")
 	t.Setenv("INI_RAW_KEEP", "neighbor")
