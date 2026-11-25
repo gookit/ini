@@ -62,7 +62,9 @@ type EncodeOptions struct {
 	DefSection string
 	// AddExportDate add export date to head of file. default: true
 	AddExportDate bool
-	// Comments comments map, key is `section +"_"+ key`, value is comment.
+	// Comments maps `section + "_" + key` to value comments and
+	// `"_sec_" + section` to section comments. A plain section name is also
+	// accepted when the prefixed key is absent.
 	Comments map[string]string
 	// RawValueMap raw value map, key is `section +"_"+ key`, value is raw value.
 	//
@@ -231,7 +233,11 @@ func encodeLite(data map[string]map[string]string, opts *EncodeOptions) (out []b
 	maxLn := len(sortedGroups) - 1
 	for idx, section := range sortedGroups {
 		// comments for section
-		if s, ok := opts.Comments[section]; ok {
+		s, ok := opts.Comments["_sec_"+section]
+		if !ok {
+			s, ok = opts.Comments[section]
+		}
+		if ok {
 			buf.WriteString(s + "\n")
 		}
 
